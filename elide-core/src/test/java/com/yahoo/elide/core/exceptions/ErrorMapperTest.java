@@ -30,6 +30,8 @@ import com.yahoo.elide.core.lifecycle.FieldTestModel;
 import com.yahoo.elide.core.lifecycle.LegacyTestModel;
 import com.yahoo.elide.core.lifecycle.PropertyTestModel;
 import com.yahoo.elide.core.type.ClassType;
+import com.yahoo.elide.jsonapi.models.JsonApiErrors;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -46,9 +48,8 @@ public class ErrorMapperTest {
     private static final CustomErrorException MAPPED_EXCEPTION = new CustomErrorException(
             422,
             "MAPPED_EXCEPTION",
-            ErrorObjects.builder()
-                    .addError()
-                    .withCode("SOME_ERROR")
+            JsonApiErrors.builder()
+                    .error(error -> error.code("SOME_ERROR"))
                     .build()
     );
     private EntityDictionary dictionary;

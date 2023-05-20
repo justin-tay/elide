@@ -15,7 +15,6 @@ import com.yahoo.elide.core.dictionary.Injector;
 import com.yahoo.elide.core.exceptions.BadRequestException;
 import com.yahoo.elide.core.exceptions.CustomErrorException;
 import com.yahoo.elide.core.exceptions.ErrorMapper;
-import com.yahoo.elide.core.exceptions.ErrorObjects;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.HttpStatusException;
@@ -37,6 +36,7 @@ import com.yahoo.elide.jsonapi.extensions.JsonApiAtomicOperationsRequestScope;
 import com.yahoo.elide.jsonapi.extensions.JsonApiJsonPatch;
 import com.yahoo.elide.jsonapi.extensions.JsonApiJsonPatchRequestScope;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
+import com.yahoo.elide.jsonapi.models.JsonApiErrors;
 import com.yahoo.elide.jsonapi.parser.BaseVisitor;
 import com.yahoo.elide.jsonapi.parser.DeleteVisitor;
 import com.yahoo.elide.jsonapi.parser.GetVisitor;
@@ -64,7 +64,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -703,19 +702,25 @@ public class Elide {
         if (error instanceof ConstraintViolationException e) {
             log.debug("Constraint violation exception caught", e);
             String message = "Constraint violation";
-            final ErrorObjects.ErrorObjectsBuilder errorObjectsBuilder = ErrorObjects.builder();
+            final JsonApiErrors.JsonApiErrorsBuilder errors = JsonApiErrors.builder();
             for (ConstraintViolation<?> constraintViolation : e.getConstraintViolations()) {
-                errorObjectsBuilder.addError()
-                        .withDetail(constraintViolation.getMessage());
-                final String propertyPathString = constraintViolation.getPropertyPath().toString();
-                if (!propertyPathString.isEmpty()) {
-                    Map<String, Object> source = new HashMap<>(1);
-                    source.put("property", propertyPathString);
-                    errorObjectsBuilder.with("source", source);
-                }
+                errors.error(err -> {
+                    err.detail(constraintViolation.getMessage());
+                    err.code(constraintViolation.getConstraintDescriptor().getAnnotation().annotationType()
+                            .getSimpleName());
+                    final String propertyPathString = constraintViolation.getPropertyPath().toString();
+                    if (!propertyPathString.isEmpty()) {
+                        err.source(
+                                source -> source.pointer("/data/attributes/" + propertyPathString.replace(".", "/")));
+                        err.meta(meta -> {
+                            meta.put("type",  "ConstraintViolation");
+                            meta.put("property",  propertyPathString);
+                        });
+                    }
+                });
             }
             return buildErrorResponse(
-                    new CustomErrorException(HttpStatus.SC_BAD_REQUEST, message, errorObjectsBuilder.build()),
+                    new CustomErrorException(HttpStatus.SC_BAD_REQUEST, message, errors.build()),
                     isVerbose
             );
         }

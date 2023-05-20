@@ -16,7 +16,7 @@ import java.util.Objects;
 public class CustomErrorException extends HttpStatusException {
     private static final long serialVersionUID = 1L;
 
-    private final ErrorObjects errorObjects;
+    private final Object errorObjects;
 
     /**
      * constructor.
@@ -24,7 +24,7 @@ public class CustomErrorException extends HttpStatusException {
      * @param message exception message
      * @param errorObjects custom error objects, not {@code null}
      */
-    public CustomErrorException(int status, String message, ErrorObjects errorObjects) {
+    public CustomErrorException(int status, String message, Object errorObjects) {
         this(status, message, null, errorObjects);
     }
 
@@ -35,7 +35,7 @@ public class CustomErrorException extends HttpStatusException {
      * @param cause the cause
      * @param errorObjects custom error objects, not {@code null}
      */
-    public CustomErrorException(int status, String message, Throwable cause, ErrorObjects errorObjects) {
+    public CustomErrorException(int status, String message, Throwable cause, Object errorObjects) {
         super(status, message, cause, null);
         this.errorObjects = Objects.requireNonNull(errorObjects, "errorObjects must not be null");
     }

@@ -7,6 +7,7 @@ package com.yahoo.elide.core.exceptions;
 
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.type.ClassType;
+import com.yahoo.elide.jsonapi.models.JsonApiErrors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -67,10 +68,9 @@ public abstract class HttpStatusException extends RuntimeException {
     }
 
     private Pair<Integer, JsonNode> buildResponse(String message) {
-        String errorDetail = message;
-        errorDetail = Encode.forHtml(errorDetail);
+        String errorDetail = Encode.forHtml(message);
 
-        ErrorObjects errors = ErrorObjects.builder().addError().withDetail(errorDetail).build();
+        JsonApiErrors errors = JsonApiErrors.builder().error(error -> error.detail(errorDetail)).build();
         JsonNode responseBody = OBJECT_MAPPER.convertValue(errors, JsonNode.class);
 
         return Pair.of(getStatus(), responseBody);
