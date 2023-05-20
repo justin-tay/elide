@@ -3,13 +3,10 @@
  * Licensed under the Apache License, Version 2.0
  * See LICENSE file in project root for terms.
  */
-
-package com.yahoo.elide.graphql;
+package com.yahoo.elide;
 
 import static com.yahoo.elide.core.dictionary.EntityDictionary.NO_VERSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -17,28 +14,21 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.yahoo.elide.Elide;
-import com.yahoo.elide.ElideResponse;
-import com.yahoo.elide.ElideSettings;
-import com.yahoo.elide.ElideSettingsBuilder;
 import com.yahoo.elide.core.TransactionRegistry;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
+import com.yahoo.elide.core.dictionary.TestDictionary;
 import com.yahoo.elide.core.exceptions.ErrorMapper;
+import com.yahoo.elide.core.lifecycle.FieldTestModel;
+import com.yahoo.elide.core.lifecycle.LegacyTestModel;
+import com.yahoo.elide.core.lifecycle.PropertyTestModel;
 import com.yahoo.elide.core.type.ClassType;
-import com.yahoo.elide.graphql.models.GraphQLErrors;
-
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-
-import example.Book;
+import com.yahoo.elide.jsonapi.models.JsonApiError;
+import com.yahoo.elide.jsonapi.models.JsonApiErrors;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-
-import graphql.GraphQLError;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -52,84 +42,65 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Tests Elide.
+ */
+class ElideTest {
 
-public class QueryRunnerTest extends GraphQLTest {
+    private final String baseUrl = "http://localhost:8080/api/v1";
+    private EntityDictionary dictionary;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "#abcd\nmutation",
-            "#abcd\n\nmutation",
-            "   #abcd\n\nmutation",
-            "#abcd\n  #befd\n mutation",
-            "mutation"
-    })
-    public void testIsMutation(String input) {
-        assertTrue(QueryRunner.isMutation(input));
+    ElideTest() throws Exception {
+        dictionary = TestDictionary.getTestDictionary();
+        dictionary.bindEntity(FieldTestModel.class);
+        dictionary.bindEntity(PropertyTestModel.class);
+        dictionary.bindEntity(LegacyTestModel.class);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "#abcd\n  #befd\n query",
-            "query",
-            "QUERY",
-            "MUTATION",
-            ""
-    })
-    public void testIsNotMutation(String input) {
-        assertFalse(QueryRunner.isMutation(input));
-    }
-
-    @Test
-    public void testNullMutation() {
-        assertFalse(QueryRunner.isMutation(null));
-    }
 
     @Test
     void constraintViolationException() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
+        FieldTestModel mockModel = mock(FieldTestModel.class);
 
         Elide elide = getElide(store, dictionary, null);
 
-        QueryRunner queryRunner = new QueryRunner(elide, NO_VERSION);
-
         String body = """
-                {"query":"mutation {book(op: UPSERT data: {id:1,title:\\"1984\\",price:{total:10.0,currency:{isoCode:\\"USD\\"}}}) {edges {node {id title authors(op: UPSERT data: {id:1,name:\\"George Orwell\\"}) {edges {node {id name}}}}}}}"}""";
+                {"data": {"type":"testModel","id":"1","attributes": {"field":"Foo"}}}""";
 
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();
         TestObject testObject = new TestObject();
         Set<ConstraintViolation<TestObject>> violations = validator.validate(testObject);
         ConstraintViolationException e = new ConstraintViolationException("message", violations);
-        Book mockModel = mock(Book.class);
+
         when(store.beginTransaction()).thenReturn(tx);
-        when(tx.createNewObject(eq(ClassType.of(Book.class)), any())).thenReturn(mockModel);
+        when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
         doThrow(e).when(tx).preCommit(any());
 
-        ElideResponse response = queryRunner.run("", body, null);
-        SimpleModule module = new SimpleModule("GraphQLDeserializer", Version.unknownVersion());
-        module.addDeserializer(GraphQLError.class, new GraphQLErrorDeserializer());
-        elide.getMapper().getObjectMapper().registerModule(module);
-        GraphQLErrors errorObjects = elide.getMapper().getObjectMapper().readValue(response.getBody(), GraphQLErrors.class);
+        ElideResponse response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
+        JsonApiErrors errorObjects = objectMapper.readValue(response.getBody(), JsonApiErrors.class);
         assertEquals(3, errorObjects.getErrors().size());
-        for (GraphQLError errorObject : errorObjects.getErrors()) {
-            Map<String, Object> extensions = errorObject.getExtensions();
+        for (JsonApiError errorObject : errorObjects.getErrors()) {
+            Map<String, Object> meta = errorObject.getMeta();
             String expected;
-            String actual = elide.getMapper().getObjectMapper().writeValueAsString(errorObject);
-            switch (extensions.get("property").toString()) {
+            String actual = objectMapper.writeValueAsString(errorObject);
+            switch (meta.get("property").toString()) {
             case "nestedTestObject.nestedNotNullField":
                 expected = """
-                        {"message":"must not be null","extensions":{"code":"NotNull","type":"ConstraintViolation","property":"nestedTestObject.nestedNotNullField","classification":"DataFetchingException"}}""";
+                        {"code":"NotNull","source":{"pointer":"/data/attributes/nestedTestObject/nestedNotNullField"},"detail":"must not be null","meta":{"type":"ConstraintViolation","property":"nestedTestObject.nestedNotNullField"}}""";
                 assertEquals(expected, actual);
                 break;
             case "notNullField":
                 expected = """
-                        {"message":"must not be null","extensions":{"code":"NotNull","type":"ConstraintViolation","property":"notNullField","classification":"DataFetchingException"}}""";
+                        {"code":"NotNull","source":{"pointer":"/data/attributes/notNullField"},"detail":"must not be null","meta":{"type":"ConstraintViolation","property":"notNullField"}}""";
                 assertEquals(expected, actual);
                 break;
             case "minField":
                 expected = """
-                        {"message":"must be greater than or equal to 5","extensions":{"code":"Min","type":"ConstraintViolation","property":"minField","classification":"DataFetchingException"}}""";
+                        {"code":"Min","source":{"pointer":"/data/attributes/minField"},"detail":"must be greater than or equal to 5","meta":{"type":"ConstraintViolation","property":"minField"}}""";
                 assertEquals(expected, actual);
                 break;
             }
