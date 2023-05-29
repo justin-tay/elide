@@ -1111,7 +1111,8 @@ public class ControllerTest extends IntegrationTest {
                 .body("tags.name", containsInAnyOrder("group", "argument", "metric",
                         "dimension", "column", "table", "asyncQuery",
                         "timeDimensionGrain", "timeDimension", "product", "playerCountry", "version", "playerStats",
-                        "stats", "namespace", "tableSource", "maintainer", "book", "publisher", "person"));
+                        "stats", "namespace", "tableSource", "maintainer", "book", "publisher", "person",
+                        "export"));
     }
 
     @Test
