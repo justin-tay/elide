@@ -18,6 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.yahoo.elide.Elide;
+import com.yahoo.elide.ElideErrors;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.ElideSettings;
 import com.yahoo.elide.ElideSettingsBuilder;
@@ -33,7 +34,7 @@ import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.jsonapi.JsonApi
 import com.yahoo.elide.jsonapi.JsonApiSettings;
-import com.yahoo.elide.jsonapi.models.JsonApiErrors;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -47,11 +48,11 @@ public class ErrorMapperTest {
     private final String baseUrl = "http://localhost:8080/api/v1";
     private static final ErrorMapper MOCK_ERROR_MAPPER = mock(ErrorMapper.class);
     private static final Exception EXPECTED_EXCEPTION = new IllegalStateException("EXPECTED_EXCEPTION");
-    private static final CustomErrorException MAPPED_EXCEPTION = new CustomErrorException(
+    private static final ErrorResponseException MAPPED_EXCEPTION = new ErrorResponseException(
             422,
             "MAPPED_EXCEPTION",
-            JsonApiErrors.builder()
-                    .error(error -> error.code("SOME_ERROR"))
+            ElideErrors.builder()
+                    .error(error -> error.attribute("code", "SOME_ERROR"))
                     .build()
     );
     private EntityDictionary dictionary;

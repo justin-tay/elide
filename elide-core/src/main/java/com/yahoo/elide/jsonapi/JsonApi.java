@@ -14,7 +14,7 @@ import com.yahoo.elide.core.audit.AuditLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.exceptions.BadRequestException;
-import com.yahoo.elide.core.exceptions.CustomErrorException;
+import com.yahoo.elide.core.exceptions.ErrorResponseException;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.HttpStatusException;
@@ -31,6 +31,9 @@ import com.yahoo.elide.jsonapi.extensions.JsonApiAtomicOperationsRequestScope;
 import com.yahoo.elide.jsonapi.extensions.JsonApiJsonPatch;
 import com.yahoo.elide.jsonapi.extensions.JsonApiJsonPatchRequestScope;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
+import com.yahoo.elide.jsonapi.models.JsonApiError;
+import com.yahoo.elide.jsonapi.models.JsonApiError.Links;
+import com.yahoo.elide.jsonapi.models.JsonApiError.Source;
 import com.yahoo.elide.jsonapi.models.JsonApiErrors;
 import com.yahoo.elide.jsonapi.parser.BaseVisitor;
 import com.yahoo.elide.jsonapi.parser.DeleteVisitor;
@@ -46,6 +49,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.owasp.encoder.Encode;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -54,9 +58,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -343,105 +349,183 @@ public class JsonApi {
         }
     }
 
-    protected ElideResponse buildErrorResponse(HttpStatusException error, boolean isVerbose) {
-        if (error instanceof InternalServerErrorException) {
-            log.error("Internal Server Error", error);
+    protected ElideResponse buildErrorResponse(HttpStatusException exception, boolean isVerbose) {
+        if (exception instanceof InternalServerErrorException) {
+            log.error("Internal Server Error", exception);
         }
 
-        return buildResponse(isVerbose ? error.getVerboseErrorResponse()
-                : error.getErrorResponse());
+        ElideErrorResponse errorResponse = (isVerbose ? exception.getVerboseErrorResponse()
+                : exception.getErrorResponse());
+        if (errorResponse.getBody() != null) {
+            return buildErrorResponse(errorResponse.getResponseCode(), errorResponse.getBody());
+        } else {
+            JsonApiErrors.JsonApiErrorsBuilder builder = JsonApiErrors.builder();
+            for (ElideError error : errorResponse.getErrors().getErrors()) {
+                builder.error(jsonApiError -> convertToJsonApiError(error, jsonApiError));
+            }
+            return buildErrorResponse(errorResponse.getResponseCode(), builder.build());
+        }
     }
 
-    private ElideResponse handleNonRuntimeException(Exception error, boolean isVerbose) {
-        CustomErrorException mappedException = getElide().mapError(error);
+    protected void attribute(String key, Map<String, Object> map, Predicate<Object> processor) {
+        if (map.containsKey(key) && processor.test(map.get(key))) {
+            map.remove(key);
+        }
+    }
+
+    protected void convertToJsonApiError(ElideError error, JsonApiError.JsonApiErrorBuilder jsonApiError) {
+        if (error.getMessage() != null) {
+            jsonApiError.detail(Encode.forHtml(error.getMessage()));
+        }
+        if (error.getAttributes() != null && !error.getAttributes().isEmpty()) {
+            Map<String, Object> meta = new LinkedHashMap<>(error.getAttributes());
+            attribute("id", meta, value -> {
+                jsonApiError.id(value.toString());
+                return true;
+            });
+            attribute("status", meta, value -> {
+                jsonApiError.status(value.toString());
+                return true;
+            });
+            attribute("code", meta, value -> {
+                jsonApiError.code(value.toString());
+                return true;
+            });
+            attribute("title", meta, value -> {
+                jsonApiError.title(value.toString());
+                return true;
+            });
+            attribute("source", meta, value -> {
+                if (value instanceof Source source) {
+                    jsonApiError.source(source);
+                    return true;
+                }
+                return false;
+            });
+            attribute("links", meta, value -> {
+                if (value instanceof Links links) {
+                    jsonApiError.links(links);
+                    return true;
+                }
+                return false;
+            });
+            if (!meta.isEmpty()) {
+                jsonApiError.meta(meta);
+            }
+        }
+    }
+
+    protected ElideResponse buildErrorResponse(int responseCode, Object errors) {
+        try {
+            return new ElideResponse(responseCode, this.mapper.writeJsonApiDocument(errors));
+        } catch (JsonProcessingException e) {
+            return new ElideResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
+    private ElideResponse handleNonRuntimeException(Exception exception, boolean isVerbose) {
+        ErrorResponseException mappedException = mapError(exception);
         if (mappedException != null) {
             return buildErrorResponse(mappedException, isVerbose);
         }
 
-        if (error instanceof JacksonException jacksonException) {
+        if (exception instanceof JacksonException jacksonException) {
             String message = (jacksonException.getLocation() != null
                     && jacksonException.getLocation().getSourceRef() != null)
-                    ? error.getMessage() //This will leak Java class info if the location isn't known.
+                    ? exception.getMessage() //This will leak Java class info if the location isn't known.
                     : jacksonException.getOriginalMessage();
 
             return buildErrorResponse(new BadRequestException(message), isVerbose);
         }
 
-        if (error instanceof IOException) {
-            log.error("IO Exception uncaught by Elide", error);
-            return buildErrorResponse(new TransactionException(error), isVerbose);
+        if (exception instanceof IOException) {
+            log.error("IO Exception uncaught by Elide", exception);
+            return buildErrorResponse(new TransactionException(exception), isVerbose);
         }
 
-        log.error("Error or exception uncaught by Elide", error);
-        throw new RuntimeException(error);
+        log.error("Error or exception uncaught by Elide", exception);
+        throw new RuntimeException(exception);
     }
 
-    private ElideResponse handleRuntimeException(RuntimeException error, boolean isVerbose) {
-        CustomErrorException mappedException = getElide().mapError(error);
+    private ElideResponse handleRuntimeException(RuntimeException exception, boolean isVerbose) {
+        ErrorResponseException mappedException = mapError(exception);
 
         if (mappedException != null) {
             return buildErrorResponse(mappedException, isVerbose);
         }
 
-        if (error instanceof WebApplicationException) {
-            throw error;
+        if (exception instanceof WebApplicationException) {
+            throw exception;
         }
 
-        if (error instanceof ForbiddenAccessException e) {
+        if (exception instanceof ForbiddenAccessException e) {
             if (log.isDebugEnabled()) {
                 log.debug("{}", e.getLoggedMessage());
             }
             return buildErrorResponse(e, isVerbose);
         }
 
-        if (error instanceof JsonPatchExtensionException e) {
+        if (exception instanceof JsonPatchExtensionException e) {
             log.debug("JSON API Json Patch extension exception caught", e);
             return buildErrorResponse(e, isVerbose);
         }
 
-        if (error instanceof JsonApiAtomicOperationsException e) {
+        if (exception instanceof JsonApiAtomicOperationsException e) {
             log.debug("JSON API Atomic Operations extension exception caught", e);
             return buildErrorResponse(e, isVerbose);
         }
 
-        if (error instanceof HttpStatusException e) {
+        if (exception instanceof HttpStatusException e) {
             log.debug("Caught HTTP status exception", e);
             return buildErrorResponse(e, isVerbose);
         }
 
-        if (error instanceof ParseCancellationException e) {
+        if (exception instanceof ParseCancellationException e) {
             log.debug("Parse cancellation exception uncaught by Elide (i.e. invalid URL)", e);
             return buildErrorResponse(new InvalidURLException(e), isVerbose);
         }
 
-        if (error instanceof ConstraintViolationException e) {
+        if (exception instanceof ConstraintViolationException e) {
             log.debug("Constraint violation exception caught", e);
-            String message = "Constraint violation";
             final JsonApiErrors.JsonApiErrorsBuilder errors = JsonApiErrors.builder();
             for (ConstraintViolation<?> constraintViolation : e.getConstraintViolations()) {
-                errors.error(err -> {
-                    err.detail(constraintViolation.getMessage());
-                    err.code(constraintViolation.getConstraintDescriptor().getAnnotation().annotationType()
+                errors.error(error -> {
+                    error.detail(constraintViolation.getMessage());
+                    error.code(constraintViolation.getConstraintDescriptor().getAnnotation().annotationType()
                             .getSimpleName());
                     final String propertyPathString = constraintViolation.getPropertyPath().toString();
                     if (!propertyPathString.isEmpty()) {
-                        err.source(
+                        error.source(
                                 source -> source.pointer("/data/attributes/" + propertyPathString.replace(".", "/")));
-                        err.meta(meta -> {
+                        error.meta(meta -> {
                             meta.put("type",  "ConstraintViolation");
                             meta.put("property",  propertyPathString);
                         });
                     }
                 });
             }
-            return buildErrorResponse(
-                    new CustomErrorException(HttpStatus.SC_BAD_REQUEST, message, errors.build()),
-                    isVerbose
-            );
+            return buildErrorResponse(HttpStatus.SC_BAD_REQUEST, errors.build());
         }
 
-        log.error("Error or exception uncaught by Elide", error);
-        throw error;
+        log.error("Error or exception uncaught by Elide", exception);
+        throw exception;
+    }
+
+    public ErrorResponseException mapError(Exception error) {
+        if (errorMapper != null) {
+            log.trace("Attempting to map unknown exception of type {}", error.getClass());
+            ErrorResponseException customizedError = errorMapper.map(error);
+
+            if (customizedError != null) {
+                log.debug("Successfully mapped exception from type {} to {}",
+                        error.getClass(), customizedError.getClass());
+                return customizedError;
+            } else {
+                log.debug("No error mapping present for {}", error.getClass());
+            }
+        }
+
+        return null;
     }
 
     protected <T> ElideResponse buildResponse(Pair<Integer, T> response) {
