@@ -30,7 +30,8 @@ import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.EntityDictionary.EntityDictionaryBuilder;
 import com.yahoo.elide.core.dictionary.EntityDictionaryBuilderCustomizer;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorMapper;
+import com.yahoo.elide.core.exceptions.ErrorMapperBuilder;
+import com.yahoo.elide.core.exceptions.ErrorMapperBuilderCustomizer;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.request.route.ApiVersionValidator;
 import com.yahoo.elide.core.request.route.BasicApiVersionValidator;
@@ -173,7 +174,7 @@ public class ElideAutoConfiguration {
      *
      * @param settings the settings
      * @param entityDictionary the entity dictionary
-     * @param errorMapper the error mapper
+     * @param errorMapperBuilder the error mapper
      * @param dataStore the data store
      * @param headerProcessor the header processor
      * @param elideMapper the elide mapper
@@ -185,12 +186,12 @@ public class ElideAutoConfiguration {
     @ConditionalOnMissingBean
     @Scope(SCOPE_PROTOTYPE)
     public ElideSettingsBuilder elideSettingsBuilder(ElideConfigProperties settings, EntityDictionary entityDictionary,
-            ErrorMapper errorMapper, DataStore dataStore, HeaderProcessor headerProcessor,
+            ErrorMapperBuilder errorMapperBuilder, DataStore dataStore, HeaderProcessor headerProcessor,
             ElideMapper elideMapper, SerdesBuilder serdesBuilder, ObjectProvider<SettingsBuilder> settingsProvider,
             ObjectProvider<ElideSettingsBuilderCustomizer> customizerProvider) {
         return ElideSettingsBuilderCustomizers.buildElideSettingsBuilder(builder -> {
             builder.dataStore(dataStore).entityDictionary(entityDictionary).objectMapper(elideMapper.getObjectMapper())
-                    .errorMapper(errorMapper)
+                    .errorMapper(errorMapperBuilder.build())
                     .defaultMaxPageSize(settings.getMaxPageSize())
                     .defaultPageSize(settings.getPageSize()).auditLogger(new Slf4jLogger())
                     .baseUrl(settings.getBaseUrl())
@@ -523,8 +524,12 @@ public class ElideAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ErrorMapper errorMapper() {
-        return error -> null;
+    public ErrorMapperBuilder errorMapperBuilder(ObjectProvider<ErrorMapper> errorMapperProvider,
+            ObjectProvider<ErrorMapperBuilderCustomizer> customizerProvider) {
+        ErrorMapperBuilder errorMapperBuilder = new ErrorMapperBuilder();
+        errorMapperProvider.orderedStream().forEach(errorMapperBuilder::errorMapper);
+        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(errorMapperBuilder));
+        return errorMapperBuilder;
     }
 
     @Bean
