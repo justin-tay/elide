@@ -19,6 +19,8 @@ import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.Injector;
 import com.yahoo.elide.core.exceptions.ErrorMapper;
+import com.yahoo.elide.core.exceptions.ErrorMapperBuilder;
+import com.yahoo.elide.core.exceptions.ErrorMapperBuilderCustomizer;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.security.checks.Check;
 import com.yahoo.elide.core.security.checks.prefab.Role;
@@ -585,8 +587,12 @@ public class ElideAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ErrorMapper getErrorMapper() {
-        return error -> null;
+    public ErrorMapperBuilder errorMapperBuilder(ObjectProvider<ErrorMapper> errorMapperProvider,
+            ObjectProvider<ErrorMapperBuilderCustomizer> customizerProvider) {
+        ErrorMapperBuilder errorMapperBuilder = new ErrorMapperBuilder();
+        errorMapperProvider.orderedStream().forEach(errorMapperBuilder::errorMapper);
+        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(errorMapperBuilder));
+        return errorMapperBuilder;
     }
 
     @Bean
@@ -644,6 +650,8 @@ public class ElideAutoConfiguration {
          * @param headerProcessor HTTP header function which is invoked for every request.
          * @param transactionRegistry Global transaction registry.
          * @param settings Elide settings.
+         * @param mapper Mapper.
+         * @param errorMapperBuilder Error mapper.
          * @return A new elide instance.
          */
         @Bean
@@ -651,9 +659,9 @@ public class ElideAutoConfiguration {
         @ConditionalOnMissingBean
         public RefreshableElide refreshableElide(EntityDictionary dictionary, DataStore dataStore,
                 HeaderUtils.HeaderProcessor headerProcessor, TransactionRegistry transactionRegistry,
-                ElideConfigProperties settings, JsonApiMapper mapper, ErrorMapper errorMapper) {
+                ElideConfigProperties settings, JsonApiMapper mapper, ErrorMapperBuilder errorMapperBuilder) {
             return buildRefreshableElide(dictionary, dataStore, headerProcessor, transactionRegistry, settings, mapper,
-                    errorMapper);
+                    errorMapperBuilder.build());
         }
 
         @Configuration
@@ -734,15 +742,17 @@ public class ElideAutoConfiguration {
          * @param headerProcessor HTTP header function which is invoked for every request.
          * @param transactionRegistry Global transaction registry.
          * @param settings Elide settings.
+         * @param mapper Mapper.
+         * @param errorMapperBuilder Error mapper.
          * @return A new elide instance.
          */
         @Bean
         @ConditionalOnMissingBean
         public RefreshableElide refreshableElide(EntityDictionary dictionary, DataStore dataStore,
                 HeaderUtils.HeaderProcessor headerProcessor, TransactionRegistry transactionRegistry,
-                ElideConfigProperties settings, JsonApiMapper mapper, ErrorMapper errorMapper) {
+                ElideConfigProperties settings, JsonApiMapper mapper, ErrorMapperBuilder errorMapperBuilder) {
             return buildRefreshableElide(dictionary, dataStore, headerProcessor, transactionRegistry, settings, mapper,
-                    errorMapper);
+                    errorMapperBuilder.build());
         }
 
         @Configuration

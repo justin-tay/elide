@@ -8,7 +8,7 @@ package com.yahoo.elide.spring.config;
 import static com.yahoo.elide.graphql.subscriptions.websocket.SubscriptionWebSocket.DEFAULT_USER_FACTORY;
 
 import com.yahoo.elide.core.audit.Slf4jLogger;
-import com.yahoo.elide.core.exceptions.ErrorMapper;
+import com.yahoo.elide.core.exceptions.ErrorMapperBuilder;
 import com.yahoo.elide.datastores.jms.websocket.SubscriptionWebSocketConfigurator;
 import com.yahoo.elide.graphql.subscriptions.websocket.SubscriptionWebSocket;
 
@@ -39,7 +39,7 @@ public class ElideSubscriptionConfiguration {
             ElideConfigProperties config,
             SubscriptionWebSocket.UserFactory userFactory,
             ConnectionFactory connectionFactory,
-            ErrorMapper errorMapper,
+            ErrorMapperBuilder errorMapperBuilder,
             DataFetcherExceptionHandler dataFetcherExceptionHandler
     ) {
         return ServerEndpointConfig.Builder
@@ -56,7 +56,7 @@ public class ElideSubscriptionConfiguration {
                         .userFactory(userFactory)
                         .auditLogger(new Slf4jLogger())
                         .verboseErrors(config.isVerboseErrors())
-                        .errorMapper(errorMapper)
+                        .errorMapper(errorMapperBuilder.build())
                         .dataFetcherExceptionHandler(dataFetcherExceptionHandler)
                         .build())
                 .build();
