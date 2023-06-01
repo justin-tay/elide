@@ -19,7 +19,7 @@ import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.TestDictionary;
-import com.yahoo.elide.core.exceptions.ErrorMapper;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
 import com.yahoo.elide.core.lifecycle.FieldTestModel;
 import com.yahoo.elide.core.lifecycle.LegacyTestModel;
 import com.yahoo.elide.core.lifecycle.PropertyTestModel;
@@ -109,15 +109,15 @@ class ElideTest {
         verify(tx).close();
     }
 
-    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ErrorMapper errorMapper) {
+    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ErrorResponseMapper errorMapper) {
         ElideSettings settings = getElideSettings(dataStore, dictionary, errorMapper);
         return new Elide(settings, new TransactionRegistry(), settings.getDictionary().getScanner(), false);
     }
 
-    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ErrorMapper errorMapper) {
+    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ErrorResponseMapper errorMapper) {
         return new ElideSettingsBuilder(dataStore)
                 .withEntityDictionary(dictionary)
-                .withErrorMapper(errorMapper)
+                .withErrorResponseMapper(errorMapper)
                 .withVerboseErrors()
                 .build();
     }

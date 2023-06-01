@@ -162,7 +162,7 @@ public interface ElideStandaloneSubscriptionSettings {
                         .userFactory(getUserFactory())
                         .auditLogger(settings.getAuditLogger())
                         .verboseErrors(settings.verboseErrors())
-                        .errorMapper(settings.getErrorMapper())
+                        .errorResponseMapper(settings.getErrorResponseMapper())
                         .dataFetcherExceptionHandler(settings.getDataFetcherExceptionHandler())
                         .build())
                 .build();

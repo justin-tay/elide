@@ -18,9 +18,9 @@ import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorMapper;
-import com.yahoo.elide.core.exceptions.ErrorMapperBuilder;
-import com.yahoo.elide.core.exceptions.ErrorMapperBuilderCustomizer;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilder;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilderCustomizer;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.security.checks.Check;
 import com.yahoo.elide.core.security.checks.prefab.Role;
@@ -587,12 +587,13 @@ public class ElideAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ErrorMapperBuilder errorMapperBuilder(ObjectProvider<ErrorMapper> errorMapperProvider,
-            ObjectProvider<ErrorMapperBuilderCustomizer> customizerProvider) {
-        ErrorMapperBuilder errorMapperBuilder = new ErrorMapperBuilder();
-        errorMapperProvider.orderedStream().forEach(errorMapperBuilder::errorMapper);
-        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(errorMapperBuilder));
-        return errorMapperBuilder;
+    public ErrorResponseMapperBuilder errorResponseMapperBuilder(
+            ObjectProvider<ErrorResponseMapper> errorResponseMapperProvider,
+            ObjectProvider<ErrorResponseMapperBuilderCustomizer> customizerProvider) {
+        ErrorResponseMapperBuilder errorResponseMapperBuilder = new ErrorResponseMapperBuilder();
+        errorResponseMapperProvider.orderedStream().forEach(errorResponseMapperBuilder::errorResponseMapper);
+        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(errorResponseMapperBuilder));
+        return errorResponseMapperBuilder;
     }
 
     @Bean
@@ -659,7 +660,7 @@ public class ElideAutoConfiguration {
         @ConditionalOnMissingBean
         public RefreshableElide refreshableElide(EntityDictionary dictionary, DataStore dataStore,
                 HeaderUtils.HeaderProcessor headerProcessor, TransactionRegistry transactionRegistry,
-                ElideConfigProperties settings, JsonApiMapper mapper, ErrorMapperBuilder errorMapperBuilder) {
+                ElideConfigProperties settings, JsonApiMapper mapper, ErrorResponseMapperBuilder errorMapperBuilder) {
             return buildRefreshableElide(dictionary, dataStore, headerProcessor, transactionRegistry, settings, mapper,
                     errorMapperBuilder.build());
         }
@@ -750,7 +751,7 @@ public class ElideAutoConfiguration {
         @ConditionalOnMissingBean
         public RefreshableElide refreshableElide(EntityDictionary dictionary, DataStore dataStore,
                 HeaderUtils.HeaderProcessor headerProcessor, TransactionRegistry transactionRegistry,
-                ElideConfigProperties settings, JsonApiMapper mapper, ErrorMapperBuilder errorMapperBuilder) {
+                ElideConfigProperties settings, JsonApiMapper mapper, ErrorResponseMapperBuilder errorMapperBuilder) {
             return buildRefreshableElide(dictionary, dataStore, headerProcessor, transactionRegistry, settings, mapper,
                     errorMapperBuilder.build());
         }
@@ -818,10 +819,10 @@ public class ElideAutoConfiguration {
 
     public static RefreshableElide buildRefreshableElide(EntityDictionary dictionary, DataStore dataStore,
             HeaderUtils.HeaderProcessor headerProcessor, TransactionRegistry transactionRegistry,
-            ElideConfigProperties settings, JsonApiMapper mapper, ErrorMapper errorMapper) {
+            ElideConfigProperties settings, JsonApiMapper mapper, ErrorResponseMapper errorMapper) {
 
         ElideSettingsBuilder builder = new ElideSettingsBuilder(dataStore).withEntityDictionary(dictionary)
-                .withErrorMapper(errorMapper).withJsonApiMapper(mapper)
+                .withErrorResponseMapper(errorMapper).withJsonApiMapper(mapper)
                 .withDefaultMaxPageSize(settings.getMaxPageSize()).withDefaultPageSize(settings.getPageSize())
                 .withJoinFilterDialect(RSQLFilterDialect.builder().dictionary(dictionary).build())
                 .withSubqueryFilterDialect(RSQLFilterDialect.builder().dictionary(dictionary).build())

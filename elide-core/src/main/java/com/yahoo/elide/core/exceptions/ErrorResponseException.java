@@ -51,6 +51,6 @@ public class ErrorResponseException extends HttpStatusException {
     }
 
     private ElideErrorResponse buildCustomResponse() {
-        return ElideErrorResponse.builder().responseCode(getStatus()).errors(this.errors).build();
+        return ElideErrorResponse.builder().responseCode(getStatus()).body(this.errors).build();
     }
 }

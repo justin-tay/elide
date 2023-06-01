@@ -8,6 +8,7 @@ package com.yahoo.elide.core.exceptions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.yahoo.elide.ElideErrorResponse;
+import com.yahoo.elide.ElideErrors;
 
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +21,7 @@ class HttpStatusExceptionTest {
         String expected = "test<script>encoding";
         HttpStatusException exception =  new HttpStatusException(500, "test<script>encoding") { };
         ElideErrorResponse res = exception.getErrorResponse();
-        assertEquals(expected, res.getErrors().getErrors().get(0).getMessage());
+        assertEquals(expected, res.getBody(ElideErrors.class).getErrors().get(0).getMessage());
     }
 
     @Test
@@ -28,7 +29,7 @@ class HttpStatusExceptionTest {
         String expected = "test<script>encoding";
         HttpStatusException exception = new HttpStatusException(500, "test<script>encoding") { };
         ElideErrorResponse res = exception.getVerboseErrorResponse();
-        assertEquals(expected, res.getErrors().getErrors().get(0).getMessage());
+        assertEquals(expected, res.getBody(ElideErrors.class).getErrors().get(0).getMessage());
     }
 
     @Test
@@ -40,6 +41,6 @@ class HttpStatusExceptionTest {
         HttpStatusException exception = new HttpStatusException(500, "test<script>encoding",
                 new RuntimeException("runtime exception"), supplier) { };
         ElideErrorResponse res = exception.getVerboseErrorResponse();
-        assertEquals(expected, res.getErrors().getErrors().get(0).getMessage());
+        assertEquals(expected, res.getBody(ElideErrors.class).getErrors().get(0).getMessage());
     }
 }
