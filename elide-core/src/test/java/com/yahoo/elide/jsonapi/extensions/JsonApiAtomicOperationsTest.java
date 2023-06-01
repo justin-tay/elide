@@ -135,7 +135,7 @@ public class JsonApiAtomicOperationsTest {
             try {
                 return JsonApiAtomicOperations.processAtomicOperations(this.dataStore, null, operationsDoc, scope);
             } catch (JsonApiAtomicOperationsException e) {
-                ObjectNode error = (ObjectNode) e.getErrorResponse().getValue().get(0).get("errors").get(0);
+                ObjectNode error = (ObjectNode) e.getErrorResponse().getBody().get(0).get("errors").get(0);
                 assertEquals("400", error.get("status").asText());
                 assertEquals("Bad Request Body&#39;Atomic Operations extension ref must specify the type member.&#39;",
                         error.get("detail").asText());
@@ -163,7 +163,7 @@ public class JsonApiAtomicOperationsTest {
             try {
                 return JsonApiAtomicOperations.processAtomicOperations(this.dataStore, null, operationsDoc, scope);
             } catch (JsonApiAtomicOperationsException e) {
-                ObjectNode error = (ObjectNode) e.getErrorResponse().getValue().get(0).get("errors").get(0);
+                ObjectNode error = (ObjectNode) e.getErrorResponse().getBody().get(0).get("errors").get(0);
                 assertEquals("400", error.get("status").asText());
                 assertEquals("Bad Request Body&#39;Atomic Operations extension add resource operation may only specify the href member.&#39;",
                         error.get("detail").asText());
@@ -192,7 +192,7 @@ public class JsonApiAtomicOperationsTest {
             try {
                 return JsonApiAtomicOperations.processAtomicOperations(this.dataStore, null, operationsDoc, scope);
             } catch (JsonApiAtomicOperationsException e) {
-                ObjectNode error = (ObjectNode) e.getErrorResponse().getValue().get(0).get("errors").get(0);
+                ObjectNode error = (ObjectNode) e.getErrorResponse().getBody().get(0).get("errors").get(0);
                 assertEquals("400", error.get("status").asText());
                 assertEquals("Bad Request Body&#39;Atomic Operations extension operation cannot contain both ref and href members.&#39;",
                         error.get("detail").asText());
@@ -221,7 +221,7 @@ public class JsonApiAtomicOperationsTest {
             try {
                 return JsonApiAtomicOperations.processAtomicOperations(this.dataStore, null, operationsDoc, scope);
             } catch (JsonApiAtomicOperationsException e) {
-                ObjectNode error = (ObjectNode) e.getErrorResponse().getValue().get(0).get("errors").get(0);
+                ObjectNode error = (ObjectNode) e.getErrorResponse().getBody().get(0).get("errors").get(0);
                 assertEquals("400", error.get("status").asText());
                 assertEquals("Bad Request Body&#39;Atomic Operations extension ref cannot contain both id and lid members.&#39;",
                         error.get("detail").asText());
@@ -244,7 +244,7 @@ public class JsonApiAtomicOperationsTest {
             try {
                 return JsonApiAtomicOperations.processAtomicOperations(this.dataStore, null, operationsDoc, scope);
             } catch (JsonApiAtomicOperationsException e) {
-                ObjectNode error = (ObjectNode) e.getErrorResponse().getValue().get(0).get("errors").get(0);
+                ObjectNode error = (ObjectNode) e.getErrorResponse().getBody().get(0).get("errors").get(0);
                 assertEquals("400", error.get("status").asText());
                 assertEquals(
                         "Bad Request Body&#39;Atomic Operations extension operation requires either ref or href members to be specified.&#39;",
@@ -272,7 +272,7 @@ public class JsonApiAtomicOperationsTest {
             try {
                 return JsonApiAtomicOperations.processAtomicOperations(this.dataStore, null, operationsDoc, scope);
             } catch (JsonApiAtomicOperationsException e) {
-                ObjectNode error = (ObjectNode) e.getErrorResponse().getValue().get(0).get("errors").get(0);
+                ObjectNode error = (ObjectNode) e.getErrorResponse().getBody().get(0).get("errors").get(0);
                 assertEquals("400", error.get("status").asText());
                 assertEquals(
                         "Bad Request Body&#39;Atomic Operations extension operation requires either ref or href members to be specified.&#39;",
@@ -300,7 +300,7 @@ public class JsonApiAtomicOperationsTest {
             try {
                 return JsonApiAtomicOperations.processAtomicOperations(this.dataStore, null, operationsDoc, scope);
             } catch (JsonApiAtomicOperationsException e) {
-                JsonNode error = e.getErrorResponse().getValue().get(0).get("errors").get(0);
+                JsonNode error = e.getErrorResponse().getBody().get(0).get("errors").get(0);
                 assertEquals("404", error.get("status").asText());
                 assertEquals("Unknown collection author", error.get("detail").asText());
                 return null;
