@@ -30,8 +30,9 @@ import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.EntityDictionary.EntityDictionaryBuilder;
 import com.yahoo.elide.core.dictionary.EntityDictionaryBuilderCustomizer;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorMapperBuilder;
-import com.yahoo.elide.core.exceptions.ErrorMapperBuilderCustomizer;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilder;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilderCustomizer;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.request.route.ApiVersionValidator;
 import com.yahoo.elide.core.request.route.BasicApiVersionValidator;
@@ -186,12 +187,12 @@ public class ElideAutoConfiguration {
     @ConditionalOnMissingBean
     @Scope(SCOPE_PROTOTYPE)
     public ElideSettingsBuilder elideSettingsBuilder(ElideConfigProperties settings, EntityDictionary entityDictionary,
-            ErrorMapperBuilder errorMapperBuilder, DataStore dataStore, HeaderProcessor headerProcessor,
+            ErrorResponseMapperBuilder errorResponseMapperBuilder, DataStore dataStore, HeaderProcessor headerProcessor,
             ElideMapper elideMapper, SerdesBuilder serdesBuilder, ObjectProvider<SettingsBuilder> settingsProvider,
             ObjectProvider<ElideSettingsBuilderCustomizer> customizerProvider) {
         return ElideSettingsBuilderCustomizers.buildElideSettingsBuilder(builder -> {
             builder.dataStore(dataStore).entityDictionary(entityDictionary).objectMapper(elideMapper.getObjectMapper())
-                    .errorMapper(errorMapperBuilder.build())
+                    .errorResponseMapper(errorResponseMapperBuilder.build())
                     .defaultMaxPageSize(settings.getMaxPageSize())
                     .defaultPageSize(settings.getPageSize()).auditLogger(new Slf4jLogger())
                     .baseUrl(settings.getBaseUrl())
@@ -524,12 +525,13 @@ public class ElideAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ErrorMapperBuilder errorMapperBuilder(ObjectProvider<ErrorMapper> errorMapperProvider,
-            ObjectProvider<ErrorMapperBuilderCustomizer> customizerProvider) {
-        ErrorMapperBuilder errorMapperBuilder = new ErrorMapperBuilder();
-        errorMapperProvider.orderedStream().forEach(errorMapperBuilder::errorMapper);
-        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(errorMapperBuilder));
-        return errorMapperBuilder;
+    public ErrorResponseMapperBuilder errorResponseMapperBuilder(
+            ObjectProvider<ErrorResponseMapper> errorResponseMapperProvider,
+            ObjectProvider<ErrorResponseMapperBuilderCustomizer> customizerProvider) {
+        ErrorResponseMapperBuilder errorResponseMapperBuilder = new ErrorResponseMapperBuilder();
+        errorResponseMapperProvider.orderedStream().forEach(errorResponseMapperBuilder::errorResponseMapper);
+        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(errorResponseMapperBuilder));
+        return errorResponseMapperBuilder;
     }
 
     @Bean

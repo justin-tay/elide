@@ -18,7 +18,7 @@ import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorMapper;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.request.route.RouteResolver;
 import com.yahoo.elide.core.security.checks.Check;
@@ -216,7 +216,7 @@ public interface ElideStandaloneSettings {
             JsonApiMapper mapper) {
         ElideSettingsBuilder builder = ElideSettings.builder().dataStore(dataStore)
                 .entityDictionary(dictionary)
-                .errorMapper(getErrorMapper())
+                .errorResponseMapper(getErrorResponseMapper())
                 .baseUrl(getBaseUrl())
                 .objectMapper(mapper.getObjectMapper())
                 .auditLogger(getAuditLogger());
@@ -710,8 +710,8 @@ public interface ElideStandaloneSettings {
      *
      * @return error mapper implementation
      */
-    default ErrorMapper getErrorMapper() {
-        return error -> null;
+    default ErrorResponseMapper getErrorResponseMapper() {
+        return (error, context) -> null;
     }
 
     /**

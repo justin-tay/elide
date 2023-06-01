@@ -367,7 +367,7 @@ public class GraphQLEndpointTest {
 
         Response response = endpoint.post("", uriInfo, requestHeaders, user2, graphQLRequestToJSON(graphQLRequest));
         assertHasErrors(response);
-        verify(elide).mapError(any());
+        verify(elide).toErrorResponse(any(), any());
     }
 
     @Test
@@ -397,7 +397,7 @@ public class GraphQLEndpointTest {
         Iterator<JsonNode> errors = node.get("errors").elements();
         assertTrue(errors.hasNext());
         assertTrue(errors.next().get("message").asText().contains("No id provided, cannot persist incidents"));
-        verify(elide).mapError(any());
+        verify(elide).toErrorResponse(any(), any());
     }
 
     @Test
@@ -756,7 +756,7 @@ public class GraphQLEndpointTest {
 
         Response response = endpoint.post("", uriInfo, requestHeaders, user3, graphQLRequestToJSON(graphQLRequest));
         assertHasErrors(response);
-        verify(elide).mapError(any());
+        verify(elide).toErrorResponse(any(), any());
     }
 
     @Test
@@ -836,7 +836,7 @@ public class GraphQLEndpointTest {
 
         Response response = endpoint.post("", uriInfo, requestHeaders, user1, graphQLRequestToJSON(graphQLRequest));
         assertHasErrors(response);
-        verify(elide).mapError(any());
+        verify(elide).toErrorResponse(any(), any());
     }
 
 

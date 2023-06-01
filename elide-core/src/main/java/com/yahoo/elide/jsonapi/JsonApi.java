@@ -6,6 +6,9 @@
 package com.yahoo.elide.jsonapi;
 
 import com.yahoo.elide.Elide;
+import com.yahoo.elide.ElideError;
+import com.yahoo.elide.ElideErrorResponse;
+import com.yahoo.elide.ElideErrors;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.ElideSettings;
 import com.yahoo.elide.RefreshableElide;
@@ -14,7 +17,8 @@ import com.yahoo.elide.core.audit.AuditLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.exceptions.BadRequestException;
-import com.yahoo.elide.core.exceptions.ErrorResponseException;
+import com.yahoo.elide.core.exceptions.ErrorContext;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.HttpStatusException;
@@ -25,7 +29,6 @@ import com.yahoo.elide.core.exceptions.JsonPatchExtensionException;
 import com.yahoo.elide.core.exceptions.TransactionException;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.security.User;
-import com.yahoo.elide.jsonapi.JsonApi.HandlerResult;
 import com.yahoo.elide.jsonapi.extensions.JsonApiAtomicOperations;
 import com.yahoo.elide.jsonapi.extensions.JsonApiAtomicOperationsRequestScope;
 import com.yahoo.elide.jsonapi.extensions.JsonApiJsonPatch;
@@ -78,6 +81,7 @@ public class JsonApi {
     private final JsonApiSettings jsonApiSettings;
     private final DataStore dataStore;
     private final JsonApiMapper mapper;
+    private final ErrorResponseMapper errorResponseMapper;
     private final TransactionRegistry transactionRegistry;
     private final AuditLogger auditLogger;
     private boolean strictQueryParameters;
@@ -95,6 +99,7 @@ public class JsonApi {
         this.elideSettings = this.elide.getElideSettings();
         this.transactionRegistry = this.elide.getTransactionRegistry();
         this.auditLogger = this.elide.getAuditLogger();
+        this.errorResponseMapper = this.elide.getErrorResponseMapper();
     }
 
     /**
@@ -349,21 +354,26 @@ public class JsonApi {
         }
     }
 
-    protected ElideResponse buildErrorResponse(HttpStatusException exception, boolean isVerbose) {
+    protected ElideResponse buildErrorResponse(HttpStatusException exception, boolean verbose) {
         if (exception instanceof InternalServerErrorException) {
             log.error("Internal Server Error", exception);
         }
 
-        ElideErrorResponse errorResponse = (isVerbose ? exception.getVerboseErrorResponse()
+        ElideErrorResponse errorResponse = (verbose ? exception.getVerboseErrorResponse()
                 : exception.getErrorResponse());
-        if (errorResponse.getBody() != null) {
-            return buildErrorResponse(errorResponse.getResponseCode(), errorResponse.getBody());
-        } else {
+        return buildErrorResponse(errorResponse);
+    }
+
+    protected ElideResponse buildErrorResponse(ElideErrorResponse errorResponse) {
+        if (errorResponse.getBody() instanceof ElideErrors errors) {
             JsonApiErrors.JsonApiErrorsBuilder builder = JsonApiErrors.builder();
-            for (ElideError error : errorResponse.getErrors().getErrors()) {
+            for (ElideError error : errors.getErrors()) {
                 builder.error(jsonApiError -> convertToJsonApiError(error, jsonApiError));
             }
             return buildErrorResponse(errorResponse.getResponseCode(), builder.build());
+        }
+        else {
+            return buildErrorResponse(errorResponse.getResponseCode(), errorResponse.getBody());
         }
     }
 
@@ -424,9 +434,11 @@ public class JsonApi {
     }
 
     private ElideResponse handleNonRuntimeException(Exception exception, boolean isVerbose) {
-        ErrorResponseException mappedException = mapError(exception);
-        if (mappedException != null) {
-            return buildErrorResponse(mappedException, isVerbose);
+        ElideErrorResponse errorResponse = toErrorResponse(exception,
+                JsonApiErrorContext.builder().verbose(isVerbose)
+                        .mapper(this.elideSettings.getSettings(JsonApiSettings.class).getJsonApiMapper()).build());
+        if (errorResponse != null) {
+            return buildErrorResponse(errorResponse);
         }
 
         if (exception instanceof JacksonException jacksonException) {
@@ -448,10 +460,11 @@ public class JsonApi {
     }
 
     private ElideResponse handleRuntimeException(RuntimeException exception, boolean isVerbose) {
-        ErrorResponseException mappedException = mapError(exception);
+        ElideErrorResponse errorResponse = toErrorResponse(exception, JsonApiErrorContext.builder().verbose(isVerbose)
+                .mapper(this.elideSettings.getSettings(JsonApiSettings.class).getJsonApiMapper()).build());
 
-        if (mappedException != null) {
-            return buildErrorResponse(mappedException, isVerbose);
+        if (errorResponse != null) {
+            return buildErrorResponse(errorResponse);
         }
 
         if (exception instanceof WebApplicationException) {
@@ -511,17 +524,16 @@ public class JsonApi {
         throw exception;
     }
 
-    public ErrorResponseException mapError(Exception error) {
-        if (errorMapper != null) {
-            log.trace("Attempting to map unknown exception of type {}", error.getClass());
-            ErrorResponseException customizedError = errorMapper.map(error);
+    public ElideErrorResponse toErrorResponse(Exception exception, ErrorContext errorContext) {
+        if (errorResponseMapper != null) {
+            log.trace("Attempting to map exception of type {}", exception.getClass());
+            ElideErrorResponse errorResponse = errorResponseMapper.map(exception, errorContext);
 
-            if (customizedError != null) {
-                log.debug("Successfully mapped exception from type {} to {}",
-                        error.getClass(), customizedError.getClass());
-                return customizedError;
+            if (errorResponse != null) {
+                log.debug("Successfully mapped exception {}", exception.getClass());
+                return errorResponse;
             } else {
-                log.debug("No error mapping present for {}", error.getClass());
+                log.debug("No error mapping present for {}", exception.getClass());
             }
         }
 

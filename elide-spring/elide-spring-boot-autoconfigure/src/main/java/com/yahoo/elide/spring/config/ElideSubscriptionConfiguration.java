@@ -11,7 +11,7 @@ import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_PROT
 
 import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorMapperBuilder;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilder;
 import com.yahoo.elide.core.request.route.RouteResolver;
 import com.yahoo.elide.datastores.jms.websocket.SubscriptionWebSocketConfigurator;
 import com.yahoo.elide.datastores.jms.websocket.SubscriptionWebSocketConfigurator.SubscriptionWebSocketConfiguratorBuilder;
@@ -91,7 +91,7 @@ public class ElideSubscriptionConfiguration {
             ElideConfigProperties config,
             SubscriptionWebSocket.UserFactory userFactory,
             ConnectionFactory connectionFactory,
-            ErrorMapperBuilder errorMapperBuilder,
+            ErrorResponseMapperBuilder errorResponseMapperBuilder,
             DataFetcherExceptionHandler dataFetcherExceptionHandler,
             RouteResolver routeResolver,
             ObjectProvider<SubscriptionWebSocketConfiguratorBuilderCustomizer> customizers,
@@ -108,7 +108,7 @@ public class ElideSubscriptionConfiguration {
                 .userFactory(userFactory)
                 .auditLogger(new Slf4jLogger())
                 .verboseErrors(config.isVerboseErrors())
-                .errorMapper(errorMapperBuilder.build())
+                .errorResponseMapper(errorResponseMapperBuilder.build())
                 .dataFetcherExceptionHandler(dataFetcherExceptionHandler)
                 .routeResolver(routeResolver)
                 .injector(injector);

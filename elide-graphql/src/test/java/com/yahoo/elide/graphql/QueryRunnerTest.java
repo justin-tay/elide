@@ -20,12 +20,11 @@ import static org.mockito.Mockito.when;
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.ElideSettings;
-import com.yahoo.elide.ElideSettingsBuilder;
 import com.yahoo.elide.core.TransactionRegistry;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.exceptions.ErrorMapper;
+import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
 import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.graphql.models.GraphQLErrors;
 
@@ -51,7 +50,6 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Map;
 import java.util.Set;
-
 
 public class QueryRunnerTest extends GraphQLTest {
 
@@ -109,13 +107,13 @@ public class QueryRunnerTest extends GraphQLTest {
         ElideResponse response = queryRunner.run("", body, null);
         SimpleModule module = new SimpleModule("GraphQLDeserializer", Version.unknownVersion());
         module.addDeserializer(GraphQLError.class, new GraphQLErrorDeserializer());
-        elide.getMapper().getObjectMapper().registerModule(module);
-        GraphQLErrors errorObjects = elide.getMapper().getObjectMapper().readValue(response.getBody(), GraphQLErrors.class);
+        elide.getObjectMapper().registerModule(module);
+        GraphQLErrors errorObjects = elide.getObjectMapper().readValue(response.getBody(), GraphQLErrors.class);
         assertEquals(3, errorObjects.getErrors().size());
         for (GraphQLError errorObject : errorObjects.getErrors()) {
             Map<String, Object> extensions = errorObject.getExtensions();
             String expected;
-            String actual = elide.getMapper().getObjectMapper().writeValueAsString(errorObject);
+            String actual = elide.getObjectMapper().writeValueAsString(errorObject);
             switch (extensions.get("property").toString()) {
             case "nestedTestObject.nestedNotNullField":
                 expected = """
@@ -138,16 +136,17 @@ public class QueryRunnerTest extends GraphQLTest {
         verify(tx).close();
     }
 
-    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ErrorMapper errorMapper) {
-        ElideSettings settings = getElideSettings(dataStore, dictionary, errorMapper);
-        return new Elide(settings, new TransactionRegistry(), settings.getDictionary().getScanner(), false);
+    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ErrorResponseMapper errorResponseMapper) {
+        ElideSettings settings = getElideSettings(dataStore, dictionary, errorResponseMapper);
+        return new Elide(settings, new TransactionRegistry(), settings.getEntityDictionary().getScanner(), false);
     }
 
-    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ErrorMapper errorMapper) {
-        return new ElideSettingsBuilder(dataStore)
-                .withEntityDictionary(dictionary)
-                .withErrorMapper(errorMapper)
-                .withVerboseErrors()
+    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ErrorResponseMapper errorResponseMapper) {
+        return ElideSettings.builder().dataStore(dataStore)
+                .entityDictionary(dictionary)
+                .errorResponseMapper(errorResponseMapper)
+                .verboseErrors(true)
+                .settings(GraphQLSettings.builder())
                 .build();
     }
 

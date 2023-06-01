@@ -8,16 +8,17 @@ package com.yahoo.elide.graphql;
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideError;
 import com.yahoo.elide.ElideErrorResponse;
+import com.yahoo.elide.ElideErrors;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.exceptions.ErrorResponseException;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.HttpStatusException;
 import com.yahoo.elide.core.exceptions.InternalServerErrorException;
 import com.yahoo.elide.core.exceptions.InvalidEntityBodyException;
 import com.yahoo.elide.core.exceptions.TransactionException;
+import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.graphql.models.GraphQLErrors;
 import com.yahoo.elide.graphql.parser.GraphQLEntityProjectionMaker;
@@ -295,7 +296,6 @@ public class QueryRunner {
             // get variables from request for constructing entityProjections
             Map<String, Object> variables = query.getVariables();
 
-            //TODO - get API version.
             GraphQLProjectionInfo projectionInfo = new GraphQLEntityProjectionMaker(elide.getElideSettings(), variables,
                     apiVersion).make(queryText);
             Route route = Route.builder()
@@ -407,11 +407,11 @@ public class QueryRunner {
             String graphQLDocument,
             boolean verbose
     ) {
-        ErrorResponseException mappedException = elide.mapError(exception);
         ObjectMapper mapper = elide.getObjectMapper();
-
-        if (mappedException != null) {
-            return buildErrorResponse(mapper, mappedException, verbose);
+        ElideErrorResponse errorResponse = elide.toErrorResponse(exception,
+                GraphQLErrorContext.builder().verbose(verbose).objectMapper(mapper).build());
+        if (errorResponse != null) {
+            return buildErrorResponse(mapper, errorResponse);
         }
 
         if (exception instanceof JsonProcessingException) {
@@ -429,11 +429,11 @@ public class QueryRunner {
     }
 
     public static ElideResponse handleRuntimeException(Elide elide, RuntimeException exception, boolean verbose) {
-        ErrorResponseException mappedException = elide.mapError(exception);
         ObjectMapper mapper = elide.getObjectMapper();
-
-        if (mappedException != null) {
-            return buildErrorResponse(mapper, mappedException, verbose);
+        ElideErrorResponse errorResponse = elide.toErrorResponse(exception,
+                GraphQLErrorContext.builder().verbose(verbose).objectMapper(mapper).build());
+        if (errorResponse != null) {
+            return buildErrorResponse(mapper, errorResponse);
         }
 
         if (exception instanceof GraphQLException e) {
@@ -460,14 +460,14 @@ public class QueryRunner {
                 @Override
                 public ElideErrorResponse getErrorResponse() {
                     ElideErrorResponse r = e.getErrorResponse();
-                    return ElideErrorResponse.builder().body(r.getBody()).errors(r.getErrors())
+                    return ElideErrorResponse.builder().body(r.getBody())
                             .responseCode(getStatus()).build();
                 }
 
                 @Override
                 public ElideErrorResponse getVerboseErrorResponse() {
                     ElideErrorResponse r = e.getVerboseErrorResponse();
-                    return ElideErrorResponse.builder().body(r.getBody()).errors(r.getErrors())
+                    return ElideErrorResponse.builder().body(r.getBody())
                             .responseCode(getStatus()).build();
                 }
 
@@ -510,17 +510,21 @@ public class QueryRunner {
         if (exception instanceof InternalServerErrorException) {
             log.error("Internal Server Error", exception);
         }
-
         ElideErrorResponse errorResponse = (verbose ? exception.getVerboseErrorResponse()
                 : exception.getErrorResponse());
-        if (errorResponse.getBody() != null) {
-            return buildErrorResponse(mapper, errorResponse.getResponseCode(), errorResponse.getBody());
-        } else {
+        return buildErrorResponse(mapper, errorResponse);
+    }
+
+    public static ElideResponse buildErrorResponse(ObjectMapper mapper, ElideErrorResponse errorResponse) {
+        if (errorResponse.getBody() instanceof ElideErrors errors) {
             GraphQLErrors.GraphQLErrorsBuilder builder = GraphQLErrors.builder();
-            for (ElideError error : errorResponse.getErrors().getErrors()) {
+            for (ElideError error : errors.getErrors()) {
                 builder.error(graphqlError -> convertToGraphQLError(error, graphqlError));
             }
             return buildErrorResponse(mapper, errorResponse.getResponseCode(), builder.build());
+        }
+        else {
+            return buildErrorResponse(mapper, errorResponse.getResponseCode(), errorResponse.getBody());
         }
     }
 
