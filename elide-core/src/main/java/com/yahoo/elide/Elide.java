@@ -28,18 +28,17 @@ import com.yahoo.elide.core.utils.ClassScanner;
 import com.yahoo.elide.core.utils.coerce.CoerceUtil;
 import com.yahoo.elide.core.utils.coerce.converters.ElideTypeConverter;
 import com.yahoo.elide.core.utils.coerce.converters.Serde;
+import com.yahoo.elide.jsonapi.DefaultJsonApiErrorMapper;
 import com.yahoo.elide.jsonapi.EntityProjectionMaker;
 import com.yahoo.elide.jsonapi.JsonApi;
 import com.yahoo.elide.jsonapi.JsonApiErrorContext;
+import com.yahoo.elide.jsonapi.JsonApiErrorMapper;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
 import com.yahoo.elide.jsonapi.extensions.JsonApiAtomicOperations;
 import com.yahoo.elide.jsonapi.extensions.JsonApiAtomicOperationsRequestScope;
 import com.yahoo.elide.jsonapi.extensions.JsonApiJsonPatch;
 import com.yahoo.elide.jsonapi.extensions.JsonApiJsonPatchRequestScope;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
-import com.yahoo.elide.jsonapi.models.JsonApiError;
-import com.yahoo.elide.jsonapi.models.JsonApiError.Links;
-import com.yahoo.elide.jsonapi.models.JsonApiError.Source;
 import com.yahoo.elide.jsonapi.models.JsonApiErrors;
 import com.yahoo.elide.jsonapi.parser.BaseVisitor;
 import com.yahoo.elide.jsonapi.parser.DeleteVisitor;
@@ -58,7 +57,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.owasp.encoder.Encode;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -69,12 +67,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -95,6 +91,7 @@ public class Elide {
     @Getter private final TransactionRegistry transactionRegistry;
     @Getter private final ClassScanner scanner;
     private boolean initialized = false;
+    private JsonApiErrorMapper jsonApiErrorMapper = new DefaultJsonApiErrorMapper();
 
     /**
      * Instantiates a new Elide instance.
@@ -640,69 +637,21 @@ public class Elide {
             log.error("Internal Server Error", exception);
         }
 
-        ElideErrorResponse errorResponse = (verbose ? exception.getVerboseErrorResponse()
+        ElideErrorResponse<?> errorResponse = (verbose ? exception.getVerboseErrorResponse()
                 : exception.getErrorResponse());
         return buildErrorResponse(errorResponse);
     }
 
-    protected ElideResponse buildErrorResponse(ElideErrorResponse errorResponse) {
+    protected ElideResponse buildErrorResponse(ElideErrorResponse<?> errorResponse) {
         if (errorResponse.getBody() instanceof ElideErrors errors) {
             JsonApiErrors.JsonApiErrorsBuilder builder = JsonApiErrors.builder();
             for (ElideError error : errors.getErrors()) {
-                builder.error(jsonApiError -> convertToJsonApiError(error, jsonApiError));
+                builder.error(jsonApiErrorMapper.toJsonApiError(error));
             }
-            return buildErrorResponse(errorResponse.getResponseCode(), builder.build());
+            return buildErrorResponse(errorResponse.getStatus(), builder.build());
         }
         else {
-            return buildErrorResponse(errorResponse.getResponseCode(), errorResponse.getBody());
-        }
-    }
-
-    protected void attribute(String key, Map<String, Object> map, Predicate<Object> processor) {
-        if (map.containsKey(key) && processor.test(map.get(key))) {
-            map.remove(key);
-        }
-    }
-
-    protected void convertToJsonApiError(ElideError error, JsonApiError.JsonApiErrorBuilder jsonApiError) {
-        if (error.getMessage() != null) {
-            jsonApiError.detail(Encode.forHtml(error.getMessage()));
-        }
-        if (error.getAttributes() != null && !error.getAttributes().isEmpty()) {
-            Map<String, Object> meta = new LinkedHashMap<>(error.getAttributes());
-            attribute("id", meta, value -> {
-                jsonApiError.id(value.toString());
-                return true;
-            });
-            attribute("status", meta, value -> {
-                jsonApiError.status(value.toString());
-                return true;
-            });
-            attribute("code", meta, value -> {
-                jsonApiError.code(value.toString());
-                return true;
-            });
-            attribute("title", meta, value -> {
-                jsonApiError.title(value.toString());
-                return true;
-            });
-            attribute("source", meta, value -> {
-                if (value instanceof Source source) {
-                    jsonApiError.source(source);
-                    return true;
-                }
-                return false;
-            });
-            attribute("links", meta, value -> {
-                if (value instanceof Links links) {
-                    jsonApiError.links(links);
-                    return true;
-                }
-                return false;
-            });
-            if (!meta.isEmpty()) {
-                jsonApiError.meta(meta);
-            }
+            return buildErrorResponse(errorResponse.getStatus(), errorResponse.getBody());
         }
     }
 

@@ -30,12 +30,17 @@ public class GraphQLErrors {
         this.errors = Objects.requireNonNull(errors, "errors must not be null");
     }
 
+    /**
+     * Returns a mutable builder for {@link GraphQLErrors}.
+     *
+     * @return
+     */
     public static GraphQLErrorsBuilder builder() {
         return new GraphQLErrorsBuilder();
     }
 
     /**
-     * GraphQLErrorsBuilder.
+     * The mutable builder for {@link GraphQLErrors}.
      */
     public static class GraphQLErrorsBuilder {
         private List<graphql.GraphQLError> errors = new ArrayList<>();

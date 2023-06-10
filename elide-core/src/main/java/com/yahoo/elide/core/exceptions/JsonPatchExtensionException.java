@@ -13,20 +13,20 @@ import com.fasterxml.jackson.databind.JsonNode;
  * Exception describing error caused from Json Patch Extension request.
  */
 public class JsonPatchExtensionException extends HttpStatusException {
-    private final ElideErrorResponse response;
+    private final ElideErrorResponse<JsonNode> response;
 
     public JsonPatchExtensionException(int status, final JsonNode errorNode) {
         super(status, "");
-        response = ElideErrorResponse.builder().responseCode(status).body(errorNode).build();
+        response = ElideErrorResponse.status(status).body(errorNode);
     }
 
     @Override
-    public ElideErrorResponse getErrorResponse() {
+    public ElideErrorResponse<JsonNode> getErrorResponse() {
         return response;
     }
 
     @Override
-    public ElideErrorResponse getVerboseErrorResponse() {
+    public ElideErrorResponse<JsonNode> getVerboseErrorResponse() {
         return getErrorResponse();
     }
 }
