@@ -20,7 +20,7 @@ class HttpStatusExceptionTest {
     void testGetResponse() {
         String expected = "test<script>encoding";
         HttpStatusException exception =  new HttpStatusException(500, "test<script>encoding") { };
-        ElideErrorResponse res = exception.getErrorResponse();
+        ElideErrorResponse<?> res = exception.getErrorResponse();
         assertEquals(expected, res.getBody(ElideErrors.class).getErrors().get(0).getMessage());
     }
 
@@ -28,7 +28,7 @@ class HttpStatusExceptionTest {
     void testGetVerboseResponse() {
         String expected = "test<script>encoding";
         HttpStatusException exception = new HttpStatusException(500, "test<script>encoding") { };
-        ElideErrorResponse res = exception.getVerboseErrorResponse();
+        ElideErrorResponse<?> res = exception.getVerboseErrorResponse();
         assertEquals(expected, res.getBody(ElideErrors.class).getErrors().get(0).getMessage());
     }
 
@@ -40,7 +40,7 @@ class HttpStatusExceptionTest {
         Supplier<String> supplier = () -> "a more verbose <script> encoding test";
         HttpStatusException exception = new HttpStatusException(500, "test<script>encoding",
                 new RuntimeException("runtime exception"), supplier) { };
-        ElideErrorResponse res = exception.getVerboseErrorResponse();
+        ElideErrorResponse<?> res = exception.getVerboseErrorResponse();
         assertEquals(expected, res.getBody(ElideErrors.class).getErrors().get(0).getMessage());
     }
 }

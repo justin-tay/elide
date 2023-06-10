@@ -14,20 +14,20 @@ import com.fasterxml.jackson.databind.JsonNode;
  */
 public class JsonApiAtomicOperationsException extends HttpStatusException {
     private static final long serialVersionUID = 1L;
-    private final ElideErrorResponse response;
+    private final ElideErrorResponse<JsonNode> response;
 
     public JsonApiAtomicOperationsException(int status, final JsonNode errorNode) {
         super(status, "");
-        response = ElideErrorResponse.builder().responseCode(status).body(errorNode).build();
+        response = ElideErrorResponse.status(status).body(errorNode);
     }
 
     @Override
-    public ElideErrorResponse getErrorResponse() {
+    public ElideErrorResponse<JsonNode> getErrorResponse() {
         return response;
     }
 
     @Override
-    public ElideErrorResponse getVerboseErrorResponse() {
+    public ElideErrorResponse<JsonNode> getVerboseErrorResponse() {
         return getErrorResponse();
     }
 }

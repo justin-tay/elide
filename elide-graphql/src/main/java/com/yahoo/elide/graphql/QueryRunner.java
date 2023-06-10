@@ -52,7 +52,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -74,6 +73,8 @@ public class QueryRunner {
     private static final String OPERATION_NAME = "operationName";
     private static final String VARIABLES = "variables";
     private static final String MUTATION = "mutation";
+
+    private static GraphQLErrorMapper graphqlErrorMapper = new DefaultGraphQLErrorMapper();
 
     /**
      * Builds a new query runner.
@@ -458,17 +459,15 @@ public class QueryRunner {
                 }
 
                 @Override
-                public ElideErrorResponse getErrorResponse() {
-                    ElideErrorResponse r = e.getErrorResponse();
-                    return ElideErrorResponse.builder().body(r.getBody())
-                            .responseCode(getStatus()).build();
+                public ElideErrorResponse<?> getErrorResponse() {
+                    ElideErrorResponse<?> r = e.getErrorResponse();
+                    return ElideErrorResponse.status(getStatus()).body(r.getBody());
                 }
 
                 @Override
-                public ElideErrorResponse getVerboseErrorResponse() {
-                    ElideErrorResponse r = e.getVerboseErrorResponse();
-                    return ElideErrorResponse.builder().body(r.getBody())
-                            .responseCode(getStatus()).build();
+                public ElideErrorResponse<?> getVerboseErrorResponse() {
+                    ElideErrorResponse<?> r = e.getVerboseErrorResponse();
+                    return ElideErrorResponse.status(getStatus()).body(r.getBody());
                 }
 
                 @Override
@@ -510,21 +509,21 @@ public class QueryRunner {
         if (exception instanceof InternalServerErrorException) {
             log.error("Internal Server Error", exception);
         }
-        ElideErrorResponse errorResponse = (verbose ? exception.getVerboseErrorResponse()
+        ElideErrorResponse<?> errorResponse = (verbose ? exception.getVerboseErrorResponse()
                 : exception.getErrorResponse());
         return buildErrorResponse(mapper, errorResponse);
     }
 
-    public static ElideResponse buildErrorResponse(ObjectMapper mapper, ElideErrorResponse errorResponse) {
+    public static ElideResponse buildErrorResponse(ObjectMapper mapper, ElideErrorResponse<?> errorResponse) {
         if (errorResponse.getBody() instanceof ElideErrors errors) {
             GraphQLErrors.GraphQLErrorsBuilder builder = GraphQLErrors.builder();
             for (ElideError error : errors.getErrors()) {
-                builder.error(graphqlError -> convertToGraphQLError(error, graphqlError));
+                builder.error(graphqlErrorMapper.toGraphQLError(error));
             }
-            return buildErrorResponse(mapper, errorResponse.getResponseCode(), builder.build());
+            return buildErrorResponse(mapper, errorResponse.getStatus(), builder.build());
         }
         else {
-            return buildErrorResponse(mapper, errorResponse.getResponseCode(), errorResponse.getBody());
+            return buildErrorResponse(mapper, errorResponse.getStatus(), errorResponse.getBody());
         }
     }
 
@@ -533,19 +532,6 @@ public class QueryRunner {
             return new ElideResponse(responseCode, mapper.writeValueAsString(errors));
         } catch (JsonProcessingException e) {
             return new ElideResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.toString());
-        }
-    }
-
-    public static void convertToGraphQLError(ElideError error,
-            com.yahoo.elide.graphql.models.GraphQLError.GraphQLErrorBuilder graphqlError) {
-        if (error.getMessage() != null) {
-            graphqlError.message(error.getMessage()); // The serializer will encode the message
-        }
-        if (error.getAttributes() != null && !error.getAttributes().isEmpty()) {
-            Map<String, Object> extensions = new LinkedHashMap<>(error.getAttributes());
-            if (!extensions.isEmpty()) {
-                graphqlError.extensions(extensions);
-            }
         }
     }
 }

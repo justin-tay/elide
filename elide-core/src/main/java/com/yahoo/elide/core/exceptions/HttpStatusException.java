@@ -6,6 +6,7 @@
 package com.yahoo.elide.core.exceptions;
 
 import com.yahoo.elide.ElideErrorResponse;
+import com.yahoo.elide.ElideErrors;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.type.ClassType;
 import org.apache.commons.lang3.StringUtils;
@@ -63,9 +64,9 @@ public abstract class HttpStatusException extends RuntimeException {
         return buildResponse(getVerboseMessage());
     }
 
-    private ElideErrorResponse buildResponse(String message) {
-        return ElideErrorResponse.builder().responseCode(getStatus())
-                .errors(errors -> errors.error(error -> error.message(message))).build();
+    private ElideErrorResponse<ElideErrors> buildResponse(String message) {
+        return ElideErrorResponse.status(getStatus())
+                .errors(errors -> errors.error(error -> error.message(message)));
     }
 
     public String getVerboseMessage() {

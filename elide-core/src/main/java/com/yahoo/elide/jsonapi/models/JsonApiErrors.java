@@ -39,12 +39,17 @@ public class JsonApiErrors {
         this.errors = Objects.requireNonNull(errors, "errors must not be null");
     }
 
+    /**
+     * Returns a mutable builder for {@link JsonApiErrors}.
+     *
+     * @return the mutable builder
+     */
     public static JsonApiErrorsBuilder builder() {
         return new JsonApiErrorsBuilder();
     }
 
     /**
-     * ErrorObjectsBuilder.
+     * The mutable builder for {@link JsonApiErrors}.
      */
     public static class JsonApiErrorsBuilder {
         private List<JsonApiError> errors = new ArrayList<>();

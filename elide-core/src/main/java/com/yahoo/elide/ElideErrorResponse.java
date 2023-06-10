@@ -5,8 +5,6 @@
  */
 package com.yahoo.elide;
 
-import lombok.Getter;
-
 import java.util.function.Consumer;
 
 /**
@@ -14,56 +12,102 @@ import java.util.function.Consumer;
  * <p>
  * Builder example:
  * <pre><code>
- * ElideErrorResponse.builder()
- *     .responseCode(200)
+ * ElideErrorResponse.status(400)
  *     .errors(errors -> errors.error(error -> error.message(message)))
  *     .build();
  * </code></pre>
+ *
+ * @param <T> the body type
  */
-@Getter
-public class ElideErrorResponse {
-    private final int responseCode;
+public class ElideErrorResponse<T> {
+    /**
+     * The HTTP status code.
+     */
+    private final int status;
 
-    private final Object body;
+    /**
+     * The body.
+     */
+    private final T body;
 
-    public ElideErrorResponse(int responseCode, Object body) {
-        this.responseCode = responseCode;
+    public ElideErrorResponse(int status, T body) {
+        this.status = status;
         this.body = body;
     }
 
-    public <T> T getBody(Class<T> clazz) {
+    /**
+     * Returns the HTTP status code of the response.
+     *
+     * @return the HTTP status code of the response
+     */
+    public int getStatus() {
+        return this.status;
+    }
+
+    /**
+     * Returns the body of the response.
+     *
+     * @return the body of the response
+     */
+    public T getBody() {
+        return this.body;
+    }
+
+    /**
+     * Returns the body of the response if it is of the appropriate type.
+     *
+     * @param <V> the expected type of the response
+     * @param clazz the expected class of the response
+     * @return the body of the response
+     */
+    public <V> V getBody(Class<V> clazz) {
         if (clazz.isInstance(this.body)) {
             return clazz.cast(this.body);
         }
         return null;
     }
 
-    public static ElideErrorResponseBuilder builder() {
-        return new ElideErrorResponseBuilder();
+    /**
+     * Builds a response with this HTTP status code.
+     *
+     * @param status the HTTP status code
+     * @return the builder
+     */
+    public static ElideErrorResponseBuilder status(int status) {
+        return new ElideErrorResponseBuilder(status);
     }
 
+    /**
+     * Builder for building a @{link ElideErrorResponse}.
+     */
     public static class ElideErrorResponseBuilder {
-        private int responseCode;
-        private Object body;
+        private int status;
 
-        public ElideErrorResponseBuilder responseCode(int responseCode) {
-            this.responseCode = responseCode;
-            return this;
+        public ElideErrorResponseBuilder(int status) {
+            this.status = status;
         }
 
-        public ElideErrorResponseBuilder body(Object body) {
-            this.body = body;
-            return this;
+        /**
+         * Sets the body of the response.
+         *
+         * @param <T> the body type
+         * @param body the body
+         * @return the response
+         */
+        public <T> ElideErrorResponse<T> body(T body) {
+            return new ElideErrorResponse<>(status, body);
         }
 
-        public ElideErrorResponseBuilder errors(Consumer<ElideErrors.ElideErrorsBuilder> errors) {
+        /**
+         * Sets the body of the response to {@link ElideErrors}.
+         *
+         * @param errors to customize
+         * @return the response
+         */
+        public ElideErrorResponse<ElideErrors> errors(Consumer<ElideErrors.ElideErrorsBuilder> errors) {
             ElideErrors.ElideErrorsBuilder builder = ElideErrors.builder();
             errors.accept(builder);
             return body(builder.build());
-        }
-
-        public ElideErrorResponse build() {
-            return new ElideErrorResponse(this.responseCode, this.body);
         }
     }
 }

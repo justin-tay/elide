@@ -41,16 +41,16 @@ public class ErrorResponseException extends HttpStatusException {
     }
 
     @Override
-    public ElideErrorResponse getErrorResponse() {
+    public ElideErrorResponse<?> getErrorResponse() {
         return buildCustomResponse();
     }
 
     @Override
-    public ElideErrorResponse getVerboseErrorResponse() {
+    public ElideErrorResponse<?> getVerboseErrorResponse() {
         return buildCustomResponse();
     }
 
-    private ElideErrorResponse buildCustomResponse() {
-        return ElideErrorResponse.builder().responseCode(getStatus()).body(this.errors).build();
+    private ElideErrorResponse<?> buildCustomResponse() {
+        return ElideErrorResponse.status(getStatus()).body(this.errors);
     }
 }
