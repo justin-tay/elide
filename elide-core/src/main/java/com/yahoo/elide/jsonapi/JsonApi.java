@@ -350,7 +350,7 @@ public class JsonApi {
         }
     }
 
-    protected ElideResponse buildErrorResponse(HttpStatusException exception, boolean verbose) {
+    protected ElideResponse<String> buildErrorResponse(HttpStatusException exception, boolean verbose) {
         if (exception instanceof InternalServerErrorException) {
             log.error("Internal Server Error", exception);
         }
@@ -360,7 +360,7 @@ public class JsonApi {
         return buildErrorResponse(errorResponse);
     }
 
-    protected ElideResponse buildErrorResponse(ElideErrorResponse<?> errorResponse) {
+    protected ElideResponse<String> buildErrorResponse(ElideErrorResponse<?> errorResponse) {
         if (errorResponse.getBody() instanceof ElideErrors errors) {
             JsonApiErrors.JsonApiErrorsBuilder builder = JsonApiErrors.builder();
             for (ElideError error : errors.getErrors()) {
@@ -373,16 +373,16 @@ public class JsonApi {
         }
     }
 
-    protected ElideResponse buildErrorResponse(int responseCode, Object errors) {
+    protected ElideResponse<String> buildErrorResponse(int responseCode, Object errors) {
         try {
-            return new ElideResponse(responseCode, this.mapper.writeJsonApiDocument(errors));
+            return new ElideResponse<>(responseCode, this.mapper.writeJsonApiDocument(errors));
         } catch (JsonProcessingException e) {
-            return new ElideResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.toString());
+            return new ElideResponse<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 
-    private ElideResponse handleNonRuntimeException(Exception exception, boolean isVerbose) {
-        ElideErrorResponse errorResponse = toErrorResponse(exception,
+    private ElideResponse<String> handleNonRuntimeException(Exception exception, boolean isVerbose) {
+        ElideErrorResponse<?> errorResponse = toErrorResponse(exception,
                 JsonApiErrorContext.builder().verbose(isVerbose)
                         .mapper(this.elideSettings.getSettings(JsonApiSettings.class).getJsonApiMapper()).build());
         if (errorResponse != null) {
@@ -407,9 +407,10 @@ public class JsonApi {
         throw new RuntimeException(exception);
     }
 
-    private ElideResponse handleRuntimeException(RuntimeException exception, boolean isVerbose) {
-        ElideErrorResponse errorResponse = toErrorResponse(exception, JsonApiErrorContext.builder().verbose(isVerbose)
-                .mapper(this.elideSettings.getSettings(JsonApiSettings.class).getJsonApiMapper()).build());
+    private ElideResponse<String> handleRuntimeException(RuntimeException exception, boolean isVerbose) {
+        ElideErrorResponse<?> errorResponse = toErrorResponse(exception,
+                JsonApiErrorContext.builder().verbose(isVerbose)
+                        .mapper(this.elideSettings.getSettings(JsonApiSettings.class).getJsonApiMapper()).build());
 
         if (errorResponse != null) {
             return buildErrorResponse(errorResponse);
@@ -472,10 +473,10 @@ public class JsonApi {
         throw exception;
     }
 
-    public ElideErrorResponse toErrorResponse(Exception exception, ErrorContext errorContext) {
+    public ElideErrorResponse<?> toErrorResponse(Exception exception, ErrorContext errorContext) {
         if (errorResponseMapper != null) {
             log.trace("Attempting to map exception of type {}", exception.getClass());
-            ElideErrorResponse errorResponse = errorResponseMapper.map(exception, errorContext);
+            ElideErrorResponse<?> errorResponse = errorResponseMapper.map(exception, errorContext);
 
             if (errorResponse != null) {
                 log.debug("Successfully mapped exception {}", exception.getClass());
