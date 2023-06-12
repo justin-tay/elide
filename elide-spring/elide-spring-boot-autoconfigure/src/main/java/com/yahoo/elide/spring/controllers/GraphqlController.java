@@ -7,7 +7,6 @@ package com.yahoo.elide.spring.controllers;
 
 import static com.yahoo.elide.graphql.QueryRunner.buildErrorResponse;
 
-import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.core.exceptions.InvalidOperationException;
 import com.yahoo.elide.core.security.User;
@@ -83,16 +82,15 @@ public class GraphqlController {
         return new Callable<ResponseEntity<String>>() {
             @Override
             public ResponseEntity<String> call() throws Exception {
-                ElideResponse response;
+                ElideResponse<String> response;
 
                 if (runner == null) {
                     response = buildErrorResponse(mapper, new InvalidOperationException("Invalid API Version"), false);
                 } else {
-                    Elide elide = runner.getElide();
                     response = runner.run(baseUrl, graphQLDocument, user, UUID.randomUUID(), requestHeadersCleaned);
                 }
 
-                return ResponseEntity.status(response.getResponseCode()).body(response.getBody());
+                return ResponseEntity.status(response.getStatus()).body(response.getBody());
             }
         };
     }

@@ -198,7 +198,7 @@ public abstract class PersistentResourceFetcherTest extends GraphQLTest {
 
     protected void assertQueryEquals(String graphQLRequest, String expectedResponse, Map<String, Object> variables)
             throws Exception {
-        ElideResponse response = runGraphQLRequest(graphQLRequest, variables);
+        ElideResponse<String> response = runGraphQLRequest(graphQLRequest, variables);
 
         JsonNode data = mapper.readTree(response.getBody()).get("data");
         assertNotNull(data);
@@ -210,7 +210,7 @@ public abstract class PersistentResourceFetcherTest extends GraphQLTest {
     }
 
     protected void assertQueryFailsWith(String graphQLRequest, String expectedMessage) throws Exception {
-        ElideResponse response = runGraphQLRequest(graphQLRequest, new HashMap<>());
+        ElideResponse<String> response = runGraphQLRequest(graphQLRequest, new HashMap<>());
 
         JsonNode errors = mapper.readTree(response.getBody()).get("errors");
         assertNotNull(errors);
@@ -222,7 +222,7 @@ public abstract class PersistentResourceFetcherTest extends GraphQLTest {
     }
 
     protected void assertQueryFails(String graphQLRequest) throws IOException {
-        ElideResponse result = runGraphQLRequest(graphQLRequest, new HashMap<>());
+        ElideResponse<String> result = runGraphQLRequest(graphQLRequest, new HashMap<>());
 
         assertTrue(result.getBody().contains("errors"));
     }
@@ -231,7 +231,7 @@ public abstract class PersistentResourceFetcherTest extends GraphQLTest {
         assertThrows(Exception.class, () -> new GraphQLEntityProjectionMaker(settings).make(graphQLRequest));
     }
 
-    protected ElideResponse runGraphQLRequest(String graphQLRequest, Map<String, Object> variables)
+    protected ElideResponse<String> runGraphQLRequest(String graphQLRequest, Map<String, Object> variables)
             throws IOException {
         String requestWithEnvelope = toGraphQLQuery(graphQLRequest, variables);
 

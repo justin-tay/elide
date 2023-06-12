@@ -84,7 +84,7 @@ public class GraphQLEndpoint {
         User user = new SecurityContextUser(securityContext);
         QueryRunner runner = runners.getOrDefault(apiVersion, null);
 
-        ElideResponse response;
+        ElideResponse<String> response;
         if (runner == null) {
             response = buildErrorResponse(elide.getMapper().getObjectMapper(),
                     new InvalidOperationException("Invalid API Version"), false);
@@ -92,7 +92,7 @@ public class GraphQLEndpoint {
             response = runner.run(getBaseUrlEndpoint(uriInfo),
                                   graphQLDocument, user, UUID.randomUUID(), requestHeaders);
         }
-        return Response.status(response.getResponseCode()).entity(response.getBody()).build();
+        return Response.status(response.getStatus()).entity(response.getBody()).build();
     }
 
     protected String getBaseUrlEndpoint(UriInfo uriInfo) {

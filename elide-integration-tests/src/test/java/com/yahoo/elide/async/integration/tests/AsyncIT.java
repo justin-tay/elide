@@ -473,7 +473,7 @@ public class AsyncIT extends AsyncApiIT {
     @Test
     public void asyncQueryModelAdminReadPermissions() throws IOException {
 
-        ElideResponse response = null;
+        ElideResponse<String> response = null;
         String id = "edc4a871-dff2-4054-804e-d80075c08959";
         String query = "test-query";
 
@@ -542,15 +542,15 @@ public class AsyncIT extends AsyncApiIT {
         String baseUrl = "/";
         // Principal is Owner
         response = elide.get(baseUrl, "/asyncQuery/" + id, new MultivaluedHashMap<>(), ownerUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         // Principal has Admin Role
         response = elide.get(baseUrl, "/asyncQuery/" + id, new MultivaluedHashMap<>(), securityContextAdminUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         // Principal without Admin Role
         response = elide.get(baseUrl, "/asyncQuery/" + id, new MultivaluedHashMap<>(), securityContextNonAdminUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
+        assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
     }
 
     /**

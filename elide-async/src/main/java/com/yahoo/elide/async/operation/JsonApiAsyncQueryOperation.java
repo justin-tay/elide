@@ -33,7 +33,7 @@ public class JsonApiAsyncQueryOperation extends AsyncQueryOperation {
     }
 
     @Override
-    public ElideResponse execute(AsyncApi queryObj, RequestScope scope)
+    public ElideResponse<String> execute(AsyncApi queryObj, RequestScope scope)
             throws URISyntaxException {
         Elide elide = getService().getElide();
         User user = scope.getUser();
@@ -44,10 +44,10 @@ public class JsonApiAsyncQueryOperation extends AsyncQueryOperation {
         log.debug("Extracted QueryParams from AsyncQuery Object: {}", queryParams);
 
         //TODO - we need to add the baseUrlEndpoint to the queryObject.
-        ElideResponse response = elide.get("", getPath(uri), queryParams, scope.getRequestHeaders(), user, apiVersion,
-                requestUUID);
+        ElideResponse<String> response = elide.get("", getPath(uri), queryParams, scope.getRequestHeaders(), user,
+                apiVersion, requestUUID);
         log.debug("JSONAPI_V1_0 getResponseCode: {}, JSONAPI_V1_0 getBody: {}",
-                response.getResponseCode(), response.getBody());
+                response.getStatus(), response.getBody());
         return response;
     }
 
@@ -76,9 +76,9 @@ public class JsonApiAsyncQueryOperation extends AsyncQueryOperation {
     }
 
     @Override
-    public Integer calculateRecordCount(AsyncQuery queryObj, ElideResponse response) {
+    public Integer calculateRecordCount(AsyncQuery queryObj, ElideResponse<String> response) {
         Integer count = null;
-        if (response.getResponseCode() == 200) {
+        if (response.getStatus() == 200) {
             count = safeJsonPathLength(response.getBody(), "$.data.length()");
         }
         return count;

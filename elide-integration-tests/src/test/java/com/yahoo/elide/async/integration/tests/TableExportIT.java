@@ -1124,7 +1124,7 @@ public class TableExportIT extends AsyncApiIT {
     @Test
     public void tableExportModelAdminReadPermissions() throws IOException {
 
-        ElideResponse response = null;
+        ElideResponse<String> response = null;
         String id = "edc4a871-dff2-4054-804e-d80075c08959";
         String query = "test-query";
 
@@ -1188,15 +1188,15 @@ public class TableExportIT extends AsyncApiIT {
         String baseUrl = "/";
         // Principal is Owner
         response = elide.get(baseUrl, "/tableExport/" + id, new MultivaluedHashMap<>(), ownerUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         // Principal has Admin Role
         response = elide.get(baseUrl, "/tableExport/" + id, new MultivaluedHashMap<>(), securityContextAdminUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         // Principal without Admin Role
         response = elide.get(baseUrl, "/tableExport/" + id, new MultivaluedHashMap<>(), securityContextNonAdminUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
+        assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
     }
 
     /**

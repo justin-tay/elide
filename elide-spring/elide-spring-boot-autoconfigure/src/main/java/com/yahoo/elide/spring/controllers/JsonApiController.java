@@ -82,10 +82,10 @@ public class JsonApiController {
         return new Callable<ResponseEntity<String>>() {
             @Override
             public ResponseEntity<String> call() throws Exception {
-                ElideResponse response = elide.get(baseUrl, pathname,
+                ElideResponse<String> response = elide.get(baseUrl, pathname,
                         convert(allRequestParams), requestHeadersCleaned,
                         user, apiVersion, UUID.randomUUID());
-                return ResponseEntity.status(response.getResponseCode()).body(response.getBody());
+                return ResponseEntity.status(response.getStatus()).body(response.getBody());
             }
         };
     }
@@ -104,9 +104,9 @@ public class JsonApiController {
         return new Callable<ResponseEntity<String>>() {
             @Override
             public ResponseEntity<String> call() throws Exception {
-                ElideResponse response = elide.post(baseUrl, pathname, body, convert(allRequestParams),
+                ElideResponse<String> response = elide.post(baseUrl, pathname, body, convert(allRequestParams),
                         requestHeadersCleaned, user, apiVersion, UUID.randomUUID());
-                return ResponseEntity.status(response.getResponseCode()).body(response.getBody());
+                return ResponseEntity.status(response.getStatus()).body(response.getBody());
             }
         };
     }
@@ -129,11 +129,11 @@ public class JsonApiController {
         return new Callable<ResponseEntity<String>>() {
             @Override
             public ResponseEntity<String> call() throws Exception {
-                ElideResponse response = elide
+                ElideResponse<String> response = elide
                         .patch(baseUrl, request.getContentType(), request.getContentType(), pathname, body,
                                convert(allRequestParams), requestHeadersCleaned, user, apiVersion,
                                UUID.randomUUID());
-                return ResponseEntity.status(response.getResponseCode()).body(response.getBody());
+                return ResponseEntity.status(response.getStatus()).body(response.getBody());
             }
         };
     }
@@ -152,10 +152,10 @@ public class JsonApiController {
         return new Callable<ResponseEntity<String>>() {
             @Override
             public ResponseEntity<String> call() throws Exception {
-                ElideResponse response = elide.delete(baseUrl, pathname, null,
+                ElideResponse<String> response = elide.delete(baseUrl, pathname, null,
                         convert(allRequestParams), requestHeadersCleaned,
                         user, apiVersion, UUID.randomUUID());
-                return ResponseEntity.status(response.getResponseCode()).body(response.getBody());
+                return ResponseEntity.status(response.getStatus()).body(response.getBody());
             }
         };
     }
@@ -176,10 +176,10 @@ public class JsonApiController {
         return new Callable<ResponseEntity<String>>() {
             @Override
             public ResponseEntity<String> call() throws Exception {
-                ElideResponse response = elide
+                ElideResponse<String> response = elide
                         .delete(baseUrl, pathname, body, convert(allRequestParams),
                                 requestHeadersCleaned, user, apiVersion, UUID.randomUUID());
-                return ResponseEntity.status(response.getResponseCode()).body(response.getBody());
+                return ResponseEntity.status(response.getStatus()).body(response.getBody());
             }
         };
     }
@@ -202,11 +202,11 @@ public class JsonApiController {
         return new Callable<ResponseEntity<String>>() {
             @Override
             public ResponseEntity<String> call() throws Exception {
-                ElideResponse response = elide
+                ElideResponse<String> response = elide
                         .operations(baseUrl, request.getContentType(), request.getContentType(), pathname, body,
                                convert(allRequestParams), requestHeadersCleaned, user, apiVersion,
                                UUID.randomUUID());
-                return ResponseEntity.status(response.getResponseCode()).body(response.getBody());
+                return ResponseEntity.status(response.getStatus()).body(response.getBody());
             }
         };
     }

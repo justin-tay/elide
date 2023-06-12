@@ -80,7 +80,7 @@ class ElideTest {
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
         doThrow(e).when(tx).preCommit(any());
 
-        ElideResponse response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
+        ElideResponse<String> response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
         JsonApiErrors errorObjects = objectMapper.readValue(response.getBody(), JsonApiErrors.class);
         assertEquals(3, errorObjects.getErrors().size());
         for (JsonApiError errorObject : errorObjects.getErrors()) {

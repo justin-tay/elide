@@ -137,8 +137,8 @@ public class DataStoreIT extends IntegrationTest {
     public void testRootEntityFormulaFetch() throws Exception {
         MultivaluedHashMap<String, String> queryParams = new MultivaluedHashMap<>();
         queryParams.put("fields[book]", Arrays.asList("title,chapterCount"));
-        ElideResponse response = elide.get(BASEURL, "/book", queryParams, goodUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        ElideResponse<String> response = elide.get(BASEURL, "/book", queryParams, goodUser, NO_VERSION);
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         JsonNode result = mapper.readTree(response.getBody());
         assertEquals(ALL_BOOKS_COUNT, result.get(DATA).size());
@@ -155,8 +155,8 @@ public class DataStoreIT extends IntegrationTest {
     public void testSubcollectionEntityFormulaFetch() throws Exception {
         MultivaluedHashMap<String, String> queryParams = new MultivaluedHashMap<>();
         queryParams.put("fields[book]", Arrays.asList("title,chapterCount"));
-        ElideResponse response = elide.get(BASEURL, "/author/1/books", queryParams, goodUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        ElideResponse<String> response = elide.get(BASEURL, "/author/1/books", queryParams, goodUser, NO_VERSION);
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         JsonNode result = mapper.readTree(response.getBody());
         assertEquals(ALL_BOOKS_COUNT, result.get(DATA).size());
@@ -174,8 +174,8 @@ public class DataStoreIT extends IntegrationTest {
         MultivaluedHashMap<String, String> queryParams = new MultivaluedHashMap<>();
         queryParams.put("fields[book]", Arrays.asList("title,chapterCount"));
         queryParams.put("filter[book.chapterCount]", Arrays.asList("20"));
-        ElideResponse response = elide.get(BASEURL, "/book", queryParams, goodUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        ElideResponse<String> response = elide.get(BASEURL, "/book", queryParams, goodUser, NO_VERSION);
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         JsonNode result = mapper.readTree(response.getBody());
         assertEquals(1, result.get(DATA).size());
@@ -189,8 +189,8 @@ public class DataStoreIT extends IntegrationTest {
         MultivaluedHashMap<String, String> queryParams = new MultivaluedHashMap<>();
         queryParams.put("fields[book]", Arrays.asList("title,chapterCount"));
         queryParams.put("filter[book.chapterCount]", Arrays.asList("20"));
-        ElideResponse response = elide.get(BASEURL, "/author/1/books", queryParams, goodUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        ElideResponse<String> response = elide.get(BASEURL, "/author/1/books", queryParams, goodUser, NO_VERSION);
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         JsonNode result = mapper.readTree(response.getBody());
         assertEquals(1, result.get(DATA).size());
@@ -204,8 +204,8 @@ public class DataStoreIT extends IntegrationTest {
         MultivaluedHashMap<String, String> queryParams = new MultivaluedHashMap<>();
         queryParams.put("fields[book]", Arrays.asList("title,chapterCount"));
         queryParams.put("sort", Arrays.asList("-chapterCount"));
-        ElideResponse response = elide.get(BASEURL, "/book", queryParams, goodUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        ElideResponse<String> response = elide.get(BASEURL, "/book", queryParams, goodUser, NO_VERSION);
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         JsonNode result = mapper.readTree(response.getBody());
         assertEquals(ALL_BOOKS_COUNT, result.get(DATA).size());
@@ -223,8 +223,8 @@ public class DataStoreIT extends IntegrationTest {
         MultivaluedHashMap<String, String> queryParams = new MultivaluedHashMap<>();
         queryParams.put("fields[book]", Arrays.asList("title,chapterCount"));
         queryParams.put("sort", Arrays.asList("-chapterCount"));
-        ElideResponse response = elide.get(BASEURL, "/author/1/books", queryParams, goodUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        ElideResponse<String> response = elide.get(BASEURL, "/author/1/books", queryParams, goodUser, NO_VERSION);
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         JsonNode result = mapper.readTree(response.getBody());
         assertEquals(ALL_BOOKS_COUNT, result.get(DATA).size());
@@ -245,8 +245,8 @@ public class DataStoreIT extends IntegrationTest {
                 linkage(type("filtered"), id("3"))
         );
 
-        ElideResponse response = elide.get(BASEURL, "filtered", new MultivaluedHashMap<>(), goodUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        ElideResponse<String> response = elide.get(BASEURL, "filtered", new MultivaluedHashMap<>(), goodUser, NO_VERSION);
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
         assertEquals(data.toJSON(), response.getBody());
     }
 
@@ -257,8 +257,8 @@ public class DataStoreIT extends IntegrationTest {
                 linkage(type("filtered"), id("3"))
         );
 
-        ElideResponse response = elide.get(BASEURL, "filtered", new MultivaluedHashMap<>(), badUser, NO_VERSION);
-        assertEquals(HttpStatus.SC_OK, response.getResponseCode());
+        ElideResponse<String> response = elide.get(BASEURL, "filtered", new MultivaluedHashMap<>(), badUser, NO_VERSION);
+        assertEquals(HttpStatus.SC_OK, response.getStatus());
         assertEquals(data.toJSON(), response.getBody());
     }
 }

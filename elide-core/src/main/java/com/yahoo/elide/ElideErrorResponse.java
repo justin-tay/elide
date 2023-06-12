@@ -5,6 +5,8 @@
  */
 package com.yahoo.elide;
 
+import com.yahoo.elide.ElideErrors.ElideErrorsBuilder;
+
 import java.util.function.Consumer;
 
 /**
@@ -19,52 +21,15 @@ import java.util.function.Consumer;
  *
  * @param <T> the body type
  */
-public class ElideErrorResponse<T> {
+public class ElideErrorResponse<T> extends ElideResponse<T> {
     /**
-     * The HTTP status code.
+     * Constructor.
+     *
+     * @param status HTTP response status
+     * @param body the body
      */
-    private final int status;
-
-    /**
-     * The body.
-     */
-    private final T body;
-
     public ElideErrorResponse(int status, T body) {
-        this.status = status;
-        this.body = body;
-    }
-
-    /**
-     * Returns the HTTP status code of the response.
-     *
-     * @return the HTTP status code of the response
-     */
-    public int getStatus() {
-        return this.status;
-    }
-
-    /**
-     * Returns the body of the response.
-     *
-     * @return the body of the response
-     */
-    public T getBody() {
-        return this.body;
-    }
-
-    /**
-     * Returns the body of the response if it is of the appropriate type.
-     *
-     * @param <V> the expected type of the response
-     * @param clazz the expected class of the response
-     * @return the body of the response
-     */
-    public <V> V getBody(Class<V> clazz) {
-        if (clazz.isInstance(this.body)) {
-            return clazz.cast(this.body);
-        }
-        return null;
+        super(status, body);
     }
 
     /**
@@ -78,13 +43,12 @@ public class ElideErrorResponse<T> {
     }
 
     /**
-     * Builder for building a @{link ElideErrorResponse}.
+     * Builder for building a {@link ElideErrorResponse}.
      */
-    public static class ElideErrorResponseBuilder {
-        private int status;
+    public static class ElideErrorResponseBuilder extends ElideResponseBuilder {
 
         public ElideErrorResponseBuilder(int status) {
-            this.status = status;
+            super(status);
         }
 
         /**
@@ -99,12 +63,22 @@ public class ElideErrorResponse<T> {
         }
 
         /**
+         * Build the response with no body.
+         *
+         * @param <T> the body type
+         * @return the response
+         */
+        public <T> ElideErrorResponse<T> build() {
+            return new ElideErrorResponse<>(status, null);
+        }
+
+        /**
          * Sets the body of the response to {@link ElideErrors}.
          *
          * @param errors to customize
          * @return the response
          */
-        public ElideErrorResponse<ElideErrors> errors(Consumer<ElideErrors.ElideErrorsBuilder> errors) {
+        public ElideErrorResponse<ElideErrors> errors(Consumer<ElideErrorsBuilder> errors) {
             ElideErrors.ElideErrorsBuilder builder = ElideErrors.builder();
             errors.accept(builder);
             return body(builder.build());

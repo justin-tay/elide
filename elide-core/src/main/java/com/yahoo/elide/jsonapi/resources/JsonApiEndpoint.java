@@ -195,8 +195,8 @@ public class JsonApiEndpoint {
                 queryParams, requestHeaders, user, apiVersion, UUID.randomUUID()));
     }
 
-    private static Response build(ElideResponse response) {
-        return Response.status(response.getResponseCode()).entity(response.getBody()).build();
+    private static Response build(ElideResponse<String> response) {
+        return Response.status(response.getStatus()).entity(response.getBody()).build();
     }
 
     protected String getBaseUrlEndpoint(UriInfo uriInfo) {

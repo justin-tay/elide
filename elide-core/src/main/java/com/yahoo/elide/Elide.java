@@ -220,7 +220,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
+    public ElideResponse<String> get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
                              User opaqueUser, String apiVersion) {
         return get(baseUrlEndPoint, path, queryParams, opaqueUser, apiVersion, UUID.randomUUID());
     }
@@ -236,7 +236,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
+    public ElideResponse<String> get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
                              User opaqueUser, String apiVersion, UUID requestId) {
         return get(baseUrlEndPoint, path, queryParams, Collections.emptyMap(), opaqueUser, apiVersion, requestId);
     }
@@ -253,7 +253,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
+    public ElideResponse<String> get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
                              Map<String, List<String>> requestHeaders, User opaqueUser, String apiVersion,
                              UUID requestId) {
         if (elideSettings.isStrictQueryParams()) {
@@ -284,7 +284,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse post(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<String> post(String baseUrlEndPoint, String path, String jsonApiDocument,
                               User opaqueUser, String apiVersion) {
         return post(baseUrlEndPoint, path, jsonApiDocument, null, opaqueUser, apiVersion, UUID.randomUUID());
     }
@@ -301,7 +301,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse post(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<String> post(String baseUrlEndPoint, String path, String jsonApiDocument,
                               MultivaluedMap<String, String> queryParams,
                               User opaqueUser, String apiVersion, UUID requestId) {
         return post(baseUrlEndPoint, path, jsonApiDocument, queryParams, Collections.emptyMap(),
@@ -321,7 +321,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse post(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<String> post(String baseUrlEndPoint, String path, String jsonApiDocument,
                               MultivaluedMap<String, String> queryParams, Map<String, List<String>> requestHeaders,
                               User opaqueUser, String apiVersion, UUID requestId) {
         return handleRequest(false, opaqueUser, dataStore::beginTransaction, requestId, (tx, user) -> {
@@ -347,7 +347,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse patch(String baseUrlEndPoint, String contentType, String accept,
+    public ElideResponse<String> patch(String baseUrlEndPoint, String contentType, String accept,
                                String path, String jsonApiDocument,
                                User opaqueUser, String apiVersion) {
         return patch(baseUrlEndPoint, contentType, accept, path, jsonApiDocument,
@@ -368,7 +368,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse patch(String baseUrlEndPoint, String contentType, String accept,
+    public ElideResponse<String> patch(String baseUrlEndPoint, String contentType, String accept,
                                String path, String jsonApiDocument, MultivaluedMap<String, String> queryParams,
                                User opaqueUser, String apiVersion, UUID requestId) {
 
@@ -391,7 +391,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse patch(String baseUrlEndPoint, String contentType, String accept,
+    public ElideResponse<String> patch(String baseUrlEndPoint, String contentType, String accept,
                                String path, String jsonApiDocument, MultivaluedMap<String, String> queryParams,
                                Map<String, List<String>> requestHeaders, User opaqueUser,
                                String apiVersion, UUID requestId) {
@@ -435,7 +435,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse delete(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<String> delete(String baseUrlEndPoint, String path, String jsonApiDocument,
                                 User opaqueUser, String apiVersion) {
         return delete(baseUrlEndPoint, path, jsonApiDocument, null, opaqueUser, apiVersion, UUID.randomUUID());
     }
@@ -452,7 +452,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse delete(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<String> delete(String baseUrlEndPoint, String path, String jsonApiDocument,
                                 MultivaluedMap<String, String> queryParams,
                                 User opaqueUser, String apiVersion, UUID requestId) {
         return delete(baseUrlEndPoint, path, jsonApiDocument, queryParams, Collections.emptyMap(),
@@ -472,7 +472,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse delete(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<String> delete(String baseUrlEndPoint, String path, String jsonApiDocument,
                                 MultivaluedMap<String, String> queryParams,
                                 Map<String, List<String>> requestHeaders,
                                 User opaqueUser, String apiVersion, UUID requestId) {
@@ -501,7 +501,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse operations(String baseUrlEndPoint, String contentType, String accept,
+    public ElideResponse<String> operations(String baseUrlEndPoint, String contentType, String accept,
                                String path, String jsonApiDocument,
                                User opaqueUser, String apiVersion) {
         return operations(baseUrlEndPoint, contentType, accept, path, jsonApiDocument,
@@ -522,7 +522,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse operations(String baseUrlEndPoint, String contentType, String accept, String path,
+    public ElideResponse<String> operations(String baseUrlEndPoint, String contentType, String accept, String path,
             String jsonApiDocument, MultivaluedMap<String, String> queryParams, User opaqueUser, String apiVersion,
             UUID requestId) {
         return operations(baseUrlEndPoint, contentType, accept, path, jsonApiDocument, queryParams, null, opaqueUser,
@@ -544,7 +544,7 @@ public class Elide {
      * @return Elide response object
      * @return
      */
-    public ElideResponse operations(String baseUrlEndPoint, String contentType, String accept, String path,
+    public ElideResponse<String> operations(String baseUrlEndPoint, String contentType, String accept, String path,
             String jsonApiDocument, MultivaluedMap<String, String> queryParams,
             Map<String, List<String>> requestHeaders, User opaqueUser, String apiVersion, UUID requestId) {
 
@@ -564,7 +564,7 @@ public class Elide {
                 }
             };
         } else {
-            return new ElideResponse(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type");
+            return new ElideResponse<>(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type");
         }
 
         return handleRequest(false, opaqueUser, dataStore::beginTransaction, requestId, handler);
@@ -590,7 +590,7 @@ public class Elide {
      * @param <T> The response type (JsonNode or JsonApiDocument)
      * @return the response
      */
-    protected <T> ElideResponse handleRequest(boolean isReadOnly, User user,
+    protected <T> ElideResponse<String> handleRequest(boolean isReadOnly, User user,
                                           Supplier<DataStoreTransaction> transaction, UUID requestId,
                                           Handler<DataStoreTransaction, User, HandlerResult> handler) {
         boolean isVerbose = false;
@@ -611,7 +611,7 @@ public class Elide {
 
             requestScope.runQueuedPreCommitTriggers();
 
-            ElideResponse response = buildResponse(responder.get());
+            ElideResponse<String> response = buildResponse(responder.get());
 
             auditLogger.commit();
             tx.commit(requestScope);
@@ -769,14 +769,14 @@ public class Elide {
         return null;
     }
 
-    protected <T> ElideResponse buildResponse(Pair<Integer, T> response) {
+    protected <T> ElideResponse<String> buildResponse(Pair<Integer, T> response) {
         try {
             T responseNode = response.getRight();
             Integer responseCode = response.getLeft();
             String body = responseNode == null ? null : mapper.writeJsonApiDocument(responseNode);
-            return new ElideResponse(responseCode, body);
+            return new ElideResponse<>(responseCode, body);
         } catch (JsonProcessingException e) {
-            return new ElideResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.toString());
+            return new ElideResponse<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 

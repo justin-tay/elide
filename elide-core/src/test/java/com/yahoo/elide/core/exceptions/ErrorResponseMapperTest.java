@@ -100,8 +100,8 @@ class ErrorResponseMapperTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
-        ElideResponse response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
-        assertEquals(400, response.getResponseCode());
+        ElideResponse<String> response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
+        assertEquals(400, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"detail\":\"Unexpected character (&#39;&#34;&#39; (code 34)): was expecting comma to separate Object entries\\n at [Source: (String)&#34;{&#34;data&#34;: {&#34;type&#34;:&#34;testModel&#34;&#34;id&#34;:&#34;1&#34;,&#34;attributes&#34;: {&#34;field&#34;:&#34;Foo&#34;}}}&#34;; line: 1, column: 30]\"}]}",
                 response.getBody());
@@ -143,8 +143,8 @@ class ErrorResponseMapperTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
-        ElideResponse response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
-        assertEquals(400, response.getResponseCode());
+        ElideResponse<String> response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
+        assertEquals(400, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"detail\":\"Unexpected character (&#39;&#34;&#39; (code 34)): was expecting comma to separate Object entries\\n at [Source: (String)&#34;{&#34;data&#34;: {&#34;type&#34;:&#34;testModel&#34;&#34;id&#34;:&#34;1&#34;,&#34;attributes&#34;: {&#34;field&#34;:&#34;Foo&#34;}}}&#34;; line: 1, column: 30]\"}]}",
                 response.getBody());
@@ -167,8 +167,8 @@ class ErrorResponseMapperTest {
         doThrow(EXPECTED_EXCEPTION).when(tx).preCommit(any());
         when(MOCK_ERROR_MAPPER.map(eq(EXPECTED_EXCEPTION), any())).thenReturn(MAPPED_EXCEPTION.getErrorResponse());
 
-        ElideResponse response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
-        assertEquals(422, response.getResponseCode());
+        ElideResponse<String> response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
+        assertEquals(422, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"code\":\"SOME_ERROR\"}]}",
                 response.getBody());
@@ -192,8 +192,8 @@ class ErrorResponseMapperTest {
 
         when(MOCK_ERROR_MAPPER.map(isA(IOException.class), any())).thenReturn(MAPPED_EXCEPTION.getErrorResponse());
 
-        ElideResponse response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
-        assertEquals(422, response.getResponseCode());
+        ElideResponse<String> response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
+        assertEquals(422, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"code\":\"SOME_ERROR\"}]}",
                 response.getBody());
