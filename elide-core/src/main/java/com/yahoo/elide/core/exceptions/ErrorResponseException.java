@@ -19,17 +19,19 @@ public class ErrorResponseException extends HttpStatusException {
     private final ElideErrors errors;
 
     /**
-     * constructor.
+     * Constructor.
+     *
      * @param status http status
      * @param message exception message
-     * @param errorObjects custom error objects, not {@code null}
+     * @param errors custom error objects, not {@code null}
      */
     public ErrorResponseException(int status, String message, ElideErrors errors) {
         this(status, message, null, errors);
     }
 
     /**
-     * constructor.
+     * Constructor.
+     *
      * @param status http status
      * @param message exception message
      * @param cause the cause

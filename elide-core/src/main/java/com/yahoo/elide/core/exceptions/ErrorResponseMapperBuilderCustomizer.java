@@ -6,9 +6,14 @@
 package com.yahoo.elide.core.exceptions;
 
 /**
- * ErrorMapperBuilderCustomizer.
+ * Customize for {@link ErrorResponseMapperBuilder}.
  */
 @FunctionalInterface
 public interface ErrorResponseMapperBuilderCustomizer {
+    /**
+     * Customize the {@link ErrorResponseMapperBuilder}.
+     *
+     * @param errorResponseMapperBuilder the builder
+     */
     void customize(ErrorResponseMapperBuilder errorResponseMapperBuilder);
 }

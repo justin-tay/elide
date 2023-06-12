@@ -18,22 +18,28 @@ import java.util.function.Consumer;
  * @see ErrorResponseMapper
  */
 public class ErrorResponseMapperBuilder {
-    private final List<ErrorResponseMapper> errorResponseMappers = new ArrayList<>();
+    private final List<ErrorResponseMapper<?>> errorResponseMappers = new ArrayList<>();
 
-    public ErrorResponseMapperBuilder errorResponseMapper(ErrorResponseMapper errorResponseMapper) {
+    public ErrorResponseMapperBuilder errorResponseMapper(ErrorResponseMapper<?> errorResponseMapper) {
         this.errorResponseMappers.add(errorResponseMapper);
         return this;
     }
 
-    public ErrorResponseMapperBuilder errorResponseMappers(Consumer<List<ErrorResponseMapper>> errorResponseMappers) {
+    public ErrorResponseMapperBuilder errorResponseMappers(
+            Consumer<List<ErrorResponseMapper<?>>> errorResponseMappers) {
         errorResponseMappers.accept(this.errorResponseMappers);
         return this;
     }
 
+    /**
+     * Builds the {@link ErrorResponseMapper}.
+     *
+     * @return the ErrorResponseMapper
+     */
     public ErrorResponseMapper build() {
         return (exception, verbose) -> {
-          for (ErrorResponseMapper errorResponseMapper : this.errorResponseMappers) {
-              ElideErrorResponse response = errorResponseMapper.map(exception, verbose);
+          for (ErrorResponseMapper<?> errorResponseMapper : this.errorResponseMappers) {
+              ElideErrorResponse<?> response = errorResponseMapper.map(exception, verbose);
               if (response != null) {
                   return response;
               }
