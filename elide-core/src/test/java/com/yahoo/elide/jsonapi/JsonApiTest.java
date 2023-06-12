@@ -600,7 +600,7 @@ public class JsonApiTest {
         doThrow(e).when(tx).preCommit(any());
 
         Route route = Route.builder().baseUrl(BASE_URL).path("/testModel").build();
-        ElideResponse response = new JsonApi(elide).post(route, body, null, UUID.randomUUID());
+        ElideResponse<String> response = new JsonApi(elide).post(route, body, null, UUID.randomUUID());
         JsonApiErrors errorObjects = mapper.getObjectMapper().readValue(response.getBody(), JsonApiErrors.class);
         assertEquals(3, errorObjects.getErrors().size());
         for (JsonApiError errorObject : errorObjects.getErrors()) {

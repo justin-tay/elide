@@ -118,7 +118,7 @@ public class GraphQLEndpoint {
             response = runner.run(route.getBaseUrl(),
                                   graphQLDocument, user, UUID.randomUUID(), requestHeaders);
         }
-        return Response.status(response.getResponseCode()).entity(response.getBody()).build();
+        return Response.status(response.getStatus()).entity(response.getBody()).build();
     }
 
     @POST
