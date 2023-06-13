@@ -30,9 +30,12 @@ import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.EntityDictionary.EntityDictionaryBuilder;
 import com.yahoo.elide.core.dictionary.EntityDictionaryBuilderCustomizer;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilder;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilderCustomizer;
+import com.yahoo.elide.core.exceptions.BasicExceptionMappers;
+import com.yahoo.elide.core.exceptions.ExceptionMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMapperRegistration;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.ExceptionMappers.ExceptionMappersBuilder;
+import com.yahoo.elide.core.exceptions.ExceptionMappersBuilderCustomizer;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.request.route.ApiVersionValidator;
 import com.yahoo.elide.core.request.route.BasicApiVersionValidator;
@@ -187,12 +190,12 @@ public class ElideAutoConfiguration {
     @ConditionalOnMissingBean
     @Scope(SCOPE_PROTOTYPE)
     public ElideSettingsBuilder elideSettingsBuilder(ElideConfigProperties settings, EntityDictionary entityDictionary,
-            ErrorResponseMapperBuilder errorResponseMapperBuilder, DataStore dataStore, HeaderProcessor headerProcessor,
+            ExceptionMappersBuilder exceptionMappersBuilder, DataStore dataStore, HeaderProcessor headerProcessor,
             ElideMapper elideMapper, SerdesBuilder serdesBuilder, ObjectProvider<SettingsBuilder> settingsProvider,
             ObjectProvider<ElideSettingsBuilderCustomizer> customizerProvider) {
         return ElideSettingsBuilderCustomizers.buildElideSettingsBuilder(builder -> {
             builder.dataStore(dataStore).entityDictionary(entityDictionary).objectMapper(elideMapper.getObjectMapper())
-                    .errorResponseMapper(errorResponseMapperBuilder.build())
+                    .exceptionMappers(exceptionMappersBuilder.build())
                     .defaultMaxPageSize(settings.getMaxPageSize())
                     .defaultPageSize(settings.getPageSize()).auditLogger(new Slf4jLogger())
                     .baseUrl(settings.getBaseUrl())
@@ -523,15 +526,29 @@ public class ElideAutoConfiguration {
         return new DefaultClassScanner();
     }
 
+    /**
+     * Creates the default {@link ExceptionMappersBuilder} to create the {@link ExceptionMappers}.
+     *
+     * @param exceptionMapperRegistrationProvider the registrations
+     * @param exceptionMapperProvider the exception mappers
+     * @param customizerProvider the customizer
+     * @return the builder
+     */
     @Bean
     @ConditionalOnMissingBean
-    public ErrorResponseMapperBuilder errorResponseMapperBuilder(
-            ObjectProvider<ErrorResponseMapper> errorResponseMapperProvider,
-            ObjectProvider<ErrorResponseMapperBuilderCustomizer> customizerProvider) {
-        ErrorResponseMapperBuilder errorResponseMapperBuilder = new ErrorResponseMapperBuilder();
-        errorResponseMapperProvider.orderedStream().forEach(errorResponseMapperBuilder::errorResponseMapper);
-        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(errorResponseMapperBuilder));
-        return errorResponseMapperBuilder;
+    @Scope(SCOPE_PROTOTYPE)
+    public ExceptionMappersBuilder exceptionMappersBuilder(
+            ObjectProvider<ExceptionMapperRegistration> exceptionMapperRegistrationProvider,
+            ObjectProvider<ExceptionMapper<?, ?>> exceptionMapperProvider,
+            ObjectProvider<ExceptionMappersBuilderCustomizer> customizerProvider) {
+        ExceptionMappersBuilder exceptionMapperBuilder = BasicExceptionMappers.builder();
+        // Registrations have priority
+        exceptionMapperRegistrationProvider.orderedStream().forEach(exceptionMapperBuilder::register);
+
+        exceptionMapperProvider.orderedStream().forEach(exceptionMapperBuilder::register);
+
+        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(exceptionMapperBuilder));
+        return exceptionMapperBuilder;
     }
 
     @Bean

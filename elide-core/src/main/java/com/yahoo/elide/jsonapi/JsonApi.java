@@ -18,7 +18,7 @@ import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.exceptions.BadRequestException;
 import com.yahoo.elide.core.exceptions.ErrorContext;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.HttpStatusException;
@@ -75,7 +75,7 @@ public class JsonApi {
     private final JsonApiSettings jsonApiSettings;
     private final DataStore dataStore;
     private final JsonApiMapper mapper;
-    private final ErrorResponseMapper errorResponseMapper;
+    private final ExceptionMappers exceptionMappers;
     private final TransactionRegistry transactionRegistry;
     private final AuditLogger auditLogger;
     private boolean strictQueryParameters;
@@ -95,7 +95,7 @@ public class JsonApi {
         this.elideSettings = this.elide.getElideSettings();
         this.transactionRegistry = this.elide.getTransactionRegistry();
         this.auditLogger = this.elide.getAuditLogger();
-        this.errorResponseMapper = this.elide.getErrorResponseMapper();
+        this.exceptionMappers = this.elide.getExceptionMappers();
     }
 
     /**
@@ -474,9 +474,9 @@ public class JsonApi {
     }
 
     public ElideErrorResponse<?> toErrorResponse(Exception exception, ErrorContext errorContext) {
-        if (errorResponseMapper != null) {
+        if (exceptionMappers != null) {
             log.trace("Attempting to map exception of type {}", exception.getClass());
-            ElideErrorResponse<?> errorResponse = errorResponseMapper.map(exception, errorContext);
+            ElideErrorResponse<?> errorResponse = exceptionMappers.toErrorResponse(exception, errorContext);
 
             if (errorResponse != null) {
                 log.debug("Successfully mapped exception {}", exception.getClass());

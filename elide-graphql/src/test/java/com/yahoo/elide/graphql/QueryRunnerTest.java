@@ -24,7 +24,7 @@ import com.yahoo.elide.core.TransactionRegistry;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.graphql.models.GraphQLErrors;
 
@@ -136,15 +136,15 @@ public class QueryRunnerTest extends GraphQLTest {
         verify(tx).close();
     }
 
-    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ErrorResponseMapper errorResponseMapper) {
-        ElideSettings settings = getElideSettings(dataStore, dictionary, errorResponseMapper);
+    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ExceptionMappers exceptionMappers) {
+        ElideSettings settings = getElideSettings(dataStore, dictionary, exceptionMappers);
         return new Elide(settings, new TransactionRegistry(), settings.getEntityDictionary().getScanner(), false);
     }
 
-    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ErrorResponseMapper errorResponseMapper) {
+    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ExceptionMappers exceptionMappers) {
         return ElideSettings.builder().dataStore(dataStore)
                 .entityDictionary(dictionary)
-                .errorResponseMapper(errorResponseMapper)
+                .exceptionMappers(exceptionMappers)
                 .verboseErrors(true)
                 .settings(GraphQLSettings.builder())
                 .build();

@@ -10,12 +10,13 @@ import com.yahoo.elide.ElideErrorResponse;
 import javax.annotation.Nullable;
 
 /**
- * Maps a exception to an {@link ElideErrorResponse}.
+ * Maps an exception to an {@link ElideErrorResponse}.
  *
+ * @param <E> exception type
  * @param <T> response body type
  */
 @FunctionalInterface
-public interface ErrorResponseMapper<T> {
+public interface ExceptionMapper<E extends Throwable, T> {
     /**
      * Map the exception to an {@link ElideErrorResponse}.
      *
@@ -23,5 +24,5 @@ public interface ErrorResponseMapper<T> {
      * @param errorContext the error context
      * @return the mapped ElideErrorResponse or null if you do not want to map this error
      */
-    @Nullable ElideErrorResponse<T> map(Exception exception, ErrorContext errorContext);
+    @Nullable ElideErrorResponse<T> toErrorResponse(E exception, ErrorContext errorContext);
 }

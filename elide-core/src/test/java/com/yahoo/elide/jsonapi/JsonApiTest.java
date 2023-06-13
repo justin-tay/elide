@@ -26,7 +26,7 @@ import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.TestDictionary;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.lifecycle.FieldTestModel;
 import com.yahoo.elide.core.lifecycle.LegacyTestModel;
 import com.yahoo.elide.core.lifecycle.PropertyTestModel;
@@ -629,15 +629,15 @@ public class JsonApiTest {
         verify(tx).close();
     }
 
-    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ErrorResponseMapper errorMapper) {
-        ElideSettings settings = getElideSettings(dataStore, dictionary, errorMapper);
+    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ExceptionMappers exceptionMappers) {
+        ElideSettings settings = getElideSettings(dataStore, dictionary, exceptionMappers);
         return new Elide(settings, new TransactionRegistry(), settings.getEntityDictionary().getScanner(), false);
     }
 
-    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ErrorResponseMapper errorMapper) {
+    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ExceptionMappers exceptionMappers) {
         return ElideSettings.builder().dataStore(dataStore)
                 .entityDictionary(dictionary)
-                .errorResponseMapper(errorMapper)
+                .exceptionMappers(exceptionMappers)
                 .verboseErrors(true)
                 .settings(JsonApiSettings.builder())
                 .build();
