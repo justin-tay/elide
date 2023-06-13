@@ -742,9 +742,11 @@ public class ElideAutoConfiguration {
             @Bean
             @RefreshScope
             @ConditionalOnMissingBean(name = "graphqlController")
-            public GraphqlController graphqlController(QueryRunners runners, JsonApiMapper jsonApiMapper,
-                    HeaderUtils.HeaderProcessor headerProcessor, ElideConfigProperties settings) {
-                return new GraphqlController(runners, jsonApiMapper, headerProcessor, settings);
+            public GraphqlController graphqlController(RefreshableElide refreshableElide, QueryRunners runners,
+                    JsonApiMapper jsonApiMapper, HeaderUtils.HeaderProcessor headerProcessor,
+                    ElideConfigProperties settings) {
+                return new GraphqlController(refreshableElide.getElide(), runners, jsonApiMapper, headerProcessor,
+                        settings);
             }
         }
     }
@@ -827,9 +829,11 @@ public class ElideAutoConfiguration {
 
             @Bean
             @ConditionalOnMissingBean(name = "graphqlController")
-            public GraphqlController graphqlController(QueryRunners runners, JsonApiMapper jsonApiMapper,
-                    HeaderUtils.HeaderProcessor headerProcessor, ElideConfigProperties settings) {
-                return new GraphqlController(runners, jsonApiMapper, headerProcessor, settings);
+            public GraphqlController graphqlController(RefreshableElide refreshableElide, QueryRunners runners,
+                    JsonApiMapper jsonApiMapper, HeaderUtils.HeaderProcessor headerProcessor,
+                    ElideConfigProperties settings) {
+                return new GraphqlController(refreshableElide.getElide(), runners, jsonApiMapper, headerProcessor,
+                        settings);
             }
         }
     }
