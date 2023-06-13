@@ -14,7 +14,7 @@ import com.yahoo.elide.core.TransactionRegistry;
 import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilder;
+import com.yahoo.elide.core.exceptions.ExceptionMappers.ExceptionMappersBuilder;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
 import com.yahoo.elide.jsonapi.links.DefaultJsonApiLinks;
@@ -37,11 +37,11 @@ public class IntegrationTestSetup {
                                             ElideConfigProperties settings,
                                             HeaderUtils.HeaderProcessor headerProcessor,
                                             JsonApiMapper mapper,
-                                            ErrorResponseMapperBuilder errorResponseMapperBuilder) {
+                                            ExceptionMappersBuilder exceptionMappersBuilder) {
 
         ElideSettingsBuilder builder = new ElideSettingsBuilder(dataStore)
                 .withEntityDictionary(dictionary)
-                .withErrorResponseMapper(errorResponseMapperBuilder.build())
+                .withExceptionMappers(exceptionMappersBuilder.build())
                 .withJsonApiMapper(mapper)
                 .withDefaultMaxPageSize(settings.getMaxPageSize())
                 .withDefaultPageSize(settings.getPageSize())

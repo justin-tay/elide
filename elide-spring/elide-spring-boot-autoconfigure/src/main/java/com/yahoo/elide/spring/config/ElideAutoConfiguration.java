@@ -18,9 +18,12 @@ import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilder;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapperBuilderCustomizer;
+import com.yahoo.elide.core.exceptions.BasicExceptionMappers;
+import com.yahoo.elide.core.exceptions.ExceptionMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMapperRegistration;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.ExceptionMappers.ExceptionMappersBuilder;
+import com.yahoo.elide.core.exceptions.ExceptionMappersBuilderCustomizer;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.security.checks.Check;
 import com.yahoo.elide.core.security.checks.prefab.Role;
@@ -585,15 +588,29 @@ public class ElideAutoConfiguration {
         return new DefaultClassScanner();
     }
 
+    /**
+     * Creates the default {@link ExceptionMappersBuilder} to create the {@link ExceptionMappers}.
+     *
+     * @param exceptionMapperRegistrationProvider the registrations
+     * @param exceptionMapperProvider the exception mappers
+     * @param customizerProvider the customizer
+     * @return the builder
+     */
     @Bean
     @ConditionalOnMissingBean
-    public ErrorResponseMapperBuilder errorResponseMapperBuilder(
-            ObjectProvider<ErrorResponseMapper> errorResponseMapperProvider,
-            ObjectProvider<ErrorResponseMapperBuilderCustomizer> customizerProvider) {
-        ErrorResponseMapperBuilder errorResponseMapperBuilder = new ErrorResponseMapperBuilder();
-        errorResponseMapperProvider.orderedStream().forEach(errorResponseMapperBuilder::errorResponseMapper);
-        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(errorResponseMapperBuilder));
-        return errorResponseMapperBuilder;
+    @Scope(SCOPE_PROTOTYPE)
+    public ExceptionMappersBuilder exceptionMappersBuilder(
+            ObjectProvider<ExceptionMapperRegistration> exceptionMapperRegistrationProvider,
+            ObjectProvider<ExceptionMapper<?, ?>> exceptionMapperProvider,
+            ObjectProvider<ExceptionMappersBuilderCustomizer> customizerProvider) {
+        ExceptionMappersBuilder exceptionMapperBuilder = BasicExceptionMappers.builder();
+        // Registrations have priority
+        exceptionMapperRegistrationProvider.orderedStream().forEach(exceptionMapperBuilder::register);
+
+        exceptionMapperProvider.orderedStream().forEach(exceptionMapperBuilder::register);
+
+        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(exceptionMapperBuilder));
+        return exceptionMapperBuilder;
     }
 
     @Bean
@@ -660,7 +677,7 @@ public class ElideAutoConfiguration {
         @ConditionalOnMissingBean
         public RefreshableElide refreshableElide(EntityDictionary dictionary, DataStore dataStore,
                 HeaderUtils.HeaderProcessor headerProcessor, TransactionRegistry transactionRegistry,
-                ElideConfigProperties settings, JsonApiMapper mapper, ErrorResponseMapperBuilder errorMapperBuilder) {
+                ElideConfigProperties settings, JsonApiMapper mapper, ExceptionMappersBuilder errorMapperBuilder) {
             return buildRefreshableElide(dictionary, dataStore, headerProcessor, transactionRegistry, settings, mapper,
                     errorMapperBuilder.build());
         }
@@ -751,9 +768,9 @@ public class ElideAutoConfiguration {
         @ConditionalOnMissingBean
         public RefreshableElide refreshableElide(EntityDictionary dictionary, DataStore dataStore,
                 HeaderUtils.HeaderProcessor headerProcessor, TransactionRegistry transactionRegistry,
-                ElideConfigProperties settings, JsonApiMapper mapper, ErrorResponseMapperBuilder errorMapperBuilder) {
+                ElideConfigProperties settings, JsonApiMapper mapper, ExceptionMappersBuilder errorMappersBuilder) {
             return buildRefreshableElide(dictionary, dataStore, headerProcessor, transactionRegistry, settings, mapper,
-                    errorMapperBuilder.build());
+                    errorMappersBuilder.build());
         }
 
         @Configuration
@@ -819,10 +836,10 @@ public class ElideAutoConfiguration {
 
     public static RefreshableElide buildRefreshableElide(EntityDictionary dictionary, DataStore dataStore,
             HeaderUtils.HeaderProcessor headerProcessor, TransactionRegistry transactionRegistry,
-            ElideConfigProperties settings, JsonApiMapper mapper, ErrorResponseMapper errorMapper) {
+            ElideConfigProperties settings, JsonApiMapper mapper, ExceptionMappers exceptionMappers) {
 
         ElideSettingsBuilder builder = new ElideSettingsBuilder(dataStore).withEntityDictionary(dictionary)
-                .withErrorResponseMapper(errorMapper).withJsonApiMapper(mapper)
+                .withExceptionMappers(exceptionMappers).withJsonApiMapper(mapper)
                 .withDefaultMaxPageSize(settings.getMaxPageSize()).withDefaultPageSize(settings.getPageSize())
                 .withJoinFilterDialect(RSQLFilterDialect.builder().dictionary(dictionary).build())
                 .withSubqueryFilterDialect(RSQLFilterDialect.builder().dictionary(dictionary).build())

@@ -14,7 +14,7 @@ import com.yahoo.elide.core.datastore.inmemory.InMemoryDataStore;
 import com.yahoo.elide.core.dictionary.Injector;
 import com.yahoo.elide.core.exceptions.BadRequestException;
 import com.yahoo.elide.core.exceptions.ErrorContext;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.HttpStatusException;
@@ -87,7 +87,7 @@ public class Elide {
     @Getter private final AuditLogger auditLogger;
     @Getter private final DataStore dataStore;
     @Getter private final JsonApiMapper mapper;
-    @Getter private final ErrorResponseMapper errorResponseMapper;
+    @Getter private final ExceptionMappers exceptionMappers;
     @Getter private final TransactionRegistry transactionRegistry;
     @Getter private final ClassScanner scanner;
     private boolean initialized = false;
@@ -136,7 +136,7 @@ public class Elide {
         this.auditLogger = elideSettings.getAuditLogger();
         this.dataStore = new InMemoryDataStore(elideSettings.getDataStore());
         this.mapper = elideSettings.getMapper();
-        this.errorResponseMapper = elideSettings.getErrorResponseMapper();
+        this.exceptionMappers = elideSettings.getExceptionMappers();
         this.transactionRegistry = transactionRegistry;
 
         if (doScans) {
@@ -754,9 +754,9 @@ public class Elide {
     }
 
     public ElideErrorResponse<?> toErrorResponse(Exception exception, ErrorContext errorContext) {
-        if (errorResponseMapper != null) {
+        if (exceptionMappers != null) {
             log.trace("Attempting to map exception of type {}", exception.getClass());
-            ElideErrorResponse<?> errorResponse = errorResponseMapper.map(exception, errorContext);
+            ElideErrorResponse<?> errorResponse = exceptionMappers.toErrorResponse(exception, errorContext);
 
             if (errorResponse != null) {
                 log.debug("Successfully mapped exception {}", exception.getClass());

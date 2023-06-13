@@ -16,7 +16,7 @@ import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorResponseMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.security.checks.Check;
 import com.yahoo.elide.core.security.checks.prefab.Role;
@@ -163,7 +163,7 @@ public interface ElideStandaloneSettings {
 
         ElideSettingsBuilder builder = new ElideSettingsBuilder(dataStore)
                 .withEntityDictionary(dictionary)
-                .withErrorResponseMapper(getErrorResponseMapper())
+                .withExceptionMappers(getExceptionMappers())
                 .withJoinFilterDialect(RSQLFilterDialect.builder().dictionary(dictionary).build())
                 .withSubqueryFilterDialect(RSQLFilterDialect.builder().dictionary(dictionary).build())
                 .withBaseUrl(getBaseUrl())
@@ -628,8 +628,8 @@ public interface ElideStandaloneSettings {
      *
      * @return error response mapper implementation
      */
-    default ErrorResponseMapper getErrorResponseMapper() {
-        return (exception, verbose) -> null;
+    default ExceptionMappers getExceptionMappers() {
+        return null;
     }
 
     /**

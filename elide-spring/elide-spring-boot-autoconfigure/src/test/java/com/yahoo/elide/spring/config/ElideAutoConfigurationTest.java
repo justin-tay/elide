@@ -7,6 +7,15 @@ package com.yahoo.elide.spring.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.yahoo.elide.ElideErrorResponse;
+import com.yahoo.elide.ElideErrors;
+import com.yahoo.elide.core.exceptions.ErrorContext;
+import com.yahoo.elide.core.exceptions.ExceptionMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMapperRegistration;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.ExceptionMappers.ExceptionMappersBuilder;
+import com.yahoo.elide.core.exceptions.ExceptionMappersBuilderCustomizer;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -22,6 +31,8 @@ import org.springframework.cloud.autoconfigure.RefreshAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.validation.ConstraintViolationException;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -159,6 +170,66 @@ class ElideAutoConfigurationTest {
                         assertThat(beanDefinition.getFactoryBeanName())
                                 .endsWith(input.userConfiguration.getSimpleName());
                     }
+                });
+    }
+
+    public static class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException, ElideErrors> {
+        @Override
+        public ElideErrorResponse<ElideErrors> toErrorResponse(ConstraintViolationException exception,
+                ErrorContext errorContext) {
+            return ElideErrorResponse.status(400)
+                    .errors(errors -> errors.error(error -> error.message(exception.getMessage())));
+        }
+    }
+
+    @Configuration
+    public static class UserExceptionMapperConfiguration {
+        @Bean
+        public ConstraintViolationExceptionMapper constraintViolationExceptionMapper() {
+            return new ConstraintViolationExceptionMapper();
+        }
+    }
+
+    @Test
+    void exceptionMappers() {
+        contextRunner.withPropertyValues("spring.cloud.refresh.enabled=false")
+                .withUserConfiguration(UserExceptionMapperConfiguration.class).run(context -> {
+                    ExceptionMappers exceptionMappers = context.getBean(ExceptionMappersBuilder.class).build();
+                    ElideErrorResponse<Object> errorResponse = exceptionMappers
+                            .toErrorResponse(new IllegalArgumentException(), null);
+                    assertThat(errorResponse).isNull();
+                    errorResponse = exceptionMappers.toErrorResponse(new ConstraintViolationException("message", null),
+                            null);
+                    assertThat(errorResponse.getBody(ElideErrors.class).getErrors().get(0).getMessage())
+                            .isEqualTo("message");
+                });
+    }
+
+    @Configuration
+    public static class UserExceptionMappersBuilderCustomizerConfiguration {
+        @Bean
+        public ExceptionMappersBuilderCustomizer exceptionMappersBuilderCustomizer() {
+            return builder -> builder.registrations(registrations -> {
+               // Add in front
+                registrations.add(0, ExceptionMapperRegistration.builder().supported(ConstraintViolationException.class)
+                        .exceptionMapper((exception, errorContext) -> ElideErrorResponse.status(200).build()).build());
+            });
+        }
+    }
+
+    @Test
+    void exceptionMappersBuilderCustomizer() {
+        contextRunner.withPropertyValues("spring.cloud.refresh.enabled=false")
+                .withUserConfiguration(UserExceptionMapperConfiguration.class,
+                        UserExceptionMappersBuilderCustomizerConfiguration.class)
+                .run(context -> {
+                    ExceptionMappers exceptionMappers = context.getBean(ExceptionMappersBuilder.class).build();
+                    ElideErrorResponse<Object> errorResponse = exceptionMappers
+                            .toErrorResponse(new IllegalArgumentException(), null);
+                    assertThat(errorResponse).isNull();
+                    errorResponse = exceptionMappers.toErrorResponse(new ConstraintViolationException("message", null),
+                            null);
+                    assertThat(errorResponse.getStatus()).isEqualTo(200);
                 });
     }
 }
