@@ -5,8 +5,6 @@
  */
 package com.yahoo.elide.graphql;
 
-import static com.yahoo.elide.graphql.QueryRunner.buildErrorResponse;
-
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
@@ -112,8 +110,10 @@ public class GraphQLEndpoint {
 
         ElideResponse response;
         if (runner == null) {
-            response = buildErrorResponse(elide.getObjectMapper(),
+            ElideResponse<?> errorResponse = QueryRunner.handleRuntimeException(elide,
                     new InvalidOperationException("Invalid API Version"), false);
+            response = QueryRunner.toResponse(elide.getObjectMapper(), errorResponse.getStatus(),
+                    errorResponse.getBody());
         } else {
             response = runner.run(route.getBaseUrl(),
                                   graphQLDocument, user, UUID.randomUUID(), requestHeaders);

@@ -5,8 +5,7 @@
  */
 package com.yahoo.elide.spring.controllers;
 
-import static com.yahoo.elide.graphql.QueryRunner.buildErrorResponse;
-
+import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.core.exceptions.InvalidOperationException;
 import com.yahoo.elide.core.request.route.Route;
@@ -52,6 +51,7 @@ import java.util.concurrent.Callable;
 @RequestMapping(value = "${elide.graphql.path}")
 public class GraphqlController {
 
+    private final Elide elide;
     private final ElideConfigProperties settings;
     private final QueryRunners runners;
     private final ObjectMapper mapper;
@@ -61,12 +61,14 @@ public class GraphqlController {
     private static final String JSON_CONTENT_TYPE = "application/json";
 
     public GraphqlController(
+            Elide elide,
             QueryRunners runners,
             ObjectMapper objectMapper,
             HeaderProcessor headerProcessor,
             ElideConfigProperties settings,
             RouteResolver routeResolver) {
         log.debug("Started ~~");
+        this.elide = elide;
         this.runners = runners;
         this.settings = settings;
         this.headerProcessor = headerProcessor;
@@ -102,7 +104,10 @@ public class GraphqlController {
                 ElideResponse<String> response;
 
                 if (runner == null) {
-                    response = buildErrorResponse(mapper, new InvalidOperationException("Invalid API Version"), false);
+                    ElideResponse<?> errorResponse = QueryRunner.handleRuntimeException(elide,
+                            new InvalidOperationException("Invalid API Version"), false);
+                    response = QueryRunner.toResponse(elide.getObjectMapper(), errorResponse.getStatus(),
+                            errorResponse.getBody());
                 } else {
                     response = runner.run(route.getBaseUrl(), graphQLDocument, user, UUID.randomUUID(),
                             requestHeadersCleaned);

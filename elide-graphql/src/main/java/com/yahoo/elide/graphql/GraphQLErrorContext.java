@@ -19,4 +19,5 @@ import lombok.Getter;
 public class GraphQLErrorContext implements ErrorContext {
     private final boolean verbose;
     private final ObjectMapper objectMapper;
+    private final String graphQLDocument;
 }

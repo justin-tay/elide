@@ -31,6 +31,7 @@ import com.yahoo.elide.core.audit.AuditLogger;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.datastore.inmemory.HashMapDataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.security.checks.Check;
 import com.yahoo.elide.core.utils.DefaultClassScanner;
 import com.yahoo.elide.graphql.GraphQLSettings.GraphQLSettingsBuilder;
@@ -91,6 +92,7 @@ public class GraphQLEndpointTest {
     private final DataFetcherExceptionHandler dataFetcherExceptionHandler = Mockito.spy(new SimpleDataFetcherExceptionHandler());
 
     private Elide elide;
+    private ExceptionMappers exceptionMappers;
 
     public static class User implements Principal {
         String log = "";
@@ -140,6 +142,8 @@ public class GraphQLEndpointTest {
         checkMappings.put(UserChecks.IS_USER_2, UserChecks.IsUserId.Two.class);
         checkMappings.put(CommitChecks.IS_NOT_USER_3, CommitChecks.IsNotUser3.class);
 
+        exceptionMappers = Mockito.mock(ExceptionMappers.class);
+
         EntityDictionary entityDictionary = EntityDictionary.builder().checks(checkMappings).build();
         elide = spy(
                 new Elide(
@@ -147,6 +151,7 @@ public class GraphQLEndpointTest {
                             .entityDictionary(entityDictionary)
                             .auditLogger(audit)
                             .settings(GraphQLSettingsBuilder.withDefaults(entityDictionary))
+                            .exceptionMappers(exceptionMappers)
                             .build())
 
                 );
@@ -367,7 +372,7 @@ public class GraphQLEndpointTest {
 
         Response response = endpoint.post("", uriInfo, requestHeaders, user2, graphQLRequestToJSON(graphQLRequest));
         assertHasErrors(response);
-        verify(elide).toErrorResponse(any(), any());
+        verify(exceptionMappers).toErrorResponse(any(), any());
     }
 
     @Test
@@ -397,7 +402,7 @@ public class GraphQLEndpointTest {
         Iterator<JsonNode> errors = node.get("errors").elements();
         assertTrue(errors.hasNext());
         assertTrue(errors.next().get("message").asText().contains("No id provided, cannot persist incidents"));
-        verify(elide).toErrorResponse(any(), any());
+        verify(exceptionMappers).toErrorResponse(any(), any());
     }
 
     @Test
@@ -756,7 +761,7 @@ public class GraphQLEndpointTest {
 
         Response response = endpoint.post("", uriInfo, requestHeaders, user3, graphQLRequestToJSON(graphQLRequest));
         assertHasErrors(response);
-        verify(elide).toErrorResponse(any(), any());
+        verify(exceptionMappers).toErrorResponse(any(), any());
     }
 
     @Test
@@ -836,7 +841,7 @@ public class GraphQLEndpointTest {
 
         Response response = endpoint.post("", uriInfo, requestHeaders, user1, graphQLRequestToJSON(graphQLRequest));
         assertHasErrors(response);
-        verify(elide).toErrorResponse(any(), any());
+        verify(exceptionMappers).toErrorResponse(any(), any());
     }
 
 

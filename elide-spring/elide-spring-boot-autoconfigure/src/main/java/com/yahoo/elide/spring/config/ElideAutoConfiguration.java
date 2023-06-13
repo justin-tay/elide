@@ -707,11 +707,11 @@ public class ElideAutoConfiguration {
             @Bean
             @RefreshScope
             @ConditionalOnMissingBean(name = "graphqlController")
-            public GraphqlController graphqlController(QueryRunners runners, ElideMapper elideMapper,
-                    HeaderProcessor headerProcessor, ElideConfigProperties settings,
+            public GraphqlController graphqlController(RefreshableElide refreshableElide, QueryRunners runners,
+                    ElideMapper elideMapper, HeaderProcessor headerProcessor, ElideConfigProperties settings,
                     RouteResolver routeResolver) {
-                return new GraphqlController(runners, elideMapper.getObjectMapper(), headerProcessor, settings,
-                        routeResolver);
+                return new GraphqlController(refreshableElide.getElide(), runners, elideMapper.getObjectMapper(),
+                        headerProcessor, settings, routeResolver);
             }
         }
     }
@@ -810,11 +810,11 @@ public class ElideAutoConfiguration {
 
             @Bean
             @ConditionalOnMissingBean(name = "graphqlController")
-            public GraphqlController graphqlController(QueryRunners runners, ElideMapper elideMapper,
-                    HeaderProcessor headerProcessor, ElideConfigProperties settings,
+            public GraphqlController graphqlController(RefreshableElide refreshableElide, QueryRunners runners,
+                    ElideMapper elideMapper, HeaderProcessor headerProcessor, ElideConfigProperties settings,
                     RouteResolver routeResolver) {
-                return new GraphqlController(runners, elideMapper.getObjectMapper(), headerProcessor, settings,
-                        routeResolver);
+                return new GraphqlController(refreshableElide.getElide(), runners, elideMapper.getObjectMapper(),
+                        headerProcessor, settings, routeResolver);
             }
         }
     }
