@@ -7,7 +7,9 @@ package com.yahoo.elide.graphql;
 
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
+import com.yahoo.elide.ResponseConverter;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
+import com.yahoo.elide.core.exceptions.InvalidApiVersionException;
 import com.yahoo.elide.core.exceptions.InvalidOperationException;
 import com.yahoo.elide.core.request.route.BasicApiVersionValidator;
 import com.yahoo.elide.core.request.route.FlexibleRouteResolver;
@@ -57,6 +59,7 @@ public class GraphQLEndpoint {
     private final Elide elide;
     private final HeaderProcessor headerProcessor;
     protected final RouteResolver routeResolver;
+    private final ResponseConverter responseConverter;
 
     @Inject
     public GraphQLEndpoint(@Named("elide") Elide elide,
@@ -79,6 +82,7 @@ public class GraphQLEndpoint {
                 return new FlexibleRouteResolver(new BasicApiVersionValidator(), elide.getElideSettings()::getBaseUrl);
             }
         });
+        this.responseConverter = new ResponseConverter(new GraphQLBodyMapper(elide.getObjectMapper()));
     }
 
     /**
@@ -108,17 +112,17 @@ public class GraphQLEndpoint {
 
         QueryRunner runner = runners.getOrDefault(route.getApiVersion(), null);
 
-        ElideResponse response;
+        ElideResponse<?> response;
         if (runner == null) {
             ElideResponse<?> errorResponse = QueryRunner.handleRuntimeException(elide,
                     new InvalidOperationException("Invalid API Version"), false);
-            response = QueryRunner.toResponse(elide.getObjectMapper(), errorResponse.getStatus(),
-                    errorResponse.getBody());
+            response = QueryRunner.handleRuntimeException(elide,
+                    new InvalidApiVersionException("Invalid API Version"), false);
         } else {
             response = runner.run(route.getBaseUrl(),
                                   graphQLDocument, user, UUID.randomUUID(), requestHeaders);
         }
-        return Response.status(response.getStatus()).entity(response.getBody()).build();
+        return this.responseConverter.convert(response);
     }
 
     @POST

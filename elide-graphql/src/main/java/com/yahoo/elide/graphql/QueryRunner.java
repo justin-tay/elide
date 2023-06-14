@@ -11,13 +11,13 @@ import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.InvalidEntityBodyException;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.graphql.parser.GraphQLEntityProjectionMaker;
 import com.yahoo.elide.graphql.parser.GraphQLProjectionInfo;
 import com.yahoo.elide.graphql.parser.GraphQLQuery;
 import com.yahoo.elide.graphql.parser.QueryParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -112,7 +112,7 @@ public class QueryRunner {
      * @param user The user who issued the query.
      * @return The response.
      */
-    public ElideResponse<String> run(String baseUrlEndPoint, String graphQLDocument, User user) {
+    public ElideResponse<?> run(String baseUrlEndPoint, String graphQLDocument, User user) {
         return run(baseUrlEndPoint, graphQLDocument, user, UUID.randomUUID());
     }
 
@@ -162,7 +162,7 @@ public class QueryRunner {
      * @param requestId the Request ID.
      * @return The response.
      */
-    public ElideResponse<String> run(String baseUrlEndPoint, String graphQLDocument, User user, UUID requestId) {
+    public ElideResponse<?> run(String baseUrlEndPoint, String graphQLDocument, User user, UUID requestId) {
         return run(baseUrlEndPoint, graphQLDocument, user, requestId, null);
     }
 
@@ -173,7 +173,7 @@ public class QueryRunner {
      * @param requestId the Request ID.
      * @return The response.
      */
-    public ElideResponse<String> run(String baseUrlEndPoint, String graphQLDocument, User user, UUID requestId,
+    public ElideResponse<?> run(String baseUrlEndPoint, String graphQLDocument, User user, UUID requestId,
                              Map<String, List<String>> requestHeaders) {
         ObjectMapper mapper = elide.getObjectMapper();
 
@@ -185,13 +185,12 @@ public class QueryRunner {
             log.debug("Invalid json body provided to GraphQL", e);
             // NOTE: Can't get at isVerbose setting here for hardcoding to false. If necessary, we can refactor
             // so this can be set appropriately.
-            ElideResponse<?> errorResponse = QueryRunner.handleRuntimeException(elide,
-                    new InvalidEntityBodyException(graphQLDocument), false);
-            return toResponse(mapper, errorResponse.getStatus(), errorResponse.getBody());
+            return QueryRunner.handleRuntimeException(elide,
+                    new InvalidEntityBodyException(graphQLDocument, e), false);
 
         }
 
-        List<ElideResponse<String>> responses = new ArrayList<>();
+        List<ElideResponse<?>> responses = new ArrayList<>();
         for (GraphQLQuery query : queries) {
             responses.add(executeGraphQLRequest(baseUrlEndPoint, mapper, user,
                     graphQLDocument, query, requestId, requestHeaders));
@@ -205,7 +204,8 @@ public class QueryRunner {
         ArrayNode result = responses.stream()
                 .map(response -> {
                     try {
-                        return mapper.readTree(response.getBody());
+                        String body = mapper.writeValueAsString(response.getBody());
+                        return mapper.readTree(body);
                     } catch (IOException e) {
                         log.debug("Caught an IO exception while trying to read response body");
                         return JsonNodeFactory.instance.objectNode();
@@ -215,16 +215,8 @@ public class QueryRunner {
                         (arrayNode, node) -> arrayNode.add(node),
                         (left, right) -> left.addAll(right));
 
-        try {
-
-            //Build and elide response from the array of responses.
-            return ElideResponse.status(HttpStatus.SC_OK)
-                    .body(mapper.writeValueAsString(result));
-        } catch (IOException e) {
-            log.error("An unexpected error occurred trying to serialize array response.", e);
-            return ElideResponse.status(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                    .build();
-        }
+        // Build and elide response from the array of responses.
+        return ElideResponse.status(HttpStatus.SC_OK).body(result);
     }
 
     /**
@@ -265,7 +257,7 @@ public class QueryRunner {
         return null;
     }
 
-    private ElideResponse<String> executeGraphQLRequest(String baseUrlEndPoint, ObjectMapper mapper, User principal,
+    private ElideResponse<?> executeGraphQLRequest(String baseUrlEndPoint, ObjectMapper mapper, User principal,
                                                 String graphQLDocument, GraphQLQuery query, UUID requestId,
                                                 Map<String, List<String>> requestHeaders) {
         boolean isVerbose = false;
@@ -342,7 +334,7 @@ public class QueryRunner {
                 requestScope.getPermissionExecutor().logCheckStats();
             }
 
-            return ElideResponse.status(HttpStatus.SC_OK).body(mapper.writeValueAsString(result));
+            return ElideResponse.status(HttpStatus.SC_OK).body(result);
         } catch (IOException e) {
             return handleNonRuntimeException(elide, e, graphQLDocument, isVerbose);
         } catch (RuntimeException e) {
@@ -389,7 +381,7 @@ public class QueryRunner {
         return result;
     }
 
-    public static ElideResponse<String> handleNonRuntimeException(
+    public static ElideResponse<?> handleNonRuntimeException(
             Elide elide,
             Exception exception,
             String graphQLDocument,
@@ -398,33 +390,17 @@ public class QueryRunner {
         ObjectMapper mapper = elide.getObjectMapper();
         GraphQLErrorContext errorContext = GraphQLErrorContext.builder().verbose(verbose).objectMapper(mapper)
                 .graphQLDocument(graphQLDocument).build();
-        DefaultGraphQLExceptionHandler exceptionHandler = new DefaultGraphQLExceptionHandler(
-                elide.getExceptionMappers(), mapper, new DefaultGraphQLErrorMapper());
-        ElideResponse<?> errorResponse = exceptionHandler.handleException(exception, errorContext);
-        return QueryRunner.toResponse(mapper, errorResponse.getStatus(), errorResponse.getBody());
+        DefaultGraphQLExceptionHandler exceptionHandler = new DefaultGraphQLExceptionHandler(new Slf4jExceptionLogger(),
+                elide.getExceptionMappers(), new DefaultGraphQLErrorMapper());
+        return exceptionHandler.handleException(exception, errorContext);
     }
 
-    public static ElideResponse<String> toResponse(ObjectMapper objectMapper, int status, Object body) {
-        String result = null;
-        if (body instanceof String data) {
-            result = data;
-        } else {
-            try {
-                result = body != null ? objectMapper.writeValueAsString(body) : null;
-            } catch (JsonProcessingException e) {
-                return ElideResponse.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).body(e.toString());
-            }
-        }
-        return ElideResponse.status(status).body(result);
-    }
-
-    public static ElideResponse<String> handleRuntimeException(Elide elide, RuntimeException exception,
+    public static ElideResponse<?> handleRuntimeException(Elide elide, RuntimeException exception,
             boolean verbose) {
         ObjectMapper mapper = elide.getObjectMapper();
         GraphQLErrorContext errorContext = GraphQLErrorContext.builder().verbose(verbose).objectMapper(mapper).build();
-        DefaultGraphQLExceptionHandler exceptionHandler = new DefaultGraphQLExceptionHandler(
-                elide.getExceptionMappers(), mapper, new DefaultGraphQLErrorMapper());
-        ElideResponse<?> errorResponse = exceptionHandler.handleException(exception, errorContext);
-        return QueryRunner.toResponse(mapper, errorResponse.getStatus(), errorResponse.getBody());
+        DefaultGraphQLExceptionHandler exceptionHandler = new DefaultGraphQLExceptionHandler(new Slf4jExceptionLogger(),
+                elide.getExceptionMappers(), new DefaultGraphQLErrorMapper());
+        return exceptionHandler.handleException(exception, errorContext);
     }
 }

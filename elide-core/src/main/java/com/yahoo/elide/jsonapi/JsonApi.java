@@ -16,6 +16,7 @@ import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.exceptions.BadRequestException;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.exceptions.HttpStatus;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.jsonapi.extensions.JsonApiAtomicOperations;
@@ -80,8 +81,8 @@ public class JsonApi {
         this.auditLogger = this.elide.getAuditLogger();
         this.exceptionMappers = this.elide.getExceptionMappers();
 
-        this.jsonApiExceptionHandler = new DefaultJsonApiExceptionHandler(this.exceptionMappers, this.mapper,
-                new DefaultJsonApiErrorMapper());
+        this.jsonApiExceptionHandler = new DefaultJsonApiExceptionHandler(new Slf4jExceptionLogger(),
+                this.exceptionMappers, new DefaultJsonApiErrorMapper());
     }
 
     /**

@@ -11,6 +11,7 @@ import com.yahoo.elide.ElideErrors;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.core.exceptions.BadRequestException;
 import com.yahoo.elide.core.exceptions.ExceptionHandlerSupport;
+import com.yahoo.elide.core.exceptions.ExceptionLogger;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
@@ -22,7 +23,6 @@ import com.yahoo.elide.core.exceptions.TransactionException;
 import com.yahoo.elide.jsonapi.models.JsonApiErrors;
 
 import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
@@ -32,6 +32,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * Default implementation of {@link JsonApiExceptionHandler}.
@@ -39,13 +40,11 @@ import java.io.IOException;
 @Slf4j
 public class DefaultJsonApiExceptionHandler extends ExceptionHandlerSupport<JsonApiErrorContext>
         implements JsonApiExceptionHandler {
-    protected JsonApiMapper jsonApiMapper;
     protected JsonApiErrorMapper jsonApiErrorMapper;
 
-    public DefaultJsonApiExceptionHandler(ExceptionMappers exceptionMappers, JsonApiMapper jsonApiMapper,
+    public DefaultJsonApiExceptionHandler(ExceptionLogger exceptionLogger, ExceptionMappers exceptionMappers,
             JsonApiErrorMapper jsonApiErrorMapper) {
-        super(exceptionMappers);
-        this.jsonApiMapper = jsonApiMapper;
+        super(exceptionLogger, exceptionMappers);
         this.jsonApiErrorMapper = jsonApiErrorMapper;
     }
 
@@ -57,34 +56,26 @@ public class DefaultJsonApiExceptionHandler extends ExceptionHandlerSupport<Json
     @Override
     protected ElideResponse<?> handleRuntimeException(RuntimeException exception, JsonApiErrorContext errorContext) {
         if (exception instanceof ForbiddenAccessException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("{}", e.getLoggedMessage());
-            }
             return buildResponse(e, errorContext);
         }
 
         if (exception instanceof JsonPatchExtensionException e) {
-            log.debug("JSON API Json Patch extension exception caught", e);
             return buildResponse(e, errorContext);
         }
 
         if (exception instanceof JsonApiAtomicOperationsException e) {
-            log.debug("JSON API Atomic Operations extension exception caught", e);
             return buildResponse(e, errorContext);
         }
 
         if (exception instanceof HttpStatusException e) {
-            log.debug("Caught HTTP status exception", e);
             return buildResponse(e, errorContext);
         }
 
         if (exception instanceof ParseCancellationException e) {
-            log.debug("Parse cancellation exception uncaught by Elide (i.e. invalid URL)", e);
             return buildResponse(new InvalidURLException(e), errorContext);
         }
 
         if (exception instanceof ConstraintViolationException e) {
-            log.debug("Constraint violation exception caught", e);
             final JsonApiErrors.JsonApiErrorsBuilder errors = JsonApiErrors.builder();
             for (ConstraintViolation<?> constraintViolation : e.getConstraintViolations()) {
                 errors.error(error -> {
@@ -122,12 +113,15 @@ public class DefaultJsonApiExceptionHandler extends ExceptionHandlerSupport<Json
         }
 
         if (exception instanceof IOException) {
-            log.error("IO Exception uncaught by Elide", exception);
             return buildResponse(new TransactionException(exception), errorContext);
         }
 
         log.error("Error or exception uncaught by Elide", exception);
-        throw new RuntimeException(exception);
+        if (exception instanceof IOException e) {
+            throw new UncheckedIOException(e);
+        } else {
+            throw new RuntimeException(exception);
+        }
     }
 
     @Override
@@ -146,10 +140,6 @@ public class DefaultJsonApiExceptionHandler extends ExceptionHandlerSupport<Json
 
     @Override
     protected ElideResponse<?> buildResponse(int status, Object body) {
-        try {
-            return new ElideResponse<>(status, this.jsonApiMapper.writeJsonApiDocument(body));
-        } catch (JsonProcessingException e) {
-            return new ElideResponse<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.toString());
-        }
+        return new ElideResponse<>(status, body);
     }
 }

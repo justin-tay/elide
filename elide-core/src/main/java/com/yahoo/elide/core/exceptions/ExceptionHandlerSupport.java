@@ -14,14 +14,18 @@ import com.yahoo.elide.ElideResponse;
  * @param <C> the error context type
  */
 public abstract class ExceptionHandlerSupport<C extends ErrorContext> implements ExceptionHandler<C> {
+    protected final ExceptionLogger exceptionLogger;
     protected final ExceptionMappers exceptionMappers;
 
-    protected ExceptionHandlerSupport(ExceptionMappers exceptionMappers) {
+    protected ExceptionHandlerSupport(ExceptionLogger exceptionLogger, ExceptionMappers exceptionMappers) {
+        this.exceptionLogger = exceptionLogger;
         this.exceptionMappers = exceptionMappers;
     }
 
     @Override
     public ElideResponse<?> handleException(Throwable exception, C errorContext) {
+        exceptionLogger.log(exception);
+
         if (this.exceptionMappers != null) {
             ElideErrorResponse<?> errorResponse = this.exceptionMappers.toErrorResponse(exception, errorContext);
             if (errorResponse != null) {

@@ -9,6 +9,8 @@ import static io.restassured.RestAssured.get;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.yahoo.elide.ElideResponse;
+import com.yahoo.elide.ElideStreamingBody;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.test.DataStoreTestHarness;
 import com.yahoo.elide.core.exceptions.HttpStatus;
@@ -36,7 +38,10 @@ import org.skyscreamer.jsonassert.JSONCompareMode;
 import io.restassured.RestAssured;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Integration test initializer.  Tests are intended to run sequentially (so they don't stomp on each other's data).
@@ -205,5 +210,23 @@ public abstract class IntegrationTest {
                 }
             }
         };
+    }
+
+    protected String getBody(ElideResponse<?> response) throws JsonProcessingException {
+        if (response.getBody() == null) {
+            return null;
+        }
+        if (response.getBody() instanceof String value) {
+            return value;
+        }
+        if (response.getBody() instanceof ElideStreamingBody streamingBody) {
+            try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+                streamingBody.writeTo(output);
+                return new String(output.toByteArray(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return this.mapper.writeValueAsString(response.getBody());
     }
 }

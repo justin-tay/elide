@@ -12,6 +12,7 @@ import com.yahoo.elide.ElideResponse;
  *
  * @param <C> the error context type
  */
+@FunctionalInterface
 public interface ExceptionHandler<C extends ErrorContext> {
     /**
      * Handle the exception.

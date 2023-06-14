@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Serializer/Deserializer for JSON API.
@@ -73,6 +74,18 @@ public class JsonApiMapper {
      */
     public <T> String writeJsonApiDocument(T doc) throws JsonProcessingException {
         return mapper.writeValueAsString(doc);
+    }
+
+    /**
+     * Write json api document.
+     *
+     * @param doc the document
+     * @param outputStream the outputstream to write to
+     * @param <T> The type of document object so serialize
+     * @throws IOException the exception
+     */
+    public <T> void writeJsonApiDocument(T doc, OutputStream outputStream) throws IOException {
+        mapper.writeValue(outputStream, doc);
     }
 
     /**
