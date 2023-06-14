@@ -21,6 +21,7 @@ import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.exceptions.InvalidOperationException;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.graphql.QueryRunner;
+import com.yahoo.elide.jsonapi.JsonApiMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +49,7 @@ public class GraphQLAsyncQueryOperationTest {
         when(asyncExecutorService.getElide()).thenReturn(elide);
         when(asyncExecutorService.getRunners()).thenReturn(runners);
         when(requestScope.getApiVersion()).thenReturn("v1");
+        when(requestScope.getMapper()).thenReturn(new JsonApiMapper());
     }
 
     @Test
@@ -56,7 +58,7 @@ public class GraphQLAsyncQueryOperationTest {
         String responseBody = "{\"data\":{\"book\":{\"edges\":[{\"node\":{\"id\":\"1\",\"title\":\"Ender's Game\"}},"
                 + "{\"node\":{\"id\":\"2\",\"title\":\"Song of Ice and Fire\"}},"
                 + "{\"node\":{\"id\":\"3\",\"title\":\"For Whom the Bell Tolls\"}}]}}}";
-        ElideResponse<String> response = new ElideResponse(200, responseBody);
+        ElideResponse response = ElideResponse.status(200).body(responseBody);
         String query = "{\"query\":\"{ group { edges { node { name commonName description } } } }\",\"variables\":null}";
         String id = "edc4a871-dff2-4054-804e-d80075cf827d";
         queryObj.setId(id);
@@ -75,7 +77,7 @@ public class GraphQLAsyncQueryOperationTest {
     public void testProcessQueryGraphQlInvalidResponse() throws URISyntaxException {
         AsyncQuery queryObj = new AsyncQuery();
         String responseBody = "ResponseBody";
-        ElideResponse<String> response = new ElideResponse(200, responseBody);
+        ElideResponse response = ElideResponse.status(200).body(responseBody);
         String query = "{\"query\":\"{ group { edges { node { name commonName description } } } }\",\"variables\":null}";
         String id = "edc4a871-dff2-4054-804e-d80075cf827d";
         queryObj.setId(id);

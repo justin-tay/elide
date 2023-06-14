@@ -10,7 +10,9 @@ import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.RefreshableElide;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.jsonapi.JsonApi;
+import com.yahoo.elide.jsonapi.JsonApiBodyMapper;
 import com.yahoo.elide.spring.config.ElideConfigProperties;
+import com.yahoo.elide.spring.http.ResponseEntityConverter;
 import com.yahoo.elide.spring.security.AuthenticationUser;
 import com.yahoo.elide.utils.HeaderUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +53,7 @@ public class JsonApiController {
     private final Elide elide;
     private final ElideConfigProperties settings;
     private final HeaderUtils.HeaderProcessor headerProcessor;
+    private final ResponseEntityConverter responseEntityConverter;
 
     public static final String JSON_API_CONTENT_TYPE = JsonApi.MEDIA_TYPE;
     public static final String JSON_API_PATCH_CONTENT_TYPE = JsonApi.JsonPatch.MEDIA_TYPE;
@@ -61,6 +64,7 @@ public class JsonApiController {
         this.settings = settings;
         this.elide = refreshableElide.getElide();
         this.headerProcessor = elide.getElideSettings().getHeaderProcessor();
+        this.responseEntityConverter = new ResponseEntityConverter(new JsonApiBodyMapper(this.elide.getMapper()));
     }
 
     private <K, V> MultivaluedHashMap<K, V> convert(MultiValueMap<K, V> springMVMap) {
@@ -70,7 +74,7 @@ public class JsonApiController {
     }
 
     @GetMapping(value = "/**", produces = JsonApi.MEDIA_TYPE)
-    public Callable<ResponseEntity<String>> elideGet(@RequestHeader HttpHeaders requestHeaders,
+    public Callable<ResponseEntity<?>> elideGet(@RequestHeader HttpHeaders requestHeaders,
                                                      @RequestParam MultiValueMap<String, String> allRequestParams,
                                                      HttpServletRequest request, Authentication authentication) {
         final String apiVersion = HeaderUtils.resolveApiVersion(requestHeaders);
@@ -79,19 +83,19 @@ public class JsonApiController {
         final User user = new AuthenticationUser(authentication);
         final String baseUrl = getBaseUrlEndpoint();
 
-        return new Callable<ResponseEntity<String>>() {
+        return new Callable<ResponseEntity<?>>() {
             @Override
-            public ResponseEntity<String> call() throws Exception {
-                ElideResponse<String> response = elide.get(baseUrl, pathname,
+            public ResponseEntity<?> call() throws Exception {
+                ElideResponse<?> response = elide.get(baseUrl, pathname,
                         convert(allRequestParams), requestHeadersCleaned,
                         user, apiVersion, UUID.randomUUID());
-                return ResponseEntity.status(response.getStatus()).body(response.getBody());
+                return responseEntityConverter.convert(response);
             }
         };
     }
 
     @PostMapping(value = "/**", consumes = JsonApi.MEDIA_TYPE, produces = JsonApi.MEDIA_TYPE)
-    public Callable<ResponseEntity<String>> elidePost(@RequestHeader HttpHeaders requestHeaders,
+    public Callable<ResponseEntity<?>> elidePost(@RequestHeader HttpHeaders requestHeaders,
                                                       @RequestParam MultiValueMap<String, String> allRequestParams,
                                                       @RequestBody String body,
                                                       HttpServletRequest request, Authentication authentication) {
@@ -101,12 +105,12 @@ public class JsonApiController {
         final User user = new AuthenticationUser(authentication);
         final String baseUrl = getBaseUrlEndpoint();
 
-        return new Callable<ResponseEntity<String>>() {
+        return new Callable<ResponseEntity<?>>() {
             @Override
-            public ResponseEntity<String> call() throws Exception {
-                ElideResponse<String> response = elide.post(baseUrl, pathname, body, convert(allRequestParams),
+            public ResponseEntity<?> call() throws Exception {
+                ElideResponse<?> response = elide.post(baseUrl, pathname, body, convert(allRequestParams),
                         requestHeadersCleaned, user, apiVersion, UUID.randomUUID());
-                return ResponseEntity.status(response.getStatus()).body(response.getBody());
+                return responseEntityConverter.convert(response);
             }
         };
     }
@@ -116,7 +120,7 @@ public class JsonApiController {
             consumes = { JsonApi.MEDIA_TYPE, JsonApi.JsonPatch.MEDIA_TYPE },
             produces = JsonApi.MEDIA_TYPE
     )
-    public Callable<ResponseEntity<String>> elidePatch(@RequestHeader HttpHeaders requestHeaders,
+    public Callable<ResponseEntity<?>> elidePatch(@RequestHeader HttpHeaders requestHeaders,
                                                        @RequestParam MultiValueMap<String, String> allRequestParams,
                                                        @RequestBody String body,
                                                        HttpServletRequest request, Authentication authentication) {
@@ -126,20 +130,20 @@ public class JsonApiController {
         final User user = new AuthenticationUser(authentication);
         final String baseUrl = getBaseUrlEndpoint();
 
-        return new Callable<ResponseEntity<String>>() {
+        return new Callable<ResponseEntity<?>>() {
             @Override
-            public ResponseEntity<String> call() throws Exception {
-                ElideResponse<String> response = elide
+            public ResponseEntity<?> call() throws Exception {
+                ElideResponse<?> response = elide
                         .patch(baseUrl, request.getContentType(), request.getContentType(), pathname, body,
                                convert(allRequestParams), requestHeadersCleaned, user, apiVersion,
                                UUID.randomUUID());
-                return ResponseEntity.status(response.getStatus()).body(response.getBody());
+                return responseEntityConverter.convert(response);
             }
         };
     }
 
     @DeleteMapping(value = "/**", produces = JsonApi.MEDIA_TYPE)
-    public Callable<ResponseEntity<String>> elideDelete(@RequestHeader HttpHeaders requestHeaders,
+    public Callable<ResponseEntity<?>> elideDelete(@RequestHeader HttpHeaders requestHeaders,
                                                         @RequestParam MultiValueMap<String, String> allRequestParams,
                                                         HttpServletRequest request,
                                                         Authentication authentication) {
@@ -149,19 +153,19 @@ public class JsonApiController {
         final User user = new AuthenticationUser(authentication);
         final String baseUrl = getBaseUrlEndpoint();
 
-        return new Callable<ResponseEntity<String>>() {
+        return new Callable<ResponseEntity<?>>() {
             @Override
-            public ResponseEntity<String> call() throws Exception {
-                ElideResponse<String> response = elide.delete(baseUrl, pathname, null,
+            public ResponseEntity<?> call() throws Exception {
+                ElideResponse<?> response = elide.delete(baseUrl, pathname, null,
                         convert(allRequestParams), requestHeadersCleaned,
                         user, apiVersion, UUID.randomUUID());
-                return ResponseEntity.status(response.getStatus()).body(response.getBody());
+                return responseEntityConverter.convert(response);
             }
         };
     }
 
     @DeleteMapping(value = "/**", consumes = JsonApi.MEDIA_TYPE)
-    public Callable<ResponseEntity<String>> elideDeleteRelation(
+    public Callable<ResponseEntity<?>> elideDeleteRelation(
             @RequestHeader HttpHeaders requestHeaders,
             @RequestParam MultiValueMap<String, String> allRequestParams,
             @RequestBody String body,
@@ -173,13 +177,13 @@ public class JsonApiController {
         final User user = new AuthenticationUser(authentication);
         final String baseUrl = getBaseUrlEndpoint();
 
-        return new Callable<ResponseEntity<String>>() {
+        return new Callable<ResponseEntity<?>>() {
             @Override
-            public ResponseEntity<String> call() throws Exception {
-                ElideResponse<String> response = elide
+            public ResponseEntity<?> call() throws Exception {
+                ElideResponse<?> response = elide
                         .delete(baseUrl, pathname, body, convert(allRequestParams),
                                 requestHeadersCleaned, user, apiVersion, UUID.randomUUID());
-                return ResponseEntity.status(response.getStatus()).body(response.getBody());
+                return responseEntityConverter.convert(response);
             }
         };
     }
@@ -189,7 +193,7 @@ public class JsonApiController {
             consumes = JsonApi.AtomicOperations.MEDIA_TYPE,
             produces = JsonApi.AtomicOperations.MEDIA_TYPE
     )
-    public Callable<ResponseEntity<String>> elideOperations(@RequestHeader HttpHeaders requestHeaders,
+    public Callable<ResponseEntity<?>> elideOperations(@RequestHeader HttpHeaders requestHeaders,
                                                        @RequestParam MultiValueMap<String, String> allRequestParams,
                                                        @RequestBody String body,
                                                        HttpServletRequest request, Authentication authentication) {
@@ -199,14 +203,14 @@ public class JsonApiController {
         final User user = new AuthenticationUser(authentication);
         final String baseUrl = getBaseUrlEndpoint();
 
-        return new Callable<ResponseEntity<String>>() {
+        return new Callable<ResponseEntity<?>>() {
             @Override
-            public ResponseEntity<String> call() throws Exception {
-                ElideResponse<String> response = elide
+            public ResponseEntity<?> call() throws Exception {
+                ElideResponse<?> response = elide
                         .operations(baseUrl, request.getContentType(), request.getContentType(), pathname, body,
                                convert(allRequestParams), requestHeadersCleaned, user, apiVersion,
                                UUID.randomUUID());
-                return ResponseEntity.status(response.getStatus()).body(response.getBody());
+                return responseEntityConverter.convert(response);
             }
         };
     }

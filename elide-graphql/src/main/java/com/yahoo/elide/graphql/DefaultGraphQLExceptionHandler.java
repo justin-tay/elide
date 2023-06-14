@@ -10,16 +10,16 @@ import com.yahoo.elide.ElideErrorResponse;
 import com.yahoo.elide.ElideErrors;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.core.exceptions.ExceptionHandlerSupport;
+import com.yahoo.elide.core.exceptions.ExceptionLogger;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
-import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.HttpStatusException;
+import com.yahoo.elide.core.exceptions.InvalidApiVersionException;
 import com.yahoo.elide.core.exceptions.InvalidEntityBodyException;
 import com.yahoo.elide.core.exceptions.TransactionException;
 import com.yahoo.elide.graphql.models.GraphQLErrors;
-
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import graphql.GraphQLException;
 
@@ -29,6 +29,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 /**
  * Default {@link GraphQLExceptionHandler}.
@@ -36,70 +37,37 @@ import java.io.IOException;
 @Slf4j
 public class DefaultGraphQLExceptionHandler extends ExceptionHandlerSupport<GraphQLErrorContext>
         implements GraphQLExceptionHandler {
-    protected ObjectMapper objectMapper;
     protected GraphQLErrorMapper graphqlErrorMapper;
 
-    public DefaultGraphQLExceptionHandler(ExceptionMappers exceptionMappers, ObjectMapper objectMapper,
+    public DefaultGraphQLExceptionHandler(ExceptionLogger exceptionLogger, ExceptionMappers exceptionMappers,
             GraphQLErrorMapper graphqlErrorMapper) {
-        super(exceptionMappers);
-        this.objectMapper = objectMapper;
+        super(exceptionLogger, exceptionMappers);
         this.graphqlErrorMapper = graphqlErrorMapper;
-    }
-
-    @Override
-    public ElideResponse<?> handleException(Throwable exception, GraphQLErrorContext errorContext) {
-        return super.handleException(exception, errorContext);
     }
 
     @Override
     protected ElideResponse<?> handleRuntimeException(RuntimeException exception, GraphQLErrorContext errorContext) {
         if (exception instanceof GraphQLException e) {
-            log.debug("GraphQLException", e);
             String body = e.getMessage();
             return ElideResponse.status(HttpStatus.SC_OK).body(body);
         }
 
-        if (exception instanceof HttpStatusException e) {
-            if (e instanceof ForbiddenAccessException forbiddenAccessException) {
-                if (log.isDebugEnabled()) {
-                    log.debug("{}", forbiddenAccessException.getLoggedMessage());
-                }
-            } else {
-                log.debug("Caught HTTP status exception {}", e.getStatus(), e);
+        if (exception instanceof InvalidEntityBodyException e) {
+            if (e.getCause() instanceof JsonParseException) {
+                return buildResponse(e, errorContext);
             }
+            return buildResponse(HttpStatus.SC_OK, e, errorContext);
+        }
 
-            return buildResponse(new HttpStatusException(200, e.getMessage()) {
-                @Override
-                public int getStatus() {
-                    return 200;
-                }
+        if (exception instanceof InvalidApiVersionException e) {
+            return buildResponse(e, errorContext);
+        }
 
-                @Override
-                public ElideErrorResponse<?> getErrorResponse() {
-                    ElideErrorResponse<?> r = e.getErrorResponse();
-                    return ElideErrorResponse.status(getStatus()).body(r.getBody());
-                }
-
-                @Override
-                public ElideErrorResponse<?> getVerboseErrorResponse() {
-                    ElideErrorResponse<?> r = e.getVerboseErrorResponse();
-                    return ElideErrorResponse.status(getStatus()).body(r.getBody());
-                }
-
-                @Override
-                public String getVerboseMessage() {
-                    return e.getVerboseMessage();
-                }
-
-                @Override
-                public String toString() {
-                    return e.toString();
-                }
-            }, errorContext);
+        if (exception instanceof HttpStatusException e) {
+            return buildResponse(HttpStatus.SC_OK, e, errorContext);
         }
 
         if (exception instanceof ConstraintViolationException e) {
-            log.debug("Constraint violation exception caught", e);
             final GraphQLErrors.GraphQLErrorsBuilder errors = GraphQLErrors.builder();
             for (ConstraintViolation<?> constraintViolation : e.getConstraintViolations()) {
                 errors.error(error -> {
@@ -118,23 +86,24 @@ public class DefaultGraphQLExceptionHandler extends ExceptionHandlerSupport<Grap
 
         log.error("Error or exception uncaught by Elide", exception);
         throw exception;
-
     }
 
     @Override
     protected ElideResponse<?> handleNonRuntimeException(Exception exception, GraphQLErrorContext errorContext) {
         if (exception instanceof JsonProcessingException) {
-            log.debug("Invalid json body provided to GraphQL", exception);
             return buildResponse(new InvalidEntityBodyException(errorContext.getGraphQLDocument()), errorContext);
         }
 
         if (exception instanceof IOException) {
-            log.error("Uncaught IO Exception by Elide in GraphQL", exception);
             return buildResponse(new TransactionException(exception), errorContext);
         }
 
         log.error("Error or exception uncaught by Elide", exception);
-        throw new RuntimeException(exception);
+        if (exception instanceof IOException e) {
+            throw new UncheckedIOException(e);
+        } else {
+            throw new RuntimeException(exception);
+        }
     }
 
     @Override
@@ -153,10 +122,14 @@ public class DefaultGraphQLExceptionHandler extends ExceptionHandlerSupport<Grap
 
     @Override
     protected ElideResponse<?> buildResponse(int status, Object body) {
-        try {
-            return new ElideResponse<>(status, this.objectMapper.writeValueAsString(body));
-        } catch (JsonProcessingException e) {
-            return new ElideResponse<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.toString());
-        }
+        return new ElideResponse<>(status, body);
+    }
+
+    /**
+     * GraphQL returns 200 instead of 4xx for errors.
+     */
+    protected ElideResponse<?> buildResponse(int status, HttpStatusException exception,
+            GraphQLErrorContext errorContext) {
+        return ElideResponse.status(status).body(super.buildResponse(exception, errorContext).getBody());
     }
 }

@@ -35,6 +35,7 @@ import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.ElideSettings;
 import com.yahoo.elide.ElideSettingsBuilder;
+import com.yahoo.elide.ElideStreamingBody;
 import com.yahoo.elide.core.PersistentResource;
 import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.TransactionRegistry;
@@ -54,6 +55,9 @@ import com.yahoo.elide.core.security.TestUser;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.jsonapi.JsonApi;
+import com.yahoo.elide.jsonapi.JsonApiMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -62,6 +66,10 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -76,6 +84,7 @@ public class LifeCycleTest {
     private final String baseUrl = "http://localhost:8080/api/v1";
     private static final AuditLogger MOCK_AUDIT_LOGGER = mock(AuditLogger.class);
     private EntityDictionary dictionary;
+    private ObjectMapper mapper = new JsonApiMapper().getObjectMapper();
 
     LifeCycleTest() throws Exception {
         dictionary = TestDictionary.getTestDictionary();
@@ -98,9 +107,10 @@ public class LifeCycleTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(ErrorTestModel.class)), any())).thenReturn(mockModel);
 
-        ElideResponse<String> response = elide.post(baseUrl, "/errorTestModel", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.post(baseUrl, "/errorTestModel", body, null, NO_VERSION);
+        String responseBody = getBody(response);
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
-        assertEquals("{\"errors\":[{\"detail\":\"Invalid\"}]}", response.getBody());
+        assertEquals("{\"errors\":[{\"detail\":\"Invalid\"}]}", responseBody);
     }
 
     @Test
@@ -116,7 +126,7 @@ public class LifeCycleTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
-        ElideResponse<String> response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_CREATED, response.getStatus());
 
         verify(mockModel, times(1)).classCallback(eq(CREATE), eq(PRESECURITY));
@@ -163,7 +173,7 @@ public class LifeCycleTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(LegacyTestModel.class)), any())).thenReturn(mockModel);
 
-        ElideResponse<String> response = elide.post(baseUrl, "/legacyTestModel", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.post(baseUrl, "/legacyTestModel", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_CREATED, response.getStatus());
 
         verify(mockModel, times(1)).classCreatePreCommitAllUpdates();
@@ -207,11 +217,12 @@ public class LifeCycleTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
-        ElideResponse<String> response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.post(baseUrl, "/testModel", body, null, NO_VERSION);
+        String responseBody = getBody(response);
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"detail\":\"Unexpected exception caught\"}]}",
-                response.getBody());
+                responseBody);
 
         verify(mockModel, never()).classCallback(any(), any());
         verify(mockModel, never()).attributeCallback(any(), any(), any());
@@ -238,7 +249,7 @@ public class LifeCycleTest {
         when(tx.loadObject(isA(EntityProjection.class), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
-        ElideResponse<String> response = elide.get(baseUrl, "/testModel/1", queryParams, null, NO_VERSION);
+        ElideResponse<?> response = elide.get(baseUrl, "/testModel/1", queryParams, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         verify(mockModel, never()).classAllFieldsCallback(any(), any());
@@ -273,7 +284,7 @@ public class LifeCycleTest {
         when(tx.loadObject(isA(EntityProjection.class), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
-        ElideResponse<String> response = elide.get(baseUrl, "/legacyTestModel/1", queryParams, null, NO_VERSION);
+        ElideResponse<?> response = elide.get(baseUrl, "/legacyTestModel/1", queryParams, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         verify(mockModel, never()).classMultiple();
@@ -316,7 +327,7 @@ public class LifeCycleTest {
 
         MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
         queryParams.putSingle("fields[testModel]", "field");
-        ElideResponse<String> response = elide.get(baseUrl, "/testModel/1", queryParams, null, NO_VERSION);
+        ElideResponse<?> response = elide.get(baseUrl, "/testModel/1", queryParams, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         verify(mockModel, never()).classAllFieldsCallback(any(), any());
@@ -349,10 +360,11 @@ public class LifeCycleTest {
         queryParams.putSingle("INCLUDE", "field"); // Valid Key is include
         queryParams.putSingle("fields.testModel", "field"); // fields is not followed by [
         queryParams.putSingle("page.size", "10"); // page is not followed by [
-        ElideResponse<String> response = elide.get(baseUrl, "/testModel/1", queryParams, null, NO_VERSION);
+        ElideResponse<?> response = elide.get(baseUrl, "/testModel/1", queryParams, null, NO_VERSION);
+        String responseBody = getBody(response);
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
         assertEquals("{\"errors\":[{\"detail\":\"Found undefined keys in request: fields.testModel, ?filter, Sort, page.size, INCLUDE\"}]}",
-                        response.getBody());
+                responseBody);
     }
 
     @Test
@@ -370,7 +382,7 @@ public class LifeCycleTest {
         when(tx.loadObject(isA(EntityProjection.class), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         MultivaluedMap<String, String> queryParams = new MultivaluedHashMap<>();
-        ElideResponse<String> response = elide.get(baseUrl, "/testModel/1/relationships/models", queryParams, null, NO_VERSION);
+        ElideResponse<?> response = elide.get(baseUrl, "/testModel/1/relationships/models", queryParams, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         verify(mockModel, never()).classAllFieldsCallback(any(), any());
@@ -408,7 +420,7 @@ public class LifeCycleTest {
         when(tx.loadObject(isA(EntityProjection.class), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         String contentType = JSONAPI_CONTENT_TYPE;
-        ElideResponse<String> response = elide.patch(baseUrl, contentType, contentType, "/testModel/1", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.patch(baseUrl, contentType, contentType, "/testModel/1", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatus());
 
         verify(mockModel, never()).classAllFieldsCallback(any(), any());
@@ -465,7 +477,7 @@ public class LifeCycleTest {
         when(tx.getToManyRelation(any(), any(), isA(Relationship.class), isA(RequestScope.class))).thenReturn(iterable);
 
         String contentType = JSONAPI_CONTENT_TYPE;
-        ElideResponse<String> response = elide.patch(baseUrl, contentType, contentType, "/testModel/1", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.patch(baseUrl, contentType, contentType, "/testModel/1", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatus());
 
         verify(parent, times(1)).relationCallback(eq(UPDATE), eq(POSTCOMMIT), notNull());
@@ -490,7 +502,7 @@ public class LifeCycleTest {
         when(tx.loadObject(isA(EntityProjection.class), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         String contentType = JSONAPI_CONTENT_TYPE;
-        ElideResponse<String> response = elide.patch(baseUrl, contentType, contentType, "/legacyTestModel/1", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.patch(baseUrl, contentType, contentType, "/legacyTestModel/1", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatus());
 
         verify(mockModel, never()).classCreatePreCommitAllUpdates();
@@ -534,7 +546,7 @@ public class LifeCycleTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.loadObject(isA(EntityProjection.class), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
-        ElideResponse<String> response = elide.delete(baseUrl, "/testModel/1", "", null, NO_VERSION);
+        ElideResponse<?> response = elide.delete(baseUrl, "/testModel/1", "", null, NO_VERSION);
         assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatus());
 
         verify(mockModel, never()).classAllFieldsCallback(any(), any());
@@ -574,7 +586,7 @@ public class LifeCycleTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.loadObject(isA(EntityProjection.class), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
-        ElideResponse<String> response = elide.delete(baseUrl, "/legacyTestModel/1", "", null, NO_VERSION);
+        ElideResponse<?> response = elide.delete(baseUrl, "/legacyTestModel/1", "", null, NO_VERSION);
         assertEquals(HttpStatus.SC_NO_CONTENT, response.getStatus());
 
         verify(mockModel, never()).classUpdatePostCommit();
@@ -621,7 +633,7 @@ public class LifeCycleTest {
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
         String contentType = JSONAPI_CONTENT_TYPE_WITH_JSON_PATCH_EXTENSION;
-        ElideResponse<String> response =
+        ElideResponse<?> response =
                 elide.patch(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
@@ -671,7 +683,7 @@ public class LifeCycleTest {
         when(tx.createNewObject(eq(ClassType.of(LegacyTestModel.class)), any())).thenReturn(mockModel);
 
         String contentType = JSONAPI_CONTENT_TYPE_WITH_JSON_PATCH_EXTENSION;
-        ElideResponse<String> response =
+        ElideResponse<?> response =
                 elide.patch(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
@@ -718,11 +730,12 @@ public class LifeCycleTest {
         when(tx.createNewObject(ClassType.of(FieldTestModel.class), scope)).thenReturn(mockModel);
 
         String contentType = JSONAPI_CONTENT_TYPE_WITH_JSON_PATCH_EXTENSION;
-        ElideResponse<String> response = elide.patch(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.patch(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        String responseBody = getBody(response);
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
         assertEquals(
                 "[{\"errors\":[{\"detail\":\"Bad Request Body&#39;Patch extension requires all objects to have an assigned ID (temporary or permanent) when assigning relationships.&#39;\",\"status\":\"400\"}]}]",
-                response.getBody());
+                responseBody);
 
         verify(mockModel, never()).classCallback(eq(CREATE), eq(PRESECURITY));
         verify(mockModel, never()).classCallback(eq(CREATE), eq(PREFLUSH));
@@ -771,9 +784,10 @@ public class LifeCycleTest {
         when(tx.loadObject(any(), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         String contentType = JSONAPI_CONTENT_TYPE_WITH_JSON_PATCH_EXTENSION;
-        ElideResponse<String> response = elide.patch(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.patch(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        String responseBody = getBody(response);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
-        assertEquals("[{\"data\":null}]", response.getBody());
+        assertEquals("[{\"data\":null}]", responseBody);
 
         verify(mockModel, times(1)).classCallback(eq(UPDATE), eq(PRESECURITY));
         verify(mockModel, times(1)).classCallback(eq(UPDATE), eq(PREFLUSH));
@@ -822,7 +836,7 @@ public class LifeCycleTest {
         when(tx.loadObject(any(), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         String contentType = JSONAPI_CONTENT_TYPE_WITH_JSON_PATCH_EXTENSION;
-        ElideResponse<String> response = elide.patch(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.patch(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         verify(mockModel, never()).classAllFieldsCallback(any(), any());
@@ -865,7 +879,7 @@ public class LifeCycleTest {
         doThrow(ConstraintViolationException.class).when(tx).flush(any());
 
         String contentType = JSONAPI_CONTENT_TYPE;
-        ElideResponse<String> response = elide.patch(baseUrl, contentType, contentType, "/testModel/1", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.patch(baseUrl, contentType, contentType, "/testModel/1", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
         assertEquals("{\"errors\":[{\"detail\":\"Constraint violation\"}]}", response.getBody());
 
@@ -924,7 +938,7 @@ public class LifeCycleTest {
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
         String contentType = JsonApi.AtomicOperations.MEDIA_TYPE;
-        ElideResponse<String> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         verify(mockModel, times(1)).classCallback(eq(CREATE), eq(PRESECURITY));
@@ -984,7 +998,7 @@ public class LifeCycleTest {
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
         String contentType = JsonApi.AtomicOperations.MEDIA_TYPE;
-        ElideResponse<String> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         verify(mockModel, times(1)).classCallback(eq(CREATE), eq(PRESECURITY));
@@ -1046,11 +1060,12 @@ public class LifeCycleTest {
         when(tx.createNewObject(ClassType.of(FieldTestModel.class), scope)).thenReturn(mockModel);
 
         String contentType = JsonApi.AtomicOperations.MEDIA_TYPE;
-        ElideResponse<String> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        String responseBody = getBody(response);
         assertEquals(HttpStatus.SC_BAD_REQUEST, response.getStatus());
         String expected = """
                 [{"errors":[{"detail":"Bad Request Body&#39;Atomic Operations extension requires all objects to have an assigned ID (temporary or permanent) when assigning relationships.&#39;","status":"400"}]}]""";
-        assertEquals(expected, response.getBody());
+        assertEquals(expected, responseBody);
 
         verify(mockModel, never()).classCallback(eq(CREATE), eq(PRESECURITY));
         verify(mockModel, never()).classCallback(eq(CREATE), eq(PREFLUSH));
@@ -1112,12 +1127,13 @@ public class LifeCycleTest {
         when(tx.loadObject(any(), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         String contentType = JsonApi.AtomicOperations.MEDIA_TYPE;
-        ElideResponse<String> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         String expected = """
                 {"atomic:results":[{"data":null}]}""";
-        assertEquals(expected, response.getBody());
+        String responseBody = getBody(response);
+        assertEquals(expected, responseBody);
 
         verify(mockModel, times(1)).classCallback(eq(UPDATE), eq(PRESECURITY));
         verify(mockModel, times(1)).classCallback(eq(UPDATE), eq(PREFLUSH));
@@ -1178,12 +1194,13 @@ public class LifeCycleTest {
         when(tx.loadObject(any(), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         String contentType = JsonApi.AtomicOperations.MEDIA_TYPE;
-        ElideResponse<String> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         String expected = """
                 {"atomic:results":[{"data":null}]}""";
-        assertEquals(expected, response.getBody());
+        String responseBody = getBody(response);
+        assertEquals(expected, responseBody);
 
         verify(mockModel, times(1)).classCallback(eq(UPDATE), eq(PRESECURITY));
         verify(mockModel, times(1)).classCallback(eq(UPDATE), eq(PREFLUSH));
@@ -1241,7 +1258,7 @@ public class LifeCycleTest {
         when(tx.loadObject(any(), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         String contentType = JsonApi.AtomicOperations.MEDIA_TYPE;
-        ElideResponse<String> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         verify(mockModel, never()).classAllFieldsCallback(any(), any());
@@ -1293,7 +1310,7 @@ public class LifeCycleTest {
         when(tx.loadObject(any(), any(), isA(RequestScope.class))).thenReturn(mockModel);
 
         String contentType = JsonApi.AtomicOperations.MEDIA_TYPE;
-        ElideResponse<String> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
+        ElideResponse<?> response = elide.operations(baseUrl, contentType, contentType, "/", body, null, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
 
         verify(mockModel, never()).classAllFieldsCallback(any(), any());
@@ -1786,8 +1803,25 @@ public class LifeCycleTest {
 
     private RequestScope buildRequestScope(EntityDictionary dict, DataStoreTransaction tx) {
         User user = new TestUser("1");
-
         return new RequestScope(null, null, NO_VERSION, null, tx, user, null, null, UUID.randomUUID(),
                 getElideSettings(null, dict, MOCK_AUDIT_LOGGER));
+    }
+
+    protected String getBody(ElideResponse<?> response) throws JsonProcessingException {
+        if (response.getBody() == null) {
+            return null;
+        }
+        if (response.getBody() instanceof String value) {
+            return value;
+        }
+        if (response.getBody() instanceof ElideStreamingBody streamingBody) {
+            try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+                streamingBody.writeTo(output);
+                return new String(output.toByteArray(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return this.mapper.writeValueAsString(response.getBody());
     }
 }

@@ -1124,7 +1124,7 @@ public class TableExportIT extends AsyncApiIT {
     @Test
     public void tableExportModelAdminReadPermissions() throws IOException {
 
-        ElideResponse<String> response = null;
+        ElideResponse<?> response = null;
         String id = "edc4a871-dff2-4054-804e-d80075c08959";
         String query = "test-query";
 

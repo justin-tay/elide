@@ -4,7 +4,6 @@
  * See LICENSE file in project root for terms.
  */
 package com.yahoo.elide.async.operation;
-
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.async.models.AsyncApi;
@@ -12,6 +11,8 @@ import com.yahoo.elide.async.models.AsyncQuery;
 import com.yahoo.elide.async.service.AsyncExecutorService;
 import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.security.User;
+import com.yahoo.elide.jsonapi.JsonApiMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -44,11 +45,24 @@ public class JsonApiAsyncQueryOperation extends AsyncQueryOperation {
         log.debug("Extracted QueryParams from AsyncQuery Object: {}", queryParams);
 
         //TODO - we need to add the baseUrlEndpoint to the queryObject.
-        ElideResponse<String> response = elide.get("", getPath(uri), queryParams, scope.getRequestHeaders(), user,
+        ElideResponse<?> response = elide.get("", getPath(uri), queryParams, scope.getRequestHeaders(), user,
                 apiVersion, requestUUID);
         log.debug("JSONAPI_V1_0 getResponseCode: {}, JSONAPI_V1_0 getBody: {}",
                 response.getStatus(), response.getBody());
-        return response;
+
+        JsonApiMapper jsonApiMapper = scope.getMapper();
+        try {
+            String body = null;
+            if (response.getBody() instanceof String value) {
+                body = value;
+            } else if (response.getBody() != null) {
+                body = jsonApiMapper.writeJsonApiDocument(response.getBody());
+            }
+            return ElideResponse.status(response.getStatus())
+                    .body(body);
+        } catch (JsonProcessingException e) {
+            return ElideResponse.status(500).body(e.toString());
+        }
     }
 
     /**

@@ -15,6 +15,7 @@ import com.yahoo.elide.core.dictionary.Injector;
 import com.yahoo.elide.core.exceptions.BadRequestException;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.exceptions.HttpStatus;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.core.utils.ClassScanner;
 import com.yahoo.elide.core.utils.coerce.CoerceUtil;
@@ -126,8 +127,8 @@ public class Elide {
         this.exceptionMappers = elideSettings.getExceptionMappers();
         this.transactionRegistry = transactionRegistry;
 
-        this.jsonApiExceptionHandler = new DefaultJsonApiExceptionHandler(this.exceptionMappers, this.mapper,
-                new DefaultJsonApiErrorMapper());
+        this.jsonApiExceptionHandler = new DefaultJsonApiExceptionHandler(new Slf4jExceptionLogger(),
+                this.exceptionMappers, new DefaultJsonApiErrorMapper());
 
         if (doScans) {
             doScans();
@@ -210,7 +211,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse<String> get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
+    public ElideResponse<?> get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
                              User opaqueUser, String apiVersion) {
         return get(baseUrlEndPoint, path, queryParams, opaqueUser, apiVersion, UUID.randomUUID());
     }
@@ -226,7 +227,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse<String> get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
+    public ElideResponse<?> get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
                              User opaqueUser, String apiVersion, UUID requestId) {
         return get(baseUrlEndPoint, path, queryParams, Collections.emptyMap(), opaqueUser, apiVersion, requestId);
     }
@@ -243,7 +244,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse<String> get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
+    public ElideResponse<?> get(String baseUrlEndPoint, String path, MultivaluedMap<String, String> queryParams,
                              Map<String, List<String>> requestHeaders, User opaqueUser, String apiVersion,
                              UUID requestId) {
         if (elideSettings.isStrictQueryParams()) {
@@ -252,9 +253,7 @@ public class Elide {
             } catch (BadRequestException e) {
                 JsonApiErrorContext errorContext = JsonApiErrorContext.builder().mapper(this.mapper).verbose(false)
                         .build();
-                ElideResponse<?> errorResponse = jsonApiExceptionHandler.handleException(e, errorContext);
-                return toResponse(errorResponse.getStatus(), errorResponse.getBody());
-
+                return jsonApiExceptionHandler.handleException(e, errorContext);
             }
         }
         return handleRequest(true, opaqueUser, dataStore::beginReadTransaction, requestId, (tx, user) -> {
@@ -278,7 +277,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse<String> post(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<?> post(String baseUrlEndPoint, String path, String jsonApiDocument,
                               User opaqueUser, String apiVersion) {
         return post(baseUrlEndPoint, path, jsonApiDocument, null, opaqueUser, apiVersion, UUID.randomUUID());
     }
@@ -295,7 +294,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse<String> post(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<?> post(String baseUrlEndPoint, String path, String jsonApiDocument,
                               MultivaluedMap<String, String> queryParams,
                               User opaqueUser, String apiVersion, UUID requestId) {
         return post(baseUrlEndPoint, path, jsonApiDocument, queryParams, Collections.emptyMap(),
@@ -315,7 +314,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse<String> post(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<?> post(String baseUrlEndPoint, String path, String jsonApiDocument,
                               MultivaluedMap<String, String> queryParams, Map<String, List<String>> requestHeaders,
                               User opaqueUser, String apiVersion, UUID requestId) {
         return handleRequest(false, opaqueUser, dataStore::beginTransaction, requestId, (tx, user) -> {
@@ -341,7 +340,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse<String> patch(String baseUrlEndPoint, String contentType, String accept,
+    public ElideResponse<?> patch(String baseUrlEndPoint, String contentType, String accept,
                                String path, String jsonApiDocument,
                                User opaqueUser, String apiVersion) {
         return patch(baseUrlEndPoint, contentType, accept, path, jsonApiDocument,
@@ -362,7 +361,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse<String> patch(String baseUrlEndPoint, String contentType, String accept,
+    public ElideResponse<?> patch(String baseUrlEndPoint, String contentType, String accept,
                                String path, String jsonApiDocument, MultivaluedMap<String, String> queryParams,
                                User opaqueUser, String apiVersion, UUID requestId) {
 
@@ -385,7 +384,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse<String> patch(String baseUrlEndPoint, String contentType, String accept,
+    public ElideResponse<?> patch(String baseUrlEndPoint, String contentType, String accept,
                                String path, String jsonApiDocument, MultivaluedMap<String, String> queryParams,
                                Map<String, List<String>> requestHeaders, User opaqueUser,
                                String apiVersion, UUID requestId) {
@@ -429,7 +428,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse<String> delete(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<?> delete(String baseUrlEndPoint, String path, String jsonApiDocument,
                                 User opaqueUser, String apiVersion) {
         return delete(baseUrlEndPoint, path, jsonApiDocument, null, opaqueUser, apiVersion, UUID.randomUUID());
     }
@@ -446,7 +445,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse<String> delete(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<?> delete(String baseUrlEndPoint, String path, String jsonApiDocument,
                                 MultivaluedMap<String, String> queryParams,
                                 User opaqueUser, String apiVersion, UUID requestId) {
         return delete(baseUrlEndPoint, path, jsonApiDocument, queryParams, Collections.emptyMap(),
@@ -466,7 +465,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse<String> delete(String baseUrlEndPoint, String path, String jsonApiDocument,
+    public ElideResponse<?> delete(String baseUrlEndPoint, String path, String jsonApiDocument,
                                 MultivaluedMap<String, String> queryParams,
                                 Map<String, List<String>> requestHeaders,
                                 User opaqueUser, String apiVersion, UUID requestId) {
@@ -495,7 +494,7 @@ public class Elide {
      * @param apiVersion the API version
      * @return Elide response object
      */
-    public ElideResponse<String> operations(String baseUrlEndPoint, String contentType, String accept,
+    public ElideResponse<?> operations(String baseUrlEndPoint, String contentType, String accept,
                                String path, String jsonApiDocument,
                                User opaqueUser, String apiVersion) {
         return operations(baseUrlEndPoint, contentType, accept, path, jsonApiDocument,
@@ -516,7 +515,7 @@ public class Elide {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse<String> operations(String baseUrlEndPoint, String contentType, String accept, String path,
+    public ElideResponse<?> operations(String baseUrlEndPoint, String contentType, String accept, String path,
             String jsonApiDocument, MultivaluedMap<String, String> queryParams, User opaqueUser, String apiVersion,
             UUID requestId) {
         return operations(baseUrlEndPoint, contentType, accept, path, jsonApiDocument, queryParams, null, opaqueUser,
@@ -538,7 +537,7 @@ public class Elide {
      * @return Elide response object
      * @return
      */
-    public ElideResponse<String> operations(String baseUrlEndPoint, String contentType, String accept, String path,
+    public ElideResponse<?> operations(String baseUrlEndPoint, String contentType, String accept, String path,
             String jsonApiDocument, MultivaluedMap<String, String> queryParams,
             Map<String, List<String>> requestHeaders, User opaqueUser, String apiVersion, UUID requestId) {
 
@@ -584,7 +583,7 @@ public class Elide {
      * @param <T> The response type (JsonNode or JsonApiDocument)
      * @return the response
      */
-    protected <T> ElideResponse<String> handleRequest(boolean isReadOnly, User user,
+    protected <T> ElideResponse<?> handleRequest(boolean isReadOnly, User user,
                                           Supplier<DataStoreTransaction> transaction, UUID requestId,
                                           Handler<DataStoreTransaction, User, HandlerResult> handler) {
         JsonApiErrorContext errorContext = JsonApiErrorContext.builder().mapper(this.mapper).verbose(false).build();
@@ -618,8 +617,7 @@ public class Elide {
 
             return response;
         } catch (Throwable e) {
-            ElideResponse<?> errorResponse = jsonApiExceptionHandler.handleException(e, errorContext);
-            return toResponse(errorResponse.getStatus(), errorResponse.getBody());
+            return jsonApiExceptionHandler.handleException(e, errorContext);
         } finally {
             transactionRegistry.removeRunningTransaction(requestId);
             auditLogger.clear();
@@ -643,6 +641,7 @@ public class Elide {
     protected <T> ElideResponse<String> buildResponse(Pair<Integer, T> response) {
         T responseNode = response.getRight();
         Integer responseCode = response.getLeft();
+        // Needs to be mapped here in case of lazy relationships
         return toResponse(responseCode, responseNode);
     }
 

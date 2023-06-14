@@ -473,7 +473,7 @@ public class AsyncIT extends AsyncApiIT {
     @Test
     public void asyncQueryModelAdminReadPermissions() throws IOException {
 
-        ElideResponse<String> response = null;
+        ElideResponse<?> response = null;
         String id = "edc4a871-dff2-4054-804e-d80075c08959";
         String query = "test-query";
 

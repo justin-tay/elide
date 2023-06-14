@@ -106,11 +106,13 @@ public class QueryRunnerTest extends GraphQLTest {
         when(tx.createNewObject(eq(ClassType.of(Book.class)), any())).thenReturn(mockModel);
         doThrow(e).when(tx).preCommit(any());
 
-        ElideResponse<String> response = queryRunner.run("", body, null);
+        ElideResponse<?> response = queryRunner.run("", body, null);
         SimpleModule module = new SimpleModule("GraphQLDeserializer", Version.unknownVersion());
         module.addDeserializer(GraphQLError.class, new GraphQLErrorDeserializer());
         elide.getMapper().getObjectMapper().registerModule(module);
-        GraphQLErrors errorObjects = elide.getMapper().getObjectMapper().readValue(response.getBody(), GraphQLErrors.class);
+        String responseBody = elide.getMapper().getObjectMapper().writeValueAsString(response.getBody());
+
+        GraphQLErrors errorObjects = elide.getMapper().getObjectMapper().readValue(responseBody, GraphQLErrors.class);
         assertEquals(3, errorObjects.getErrors().size());
         for (GraphQLError errorObject : errorObjects.getErrors()) {
             Map<String, Object> extensions = errorObject.getExtensions();

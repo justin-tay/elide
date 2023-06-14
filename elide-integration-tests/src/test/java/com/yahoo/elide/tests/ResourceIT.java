@@ -53,6 +53,7 @@ import com.yahoo.elide.jsonapi.JsonApi;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
 import com.yahoo.elide.test.jsonapi.elements.Data;
 import com.yahoo.elide.test.jsonapi.elements.Resource;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Sets;
 import example.Address;
 import example.Book;
@@ -2568,7 +2569,7 @@ public class ResourceIT extends IntegrationTest {
     }
 
     @Test
-    public void elideSecurityEnabled() {
+    public void elideSecurityEnabled() throws JsonProcessingException {
         Elide elide = new Elide(new ElideSettingsBuilder(dataStore)
                 .withEntityDictionary(EntityDictionary.builder().checks(TestCheckMappings.MAPPINGS).build())
                 .withAuditLogger(new TestAuditLogger())
@@ -2577,7 +2578,7 @@ public class ResourceIT extends IntegrationTest {
         elide.doScans();
 
         com.yahoo.elide.core.security.User user = new com.yahoo.elide.core.security.User(() -> "-1");
-        ElideResponse<String> response = elide.get(baseUrl, "parent/1/children", new MultivaluedHashMap<>(), user, NO_VERSION);
+        ElideResponse<?> response = elide.get(baseUrl, "parent/1/children", new MultivaluedHashMap<>(), user, NO_VERSION);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
         assertEquals("{\"data\":[]}", response.getBody());
     }

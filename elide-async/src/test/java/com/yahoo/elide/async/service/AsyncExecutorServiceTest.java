@@ -32,6 +32,7 @@ import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.core.security.checks.Check;
 import com.yahoo.elide.core.utils.DefaultClassScanner;
+import com.yahoo.elide.jsonapi.JsonApiMapper;
 
 import org.apache.http.NoHttpResponseException;
 import org.junit.jupiter.api.BeforeAll;
@@ -122,6 +123,7 @@ public class AsyncExecutorServiceTest {
         when(queryObj.getAsyncAfterSeconds()).thenReturn(10);
         when(scope.getApiVersion()).thenReturn(NO_VERSION);
         when(scope.getUser()).thenReturn(testUser);
+        when(scope.getMapper()).thenReturn(new JsonApiMapper());
         JsonApiAsyncQueryOperation jsonOperation = new JsonApiAsyncQueryOperation(service, queryObj, scope);
         service.executeQuery(queryObj, jsonOperation);
         verify(queryObj, times(1)).setStatus(QueryStatus.PROCESSING);

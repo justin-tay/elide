@@ -7,7 +7,8 @@ package com.yahoo.elide.graphql;
 
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
-import com.yahoo.elide.core.exceptions.InvalidOperationException;
+import com.yahoo.elide.ResponseConverter;
+import com.yahoo.elide.core.exceptions.InvalidApiVersionException;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.jsonapi.resources.SecurityContextUser;
 import com.yahoo.elide.utils.HeaderUtils;
@@ -48,6 +49,7 @@ public class GraphQLEndpoint {
     private final Map<String, QueryRunner> runners;
     private final Elide elide;
     private final HeaderUtils.HeaderProcessor headerProcessor;
+    private final ResponseConverter responseConverter;
 
     @Inject
     public GraphQLEndpoint(@Named("elide") Elide elide,
@@ -60,6 +62,7 @@ public class GraphQLEndpoint {
             runners.put(apiVersion, new QueryRunner(elide, apiVersion,
                     optionalDataFetcherExceptionHandler.orElseGet(SimpleDataFetcherExceptionHandler::new)));
         }
+        this.responseConverter = new ResponseConverter(new GraphQLBodyMapper(elide.getMapper().getObjectMapper()));
     }
 
     /**
@@ -82,17 +85,15 @@ public class GraphQLEndpoint {
         User user = new SecurityContextUser(securityContext);
         QueryRunner runner = runners.getOrDefault(apiVersion, null);
 
-        ElideResponse<String> response;
+        ElideResponse<?> response;
         if (runner == null) {
-            ElideResponse<?> errorResponse = QueryRunner.handleRuntimeException(elide,
-                    new InvalidOperationException("Invalid API Version"), false);
-            response = QueryRunner.toResponse(elide.getMapper().getObjectMapper(), errorResponse.getStatus(),
-                    errorResponse.getBody());
+            response = QueryRunner.handleRuntimeException(elide,
+                    new InvalidApiVersionException("Invalid API Version"), false);
         } else {
             response = runner.run(getBaseUrlEndpoint(uriInfo),
                                   graphQLDocument, user, UUID.randomUUID(), requestHeaders);
         }
-        return Response.status(response.getStatus()).entity(response.getBody()).build();
+        return this.responseConverter.convert(response);
     }
 
     protected String getBaseUrlEndpoint(UriInfo uriInfo) {

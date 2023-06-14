@@ -9,9 +9,11 @@ import static com.yahoo.elide.Elide.JSONAPI_CONTENT_TYPE;
 
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
+import com.yahoo.elide.ResponseConverter;
 import com.yahoo.elide.annotation.PATCH;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.jsonapi.JsonApi;
+import com.yahoo.elide.jsonapi.JsonApiBodyMapper;
 import com.yahoo.elide.utils.HeaderUtils;
 import com.yahoo.elide.utils.ResourceUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,12 +49,14 @@ import java.util.UUID;
 public class JsonApiEndpoint {
     protected final Elide elide;
     protected final HeaderUtils.HeaderProcessor headerProcessor;
+    private final ResponseConverter responseConverter;
 
     @Inject
     public JsonApiEndpoint(
             @Named("elide") Elide elide) {
         this.elide = elide;
         this.headerProcessor = elide.getElideSettings().getHeaderProcessor();
+        this.responseConverter = new ResponseConverter(new JsonApiBodyMapper(elide.getMapper()));
     }
 
     /**
@@ -195,8 +199,8 @@ public class JsonApiEndpoint {
                 queryParams, requestHeaders, user, apiVersion, UUID.randomUUID()));
     }
 
-    private static Response build(ElideResponse<String> response) {
-        return Response.status(response.getStatus()).entity(response.getBody()).build();
+    private Response build(ElideResponse<?> response) {
+        return responseConverter.convert(response);
     }
 
     protected String getBaseUrlEndpoint(UriInfo uriInfo) {

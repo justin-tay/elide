@@ -7,12 +7,14 @@ package com.yahoo.elide.spring.controllers;
 
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
-import com.yahoo.elide.core.exceptions.InvalidOperationException;
+import com.yahoo.elide.core.exceptions.InvalidApiVersionException;
 import com.yahoo.elide.core.security.User;
+import com.yahoo.elide.graphql.GraphQLBodyMapper;
 import com.yahoo.elide.graphql.QueryRunner;
 import com.yahoo.elide.graphql.QueryRunners;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
 import com.yahoo.elide.spring.config.ElideConfigProperties;
+import com.yahoo.elide.spring.http.ResponseEntityConverter;
 import com.yahoo.elide.spring.security.AuthenticationUser;
 import com.yahoo.elide.utils.HeaderUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,6 +49,7 @@ public class GraphqlController {
     private final QueryRunners runners;
     private final ObjectMapper mapper;
     private final HeaderUtils.HeaderProcessor headerProcessor;
+    private final ResponseEntityConverter responseEntityConverter;
 
     private static final String JSON_CONTENT_TYPE = "application/json";
 
@@ -61,7 +64,8 @@ public class GraphqlController {
         this.runners = runners;
         this.settings = settings;
         this.headerProcessor = headerProcessor;
-        this.mapper = jsonApiMapper.getObjectMapper();
+        this.mapper = elide.getMapper().getObjectMapper();
+        this.responseEntityConverter = new ResponseEntityConverter(new GraphQLBodyMapper(this.mapper));
     }
 
     /**
@@ -73,7 +77,7 @@ public class GraphqlController {
      * @return response
      */
     @PostMapping(value = {"/**", ""}, consumes = JSON_CONTENT_TYPE, produces = JSON_CONTENT_TYPE)
-    public Callable<ResponseEntity<String>> post(@RequestHeader HttpHeaders requestHeaders,
+    public Callable<ResponseEntity<?>> post(@RequestHeader HttpHeaders requestHeaders,
                                                  @RequestBody String graphQLDocument, Authentication principal) {
         final User user = new AuthenticationUser(principal);
         final String apiVersion = HeaderUtils.resolveApiVersion(requestHeaders);
@@ -81,21 +85,18 @@ public class GraphqlController {
         final QueryRunner runner = runners.getRunner(apiVersion);
         final String baseUrl = getBaseUrlEndpoint();
 
-        return new Callable<ResponseEntity<String>>() {
+        return new Callable<ResponseEntity<?>>() {
             @Override
-            public ResponseEntity<String> call() throws Exception {
-                ElideResponse<String> response;
+            public ResponseEntity<?> call() throws Exception {
+                ElideResponse<?> response;
 
                 if (runner == null) {
-                    ElideResponse<?> errorResponse = QueryRunner.handleRuntimeException(elide,
-                            new InvalidOperationException("Invalid API Version"), false);
-                    response = QueryRunner.toResponse(elide.getMapper().getObjectMapper(), errorResponse.getStatus(),
-                            errorResponse.getBody());
+                    response = QueryRunner.handleRuntimeException(elide,
+                            new InvalidApiVersionException("Invalid API Version"), false);
                 } else {
                     response = runner.run(baseUrl, graphQLDocument, user, UUID.randomUUID(), requestHeadersCleaned);
                 }
-
-                return ResponseEntity.status(response.getStatus()).body(response.getBody());
+                return responseEntityConverter.convert(response);
             }
         };
     }

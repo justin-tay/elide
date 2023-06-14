@@ -13,6 +13,8 @@ import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.exceptions.InvalidOperationException;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.graphql.QueryRunner;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,11 +41,24 @@ public class GraphQLAsyncQueryOperation extends AsyncQueryOperation {
         }
         UUID requestUUID = UUID.fromString(queryObj.getRequestId());
         //TODO - we need to add the baseUrlEndpoint to the queryObject.
-        ElideResponse<String> response = runner.run("", queryObj.getQuery(), user, requestUUID,
+        ElideResponse<?> response = runner.run("", queryObj.getQuery(), user, requestUUID,
                 scope.getRequestHeaders());
         log.debug("GRAPHQL_V1_0 getResponseCode: {}, GRAPHQL_V1_0 getBody: {}",
                 response.getStatus(), response.getBody());
-        return response;
+
+        ObjectMapper objectMapper = scope.getMapper().getObjectMapper();
+        try {
+            String body = null;
+            if (response.getBody() instanceof String value) {
+                body = value;
+            } else if (response.getBody() != null) {
+                body = objectMapper.writeValueAsString(response.getBody());
+            }
+            return ElideResponse.status(response.getStatus())
+                    .body(body);
+        } catch (JsonProcessingException e) {
+            return ElideResponse.status(500).body(e.toString());
+        }
     }
 
     @Override
