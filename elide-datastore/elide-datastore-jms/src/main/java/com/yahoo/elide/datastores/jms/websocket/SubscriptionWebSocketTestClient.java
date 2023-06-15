@@ -6,8 +6,8 @@
 
 package com.yahoo.elide.datastores.jms.websocket;
 
-import com.yahoo.elide.graphql.ExecutionResultSerializer;
-import com.yahoo.elide.graphql.GraphQLErrorSerializer;
+import com.yahoo.elide.graphql.serialization.ExecutionResultSerializer;
+import com.yahoo.elide.graphql.serialization.GraphQLErrorSerializer;
 import com.yahoo.elide.graphql.subscriptions.websocket.protocol.Complete;
 import com.yahoo.elide.graphql.subscriptions.websocket.protocol.ConnectionInit;
 import com.yahoo.elide.graphql.subscriptions.websocket.protocol.Error;

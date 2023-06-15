@@ -3,13 +3,17 @@
  * Licensed under the Apache License, Version 2.0
  * See LICENSE file in project root for terms.
  */
-package com.yahoo.elide;
+package com.yahoo.elide.core.jaxrs;
 
+import com.yahoo.elide.ElideResponse;
+import com.yahoo.elide.ElideResponseBodyMapper;
+import com.yahoo.elide.ElideStreamingBody;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -17,10 +21,11 @@ import java.io.OutputStream;
 /**
  * Converts {@link ElideResponse} to {@link Response}.
  */
+@Slf4j
 public class ResponseConverter {
-    private final ElideResponseBodyMapper responseBodyMapper;
+    private final ElideResponseBodyMapper<Object, ?> responseBodyMapper;
 
-    public ResponseConverter(ElideResponseBodyMapper responseBodyMapper) {
+    public ResponseConverter(ElideResponseBodyMapper<Object, ?> responseBodyMapper) {
         this.responseBodyMapper = responseBodyMapper;
     }
 
@@ -45,7 +50,8 @@ public class ResponseConverter {
             }
             return Response.status(elideResponse.getStatus()).entity(mapped).build();
         } catch (Exception e) {
-            return Response.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).entity(e.toString()).build();
+            log.error("Caught {}", e.getClass().getSimpleName(), e);
+            return Response.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).build();
         }
     }
 }

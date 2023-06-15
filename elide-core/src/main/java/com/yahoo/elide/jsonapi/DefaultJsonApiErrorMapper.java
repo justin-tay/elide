@@ -9,12 +9,13 @@ import com.yahoo.elide.ElideError;
 import com.yahoo.elide.jsonapi.models.JsonApiError;
 import com.yahoo.elide.jsonapi.models.JsonApiError.JsonApiErrorBuilder;
 import com.yahoo.elide.jsonapi.models.JsonApiError.Links;
+import com.yahoo.elide.jsonapi.models.JsonApiError.Links.LinksBuilder;
 import com.yahoo.elide.jsonapi.models.JsonApiError.Source;
-
-import org.owasp.encoder.Encode;
+import com.yahoo.elide.jsonapi.models.JsonApiError.Source.SourceBuilder;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -26,7 +27,8 @@ public class DefaultJsonApiErrorMapper implements JsonApiErrorMapper {
     public JsonApiError toJsonApiError(ElideError error) {
         JsonApiErrorBuilder jsonApiError = JsonApiError.builder();
         if (error.getMessage() != null) {
-            jsonApiError.detail(Encode.forHtml(error.getMessage()));
+            // This will be encoded by the JsonApiErrorSerializer
+            jsonApiError.detail(error.getMessage());
         }
         if (error.getAttributes() != null && !error.getAttributes().isEmpty()) {
             Map<String, Object> meta = new LinkedHashMap<>(error.getAttributes());
@@ -49,22 +51,46 @@ public class DefaultJsonApiErrorMapper implements JsonApiErrorMapper {
             attribute("source", meta, value -> {
                 if (value instanceof Source source) {
                     jsonApiError.source(source);
-                    return true;
+                } else if (value instanceof Map map) {
+                    jsonApiError.source(toSource(map));
                 }
-                return false;
+                return true;
             });
             attribute("links", meta, value -> {
                 if (value instanceof Links links) {
                     jsonApiError.links(links);
-                    return true;
+                } else if (value instanceof Map map) {
+                    jsonApiError.links(toLinks(map));
                 }
-                return false;
+                return true;
             });
             if (!meta.isEmpty()) {
                 jsonApiError.meta(meta);
             }
         }
         return jsonApiError.build();
+    }
+
+    protected Links toLinks(Map<?, ?> map) {
+        LinksBuilder builder = Links.builder();
+        get("about", map).ifPresent(builder::about);
+        get("type", map).ifPresent(builder::type);
+        return builder.build();
+    }
+
+    protected Source toSource(Map<?, ?> map) {
+        SourceBuilder builder = Source.builder();
+        get("pointer", map).ifPresent(builder::pointer);
+        get("parameter", map).ifPresent(builder::parameter);
+        get("header", map).ifPresent(builder::header);
+        return builder.build();
+    }
+
+    protected Optional<String> get(String key, Map<?, ?> map) {
+        if (map.get(key) instanceof String value) {
+            return Optional.of(value);
+        }
+        return Optional.empty();
     }
 
     protected void attribute(String key, Map<String, Object> map, Predicate<Object> processor) {

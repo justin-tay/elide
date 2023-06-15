@@ -69,17 +69,19 @@ public class DefaultGraphQLExceptionHandler extends ExceptionHandlerSupport<Grap
 
         if (exception instanceof ConstraintViolationException e) {
             final GraphQLErrors.GraphQLErrorsBuilder errors = GraphQLErrors.builder();
-            for (ConstraintViolation<?> constraintViolation : e.getConstraintViolations()) {
-                errors.error(error -> {
-                    error.message(constraintViolation.getMessage());
-                    error.extension("code", constraintViolation.getConstraintDescriptor().getAnnotation()
-                            .annotationType().getSimpleName());
-                    error.extension("type",  "ConstraintViolation");
-                    final String propertyPathString = constraintViolation.getPropertyPath().toString();
-                    if (!propertyPathString.isEmpty()) {
-                        error.extension("property",  propertyPathString);
-                    }
-                });
+            if (e.getConstraintViolations() != null) {
+                for (ConstraintViolation<?> constraintViolation : e.getConstraintViolations()) {
+                    errors.error(error -> {
+                        error.message(constraintViolation.getMessage());
+                        error.extension("code", constraintViolation.getConstraintDescriptor().getAnnotation()
+                                .annotationType().getSimpleName());
+                        error.extension("type",  "ConstraintViolation");
+                        final String propertyPathString = constraintViolation.getPropertyPath().toString();
+                        if (!propertyPathString.isEmpty()) {
+                            error.extension("property",  propertyPathString);
+                        }
+                    });
+                }
             }
             return buildResponse(HttpStatus.SC_OK, errors.build());
         }
@@ -114,8 +116,7 @@ public class DefaultGraphQLExceptionHandler extends ExceptionHandlerSupport<Grap
                 builder.error(graphqlErrorMapper.toGraphQLError(error));
             }
             return buildResponse(errorResponse.getStatus(), builder.build());
-        }
-        else {
+        } else {
             return buildResponse(errorResponse.getStatus(), errorResponse.getBody());
         }
     }

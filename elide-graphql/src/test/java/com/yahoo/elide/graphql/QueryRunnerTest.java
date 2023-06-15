@@ -27,7 +27,7 @@ import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.graphql.models.GraphQLErrors;
-
+import com.yahoo.elide.graphql.serialization.GraphQLErrorDeserializer;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 

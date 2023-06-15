@@ -8,8 +8,11 @@ package com.yahoo.elide;
 /**
  * Maps the body in the ElideResponse to another typically for JSON conversion
  * with a specific object mapper.
+ *
+ * @param <T> body type
+ * @param <R> mapped type
  */
-public interface ElideResponseBodyMapper {
+public interface ElideResponseBodyMapper<T, R> {
     /**
      * Maps the response body to another object.
      *
@@ -17,5 +20,15 @@ public interface ElideResponseBodyMapper {
      * @return the mapped body
      * @throws Exception the exception
      */
-    Object map(Object body) throws Exception;
+    R map(T body) throws Exception;
+
+    /**
+     * Returns a mapper that always returns its input.
+     *
+     * @param <T>
+     * @return the mapper
+     */
+    public static <T> ElideResponseBodyMapper<T, T> identity() {
+        return t -> t;
+    }
 }

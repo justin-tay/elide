@@ -6,6 +6,7 @@
 package com.yahoo.elide;
 
 import com.yahoo.elide.ElideErrors.ElideErrorsBuilder;
+import com.yahoo.elide.core.exceptions.HttpStatus;
 
 import java.util.function.Consumer;
 
@@ -40,6 +41,46 @@ public class ElideErrorResponse<T> extends ElideResponse<T> {
      */
     public static ElideErrorResponseBuilder status(int status) {
         return new ElideErrorResponseBuilder(status);
+    }
+
+    /**
+     * Build a response with 200.
+     *
+     * @return the builder
+     */
+    public static ElideErrorResponseBuilder ok() {
+        return status(HttpStatus.SC_OK);
+    }
+
+    /**
+     * Build a response with 200.
+     *
+     * @param <T> the body type
+     * @param body the body
+     * @return the response
+     */
+    public static <T> ElideErrorResponse<T> ok(T body) {
+        return ok().body(body);
+    }
+
+    /**
+     * Build a response with 400.
+     *
+     * @return the builder
+     */
+    public static ElideErrorResponseBuilder badRequest() {
+        return status(HttpStatus.SC_BAD_REQUEST);
+    }
+
+    /**
+     * Build a response with 400.
+     *
+     * @param <T> the body type
+     * @param body the body
+     * @return the response
+     */
+    public static <T> ElideErrorResponse<T> badRequest(T body) {
+        return badRequest().body(body);
     }
 
     /**

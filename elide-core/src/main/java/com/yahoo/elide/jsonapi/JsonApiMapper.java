@@ -8,6 +8,7 @@ package com.yahoo.elide.jsonapi;
 import com.yahoo.elide.jsonapi.extensions.JsonApiAtomicOperationsMapper;
 import com.yahoo.elide.jsonapi.extensions.JsonApiJsonPatchMapper;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
+import com.yahoo.elide.jsonapi.serialization.JsonApiModule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +50,7 @@ public class JsonApiMapper {
     public JsonApiMapper(ObjectMapper mapper, JsonApiJsonPatchMapper jsonPatchMapper,
             JsonApiAtomicOperationsMapper atomicOperationsMapper) {
         this.mapper = mapper;
-        this.mapper.registerModule(JsonApiSerializer.getModule());
+        this.mapper.registerModule(new JsonApiModule());
         this.jsonPatchMapper = jsonPatchMapper;
         this.atomicOperationsMapper = atomicOperationsMapper;
     }
@@ -68,7 +69,7 @@ public class JsonApiMapper {
      * Write json api document.
      *
      * @param doc the document
-     * @param <T> The type of document object so serialize
+     * @param <T> The type of document object to serialize
      * @return the string
      * @throws JsonProcessingException the json processing exception
      */
@@ -81,7 +82,7 @@ public class JsonApiMapper {
      *
      * @param doc the document
      * @param outputStream the outputstream to write to
-     * @param <T> The type of document object so serialize
+     * @param <T> The type of document object to serialize
      * @throws IOException the exception
      */
     public <T> void writeJsonApiDocument(T doc, OutputStream outputStream) throws IOException {

@@ -7,10 +7,10 @@ package com.yahoo.elide.graphql;
 
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
-import com.yahoo.elide.ResponseConverter;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.InvalidApiVersionException;
 import com.yahoo.elide.core.exceptions.InvalidOperationException;
+import com.yahoo.elide.core.jaxrs.ResponseConverter;
 import com.yahoo.elide.core.request.route.BasicApiVersionValidator;
 import com.yahoo.elide.core.request.route.FlexibleRouteResolver;
 import com.yahoo.elide.core.request.route.NullRouteResolver;

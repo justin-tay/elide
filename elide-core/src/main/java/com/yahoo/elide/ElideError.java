@@ -59,7 +59,7 @@ public class ElideError {
             return this;
         }
 
-        public ElideErrorBuilder attribute(String key, String value) {
+        public ElideErrorBuilder attribute(String key, Object value) {
             this.attributes.put(key, value);
             return this;
         }

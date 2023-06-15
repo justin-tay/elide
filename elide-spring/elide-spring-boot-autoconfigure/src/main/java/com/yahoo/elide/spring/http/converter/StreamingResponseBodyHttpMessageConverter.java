@@ -20,9 +20,11 @@ import java.io.IOException;
  * A {@link HttpMessageConverter} implementation for processing
  * {@link StreamingResponseBody}.
  * <p>
- * The
- * {@link org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBodyReturnValueHandler}
- * only processes methods with a fixed method signature.
+ * The StreamingResponseBodyReturnValueHandler only processes methods with a
+ * fixed method signature so this handles cases where the return result is
+ * EntityResponse&lt;?&gt; or Callable&lt;EntityResponse&lt;?&gt;&gt;.
+ *
+ * @see org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBodyReturnValueHandler
  */
 public class StreamingResponseBodyHttpMessageConverter extends AbstractHttpMessageConverter<StreamingResponseBody> {
     public StreamingResponseBodyHttpMessageConverter() {

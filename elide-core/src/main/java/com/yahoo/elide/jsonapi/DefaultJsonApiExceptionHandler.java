@@ -132,8 +132,7 @@ public class DefaultJsonApiExceptionHandler extends ExceptionHandlerSupport<Json
                 builder.error(jsonApiErrorMapper.toJsonApiError(error));
             }
             return buildResponse(errorResponse.getStatus(), builder.build());
-        }
-        else {
+        } else {
             return buildResponse(errorResponse.getStatus(), errorResponse.getBody());
         }
     }
