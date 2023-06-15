@@ -6,30 +6,20 @@
 package com.yahoo.elide.graphql;
 
 import com.yahoo.elide.Elide;
-import com.yahoo.elide.ElideError;
-import com.yahoo.elide.ElideErrorResponse;
-import com.yahoo.elide.ElideErrors;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
-import com.yahoo.elide.core.exceptions.HttpStatusException;
-import com.yahoo.elide.core.exceptions.InternalServerErrorException;
 import com.yahoo.elide.core.exceptions.InvalidEntityBodyException;
 import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
-import com.yahoo.elide.core.exceptions.TransactionException;
 import com.yahoo.elide.core.security.User;
-import com.yahoo.elide.graphql.models.GraphQLErrors;
 import com.yahoo.elide.graphql.parser.GraphQLEntityProjectionMaker;
 import com.yahoo.elide.graphql.parser.GraphQLProjectionInfo;
 import com.yahoo.elide.graphql.parser.GraphQLQuery;
 import com.yahoo.elide.graphql.parser.QueryParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.Version;
+import com.yahoo.elide.graphql.serialization.GraphQLModule;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
@@ -43,8 +33,6 @@ import graphql.execution.DataFetcherExceptionHandler;
 import graphql.execution.SimpleDataFetcherExceptionHandler;
 import graphql.validation.ValidationError;
 import graphql.validation.ValidationErrorType;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -109,12 +97,7 @@ public class QueryRunner {
                 .queryExecutionStrategy(new AsyncSerialExecutionStrategy(exceptionHandler))
                 .build();
 
-        // TODO - add serializers to allow for custom handling of ExecutionResult and GraphQLError objects
-        GraphQLErrorSerializer errorSerializer = new GraphQLErrorSerializer();
-        SimpleModule module = new SimpleModule("ExecutionResultSerializer", Version.unknownVersion());
-        module.addSerializer(ExecutionResult.class, new ExecutionResultSerializer(errorSerializer));
-        module.addSerializer(GraphQLError.class, errorSerializer);
-        elide.getElideSettings().getMapper().getObjectMapper().registerModule(module);
+        elide.getElideSettings().getMapper().getObjectMapper().registerModule(new GraphQLModule());
     }
 
     /**
@@ -215,8 +198,14 @@ public class QueryRunner {
         ArrayNode result = responses.stream()
                 .map(response -> {
                     try {
-                        String body = mapper.writeValueAsString(response.getBody());
-                        return mapper.readTree(body);
+                        Object body = response.getBody();
+                        if (body instanceof JsonNode jsonNode) {
+                            return jsonNode;
+                        } else if (body instanceof String value) {
+                            return mapper.readTree(value);
+                        } else {
+                            return mapper.valueToTree(body);
+                        }
                     } catch (IOException e) {
                         log.debug("Caught an IO exception while trying to read response body");
                         return JsonNodeFactory.instance.objectNode();
@@ -382,7 +371,7 @@ public class QueryRunner {
         return result;
     }
 
-    public static ElideResponse<String> handleNonRuntimeException(
+    public static ElideResponse<?> handleNonRuntimeException(
             Elide elide,
             Exception exception,
             String graphQLDocument,

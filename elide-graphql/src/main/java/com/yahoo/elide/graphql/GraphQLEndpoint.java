@@ -7,8 +7,8 @@ package com.yahoo.elide.graphql;
 
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
-import com.yahoo.elide.ResponseConverter;
 import com.yahoo.elide.core.exceptions.InvalidApiVersionException;
+import com.yahoo.elide.core.jaxrs.ResponseConverter;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.jsonapi.resources.SecurityContextUser;
 import com.yahoo.elide.utils.HeaderUtils;

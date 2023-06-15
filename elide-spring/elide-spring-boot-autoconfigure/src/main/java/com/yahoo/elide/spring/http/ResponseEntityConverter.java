@@ -11,8 +11,9 @@ import com.yahoo.elide.ElideStreamingBody;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,10 +23,11 @@ import java.io.OutputStream;
  *
  * @see com.yahoo.elide.spring.http.converter.StreamingResponseBodyHttpMessageConverter
  */
+@Slf4j
 public class ResponseEntityConverter {
-    private final ElideResponseBodyMapper responseBodyMapper;
+    private final ElideResponseBodyMapper<Object, ?> responseBodyMapper;
 
-    public ResponseEntityConverter(ElideResponseBodyMapper responseBodyMapper) {
+    public ResponseEntityConverter(ElideResponseBodyMapper<Object, ?> responseBodyMapper) {
         this.responseBodyMapper = responseBodyMapper;
     }
 
@@ -51,7 +53,8 @@ public class ResponseEntityConverter {
             }
             return ResponseEntity.status(elideResponse.getStatus()).body(mapped);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).body(e.toString());
+            log.error("Caught {}", e.getClass().getSimpleName(), e);
+            return ResponseEntity.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).build();
         }
     }
 }

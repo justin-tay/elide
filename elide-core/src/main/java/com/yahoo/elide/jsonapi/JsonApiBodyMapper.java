@@ -14,7 +14,7 @@ import java.io.OutputStream;
 /**
  * JsonApi body mapper.
  */
-public class JsonApiBodyMapper implements ElideResponseBodyMapper {
+public class JsonApiBodyMapper implements ElideResponseBodyMapper<Object, Object> {
     private final JsonApiMapper jsonApiMapper;
 
     public JsonApiBodyMapper(JsonApiMapper jsonApiMapper) {
@@ -22,7 +22,7 @@ public class JsonApiBodyMapper implements ElideResponseBodyMapper {
     }
 
     @Override
-    public Object map(Object body) throws Exception {
+    public Object map(Object body) {
         if (body == null) {
             return null;
         }

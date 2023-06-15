@@ -16,7 +16,7 @@ import java.io.OutputStream;
 /**
  * GraphQL body mapper.
  */
-public class GraphQLBodyMapper implements ElideResponseBodyMapper {
+public class GraphQLBodyMapper implements ElideResponseBodyMapper<Object, Object> {
     private final ObjectMapper objectMapper;
 
     public GraphQLBodyMapper(ObjectMapper objectMapper) {
@@ -24,7 +24,7 @@ public class GraphQLBodyMapper implements ElideResponseBodyMapper {
     }
 
     @Override
-    public Object map(Object body) throws Exception {
+    public Object map(Object body) {
         if (body == null) {
             return null;
         }

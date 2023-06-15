@@ -17,10 +17,10 @@ import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.datastores.jms.JMSDataStore;
-import com.yahoo.elide.graphql.ExecutionResultDeserializer;
-import com.yahoo.elide.graphql.ExecutionResultSerializer;
-import com.yahoo.elide.graphql.GraphQLErrorDeserializer;
-import com.yahoo.elide.graphql.GraphQLErrorSerializer;
+import com.yahoo.elide.graphql.serialization.ExecutionResultDeserializer;
+import com.yahoo.elide.graphql.serialization.ExecutionResultSerializer;
+import com.yahoo.elide.graphql.serialization.GraphQLErrorDeserializer;
+import com.yahoo.elide.graphql.serialization.GraphQLErrorSerializer;
 import com.yahoo.elide.graphql.subscriptions.websocket.SubscriptionWebSocket;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 

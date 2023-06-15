@@ -9,8 +9,8 @@ import static com.yahoo.elide.Elide.JSONAPI_CONTENT_TYPE;
 
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
-import com.yahoo.elide.ResponseConverter;
 import com.yahoo.elide.annotation.PATCH;
+import com.yahoo.elide.core.jaxrs.ResponseConverter;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.jsonapi.JsonApi;
 import com.yahoo.elide.jsonapi.JsonApiBodyMapper;

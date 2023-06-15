@@ -5,6 +5,8 @@
  */
 package com.yahoo.elide;
 
+import com.yahoo.elide.core.exceptions.HttpStatus;
+
 /**
  * Elide Response.
  * <p>
@@ -79,6 +81,46 @@ public class ElideResponse<T> {
      */
     public static ElideResponseBuilder status(int status) {
         return new ElideResponseBuilder(status);
+    }
+
+    /**
+     * Build a response with 200.
+     *
+     * @return the builder
+     */
+    public static ElideResponseBuilder ok() {
+        return status(HttpStatus.SC_OK);
+    }
+
+    /**
+     * Build a response with 200.
+     *
+     * @param <T> the body type
+     * @param body the body
+     * @return the response
+     */
+    public static <T> ElideResponse<T> ok(T body) {
+        return ok().body(body);
+    }
+
+    /**
+     * Build a response with 400.
+     *
+     * @return the builder
+     */
+    public static ElideResponseBuilder badRequest() {
+        return status(HttpStatus.SC_BAD_REQUEST);
+    }
+
+    /**
+     * Build a response with 400.
+     *
+     * @param <T> the body type
+     * @param body the body
+     * @return the response
+     */
+    public static <T> ElideResponse<T> badRequest(T body) {
+        return badRequest().body(body);
     }
 
     /**

@@ -34,7 +34,6 @@ import com.yahoo.elide.core.lifecycle.LegacyTestModel;
 import com.yahoo.elide.core.lifecycle.PropertyTestModel;
 import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
