@@ -7,6 +7,14 @@ package com.yahoo.elide.spring.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.yahoo.elide.core.serialization.ObjectMapperBuilder;
+import com.yahoo.elide.core.serialization.ObjectMapperBuilderCustomizer;
+import com.yahoo.elide.graphql.GraphQLErrorSerializer;
+
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -22,6 +30,8 @@ import org.springframework.cloud.autoconfigure.RefreshAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.RestController;
+
+import graphql.GraphQLError;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -160,5 +170,31 @@ class ElideAutoConfigurationTest {
                                 .endsWith(input.userConfiguration.getSimpleName());
                     }
                 });
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    public static class UserObjectMapperConfiguration {
+        @Bean
+        public ObjectMapperBuilderCustomizer objectMapperBuilderCustomizer() {
+            return builder -> {
+                SimpleModule simpleModule = new SimpleModule("SimpleModule", Version.unknownVersion());
+                simpleModule.addSerializer(GraphQLError.class, new GraphQLErrorSerializer());
+                builder.addModule(simpleModule);
+            };
+        }
+    }
+
+    @Test
+    void objectMapper() {
+        contextRunner.withPropertyValues("spring.cloud.refresh.enabled=false")
+        .withConfiguration(UserConfigurations.of(UserObjectMapperConfiguration.class)).run(context -> {
+            ObjectMapperBuilder objectMapperBuilder = context.getBean(ObjectMapperBuilder.class);
+            ObjectMapper objectMapper = objectMapperBuilder.build();
+            GraphQLError error = GraphQLError.newError().message("<script>Message</script>").build();
+            String actual = objectMapper.writeValueAsString(error);
+            String expected = """
+                    {"message":"&lt;script&gt;Message&lt;/script&gt;","locations":[],"extensions":{"classification":"DataFetchingException"}}""";
+            assertThat(actual).isEqualTo(expected);
+        });
     }
 }

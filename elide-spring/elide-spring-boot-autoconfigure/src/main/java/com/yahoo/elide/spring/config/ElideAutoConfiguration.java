@@ -22,6 +22,8 @@ import com.yahoo.elide.core.exceptions.ErrorMapper;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.security.checks.Check;
 import com.yahoo.elide.core.security.checks.prefab.Role;
+import com.yahoo.elide.core.serialization.ObjectMapperBuilder;
+import com.yahoo.elide.core.serialization.ObjectMapperBuilderCustomizer;
 import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.core.type.Type;
 import com.yahoo.elide.core.utils.ClassScanner;
@@ -62,7 +64,6 @@ import com.yahoo.elide.spring.controllers.GraphqlController;
 import com.yahoo.elide.spring.controllers.JsonApiController;
 import com.yahoo.elide.spring.datastore.config.DataStoreBuilder;
 import com.yahoo.elide.spring.datastore.config.DataStoreBuilderCustomizer;
-import com.yahoo.elide.spring.jackson.ObjectMapperBuilder;
 import com.yahoo.elide.spring.orm.jpa.config.EnableJpaDataStore;
 import com.yahoo.elide.spring.orm.jpa.config.EnableJpaDataStores;
 import com.yahoo.elide.spring.orm.jpa.config.JpaDataStoreRegistration;
@@ -593,11 +594,17 @@ public class ElideAutoConfiguration {
     @ConditionalOnMissingBean
     @Scope(SCOPE_PROTOTYPE)
     public ObjectMapperBuilder objectMapperBuilder(
-            Optional<Jackson2ObjectMapperBuilder> optionalJackson2ObjectMapperBuilder) {
+            Optional<Jackson2ObjectMapperBuilder> optionalJackson2ObjectMapperBuilder,
+            ObjectProvider<ObjectMapperBuilderCustomizer> customizers) {
+        ObjectMapper objectMapper;
         if (optionalJackson2ObjectMapperBuilder.isPresent()) {
-            return optionalJackson2ObjectMapperBuilder.get()::build;
+            objectMapper = optionalJackson2ObjectMapperBuilder.get().build();
+        } else {
+            objectMapper = new ObjectMapper();
         }
-        return ObjectMapper::new;
+        ObjectMapperBuilder objectMapperBuilder = new ObjectMapperBuilder(objectMapper);
+        customizers.orderedStream().forEach(customizer -> customizer.customize(objectMapperBuilder));
+        return objectMapperBuilder;
     }
 
     @Bean
