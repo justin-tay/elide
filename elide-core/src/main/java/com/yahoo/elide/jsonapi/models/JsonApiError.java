@@ -88,12 +88,27 @@ public class JsonApiError {
         return (T) this.meta;
     }
 
+    /**
+     * A mutable builder for building {@link JsonApiError}.
+     */
     public static class JsonApiErrorBuilder {
+        /**
+         * Sets the {@link Links}.
+         *
+         * @param links the links
+         * @return the builder
+         */
         public JsonApiErrorBuilder links(Links links) {
             this.links = links;
             return this;
         }
 
+        /**
+         * Customize the {@link Links}.
+         *
+         * @param links the customizer
+         * @return the builder
+         */
         public JsonApiErrorBuilder links(Consumer<Links.LinksBuilder> links) {
             Links.LinksBuilder builder = new Links.LinksBuilder();
             links.accept(builder);
@@ -101,11 +116,23 @@ public class JsonApiError {
             return this;
         }
 
+        /**
+         * Sets the {@link Source}.
+         *
+         * @param source the source
+         * @return the builder
+         */
         public JsonApiErrorBuilder source(Source source) {
             this.source = source;
             return this;
         }
 
+        /**
+         * Customize the {@link Source}.
+         *
+         * @param source the customizer
+         * @return the builder
+         */
         public JsonApiErrorBuilder source(Consumer<Source.SourceBuilder> source) {
             Source.SourceBuilder builder = new Source.SourceBuilder();
             source.accept(builder);
@@ -113,14 +140,25 @@ public class JsonApiError {
             return this;
         }
 
+        /**
+         * Customize the meta.
+         *
+         * @param meta the customizer
+         * @return the builder
+         */
         public JsonApiErrorBuilder meta(Consumer<Map<String, Object>> meta) {
             Map<String, Object> builder = new LinkedHashMap<>();
             meta.accept(builder);
-            this.meta = builder;
-            return this;
+            return meta(builder);
         }
 
-        public JsonApiErrorBuilder meta(Object meta) {
+        /**
+         * Sets the meta.
+         *
+         * @param meta the meta
+         * @return the builder
+         */
+        public <M> JsonApiErrorBuilder meta(M meta) {
             this.meta = meta;
             return this;
         }

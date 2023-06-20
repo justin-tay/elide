@@ -6,11 +6,14 @@
 package com.yahoo.elide.jsonapi.models;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
+
+import lombok.Getter;
 
 import java.util.Map;
 
@@ -84,5 +87,52 @@ class JsonApiErrorTest {
         String expected = """
                 {"source":{"pointer":"/data/attributes/title","parameter":"parameter","header":"header"}}""";
         assertEquals(expected, actual);
+    }
+
+    @Getter
+    public static class MetaObject {
+        String property = "value";
+    }
+
+    @Test
+    void metaObject() throws JsonProcessingException {
+        JsonApiError error = JsonApiError.builder()
+                .meta(new MetaObject())
+                .build();
+        String actual = objectMapper.writeValueAsString(error);
+        String expected = """
+                {"meta":{"property":"value"}}""";
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void builderToStringEquals() {
+        assertEquals(JsonApiError.builder().toString(), JsonApiError.builder().toString());
+    }
+
+    @Test
+    void builderToStringNotEquals() {
+        assertNotEquals(JsonApiError.builder().toString(), JsonApiError.builder().detail("detail").toString());
+    }
+
+    @Test
+    void linksBuilderToStringEquals() {
+        assertEquals(JsonApiError.Links.builder().toString(), JsonApiError.Links.builder().toString());
+    }
+
+    @Test
+    void linksBuilderToStringNotEquals() {
+        assertNotEquals(JsonApiError.Links.builder().toString(), JsonApiError.Links.builder().type("type").toString());
+    }
+
+    @Test
+    void sourceBuilderToStringEquals() {
+        assertEquals(JsonApiError.Source.builder().toString(), JsonApiError.Source.builder().toString());
+    }
+
+    @Test
+    void sourceBuilderToStringNotEquals() {
+        assertNotEquals(JsonApiError.Source.builder().toString(),
+                JsonApiError.Source.builder().header("header").toString());
     }
 }
