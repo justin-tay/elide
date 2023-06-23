@@ -150,7 +150,7 @@ public class ElideResourceConfig extends ResourceConfig {
                 Elide elide,
                 EntityDictionary dictionary
         ) {
-            AsyncApiDao asyncAPIDao = asyncProperties.getApiDao();
+            AsyncApiDao asyncAPIDao = asyncProperties.getAsyncApiDao();
             if (asyncAPIDao == null) {
                 asyncAPIDao = new DefaultAsyncApiDao(elide.getElideSettings(), elide.getDataStore());
             }
