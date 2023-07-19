@@ -28,6 +28,7 @@ import com.yahoo.elide.core.utils.coerce.converters.OffsetDateTimeSerde;
 import com.yahoo.elide.core.utils.coerce.converters.Serde;
 import com.yahoo.elide.core.utils.coerce.converters.TimeZoneSerde;
 import com.yahoo.elide.core.utils.coerce.converters.URLSerde;
+import com.yahoo.elide.core.utils.coerce.converters.ZonedDateTimeSerde;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
 import com.yahoo.elide.jsonapi.links.JsonApiLinks;
 import com.yahoo.elide.utils.HeaderUtils;
@@ -35,6 +36,7 @@ import com.yahoo.elide.utils.HeaderUtils;
 import java.net.URL;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -228,6 +230,7 @@ public class ElideSettingsBuilder {
     public ElideSettingsBuilder withDefaultSerdes() {
         serdes.put(Instant.class, new InstantSerde());
         serdes.put(OffsetDateTime.class, new OffsetDateTimeSerde());
+        serdes.put(ZonedDateTime.class, new ZonedDateTimeSerde());
         serdes.put(TimeZone.class, new TimeZoneSerde());
         serdes.put(URL.class, new URLSerde());
         return this;

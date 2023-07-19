@@ -8,6 +8,7 @@ package com.yahoo.elide.spring.config;
 import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_PROTOTYPE;
 
 import com.yahoo.elide.Elide;
+import com.yahoo.elide.ElideSettings;
 import com.yahoo.elide.ElideSettingsBuilder;
 import com.yahoo.elide.RefreshableElide;
 import com.yahoo.elide.async.models.AsyncQuery;
@@ -27,6 +28,7 @@ import com.yahoo.elide.core.type.Type;
 import com.yahoo.elide.core.utils.ClassScanner;
 import com.yahoo.elide.core.utils.DefaultClassScanner;
 import com.yahoo.elide.core.utils.coerce.CoerceUtil;
+import com.yahoo.elide.core.utils.coerce.converters.ZonedDateTimeSerde;
 import com.yahoo.elide.datastores.aggregation.AggregationDataStore;
 import com.yahoo.elide.datastores.aggregation.DefaultQueryValidator;
 import com.yahoo.elide.datastores.aggregation.QueryEngine;
@@ -72,6 +74,8 @@ import com.yahoo.elide.spring.orm.jpa.config.JpaDataStoreRegistrationsBuilderCus
 import com.yahoo.elide.swagger.OpenApiBuilder;
 import com.yahoo.elide.utils.HeaderUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.beans.factory.ObjectProvider;
@@ -106,6 +110,8 @@ import jakarta.persistence.EntityManagerFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -851,7 +857,16 @@ public class ElideAutoConfiguration {
             }
         }
 
-        Elide elide = new Elide(builder.build(), transactionRegistry, dictionary.getScanner(), true);
+        ElideSettings elideSettings = builder.build();
+
+        // Serialize ZoneDateTime with Zone ID if configured for Jackson
+        if (mapper.getObjectMapper().getSerializationConfig()
+                .isEnabled(SerializationFeature.WRITE_DATES_WITH_ZONE_ID)) {
+            elideSettings.getSerdes().put(ZonedDateTime.class,
+                    new ZonedDateTimeSerde(DateTimeFormatter.ISO_ZONED_DATE_TIME));
+        }
+
+        Elide elide = new Elide(elideSettings, transactionRegistry, dictionary.getScanner(), true);
 
         return new RefreshableElide(elide);
     }

@@ -7,12 +7,16 @@ package com.yahoo.elide.spring.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.yahoo.elide.RefreshableElide;
+import com.yahoo.elide.core.utils.coerce.converters.Serde;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
@@ -23,6 +27,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,7 +43,8 @@ class ElideAutoConfigurationTest {
     private static final String SCOPE_REFRESH = "refresh";
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(ElideAutoConfiguration.class, DataSourceAutoConfiguration.class,
-                    HibernateJpaAutoConfiguration.class, TransactionAutoConfiguration.class, RefreshAutoConfiguration.class));
+                    HibernateJpaAutoConfiguration.class, TransactionAutoConfiguration.class,
+                    RefreshAutoConfiguration.class));
 
     @Test
     void nonRefreshable() {
@@ -160,5 +169,33 @@ class ElideAutoConfigurationTest {
                                 .endsWith(input.userConfiguration.getSimpleName());
                     }
                 });
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    void zonedDateTimeShouldSerializeWithoutZoneByDefault() {
+        contextRunner.withPropertyValues("spring.cloud.refresh.enabled=false").run(context -> {
+            RefreshableElide elide = context.getBean(RefreshableElide.class);
+            Serde serde = elide.getElide().getElideSettings().getSerdes().get(ZonedDateTime.class);
+            ZonedDateTime time = ZonedDateTime.of(LocalDate.of(2007, 12, 3), LocalTime.of(10, 15, 30),
+                    ZoneId.of("Europe/Paris"));
+            String result = serde.serialize(time).toString();
+            assertThat(result).isEqualTo("2007-12-03T10:15:30+01:00");
+        });
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    void zonedDateTimeShouldSerializeWithZone() {
+        contextRunner.withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class))
+                .withPropertyValues("spring.cloud.refresh.enabled=false",
+                        "spring.jackson.serialization.write-dates-with-zone-id=true").run(context -> {
+                    RefreshableElide elide = context.getBean(RefreshableElide.class);
+            Serde serde = elide.getElide().getElideSettings().getSerdes().get(ZonedDateTime.class);
+            ZonedDateTime time = ZonedDateTime.of(LocalDate.of(2007, 12, 3), LocalTime.of(10, 15, 30),
+                    ZoneId.of("Europe/Paris"));
+            String result = serde.serialize(time).toString();
+            assertThat(result).isEqualTo("2007-12-03T10:15:30+01:00[Europe/Paris]");
+        });
     }
 }
