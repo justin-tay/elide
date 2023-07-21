@@ -5,11 +5,14 @@
  */
 package com.yahoo.elide.swagger;
 
+import io.swagger.v3.core.filter.OpenAPI31SpecFilter;
+import io.swagger.v3.core.filter.SpecFilter;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.core.util.Json31;
 import io.swagger.v3.core.util.Yaml;
 import io.swagger.v3.core.util.Yaml31;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.SpecVersion;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,14 +94,18 @@ public class OpenApiDocument {
      * @return Pretty printed 'OpenAPI' document in JSON.
      */
     public static String of(OpenAPI openApi, Version version, String mediaType) {
+        OpenAPI result = openApi;
+        if (Version.OPENAPI_3_1.equals(version) && !SpecVersion.V31.equals(openApi.getSpecVersion())) {
+            result = new SpecFilter().filter(openApi, new OpenAPI31SpecFilter(), null, null, null);
+        }
         if (MediaType.APPLICATION_YAML.equalsIgnoreCase(mediaType)) {
             if (Version.OPENAPI_3_1.equals(version)) {
-                return Yaml31.pretty(openApi);
+                return Yaml31.pretty(result);
             }
-            return Yaml.pretty(openApi);
+            return Yaml.pretty(result);
         } else if (Version.OPENAPI_3_1.equals(version)) {
-            return Json31.pretty(openApi);
+            return Json31.pretty(result);
         }
-        return Json.pretty(openApi);
+        return Json.pretty(result);
     }
 }
