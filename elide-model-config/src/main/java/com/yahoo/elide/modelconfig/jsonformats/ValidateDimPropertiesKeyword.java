@@ -6,68 +6,52 @@
 package com.yahoo.elide.modelconfig.jsonformats;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.fge.jackson.NodeType;
-import com.github.fge.jackson.jsonpointer.JsonPointer;
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.core.keyword.syntax.checkers.AbstractSyntaxChecker;
-import com.github.fge.jsonschema.core.report.ProcessingReport;
-import com.github.fge.jsonschema.core.tree.SchemaTree;
-import com.github.fge.jsonschema.keyword.digest.AbstractDigester;
-import com.github.fge.jsonschema.library.Keyword;
-import com.github.fge.msgsimple.bundle.MessageBundle;
+import com.networknt.schema.AbstractJsonValidator;
+import com.networknt.schema.AbstractKeyword;
+import com.networknt.schema.ExecutionContext;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaException;
+import com.networknt.schema.JsonValidator;
+import com.networknt.schema.ValidationContext;
+import com.networknt.schema.ValidationMessage;
 
-import lombok.Getter;
-
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
- * Creates custom keyword for {@code validateDimensionProperties}.
+ * Defines custom Keyword Validator for {@code validateDimensionProperties}.
+ * <p>
+ * This validator checks neither additional properties are defined for any
+ * dimension nor not both {@code tableSource} and {@code values} property is
+ * defined for any dimension.
+ * </p>
  */
-public class ValidateDimPropertiesKeyword {
+public class ValidateDimPropertiesKeyword extends AbstractKeyword {
 
-    @Getter
-    private Keyword keyword;
+    public static final String KEYWORD = "validateDimensionProperties";
 
-    public ValidateDimPropertiesKeyword() {
-        keyword = Keyword.newBuilder(ValidateDimPropertiesValidator.KEYWORD)
-                        .withSyntaxChecker(new ValidateDimPropertiesSyntaxChecker())
-                        .withDigester(new ValidateDimPropertiesDigester())
-                        .withValidatorClass(ValidateDimPropertiesValidator.class)
-                        .freeze();
+    private final MessageSource messageSource;
+
+    public ValidateDimPropertiesKeyword(MessageSource messageSource) {
+        super(KEYWORD);
+        this.messageSource = messageSource;
     }
 
-    /**
-     * Defines custom SyntaxChecker for {@code validateDimensionProperties}.
-     */
-    private class ValidateDimPropertiesSyntaxChecker extends AbstractSyntaxChecker {
-
-        public ValidateDimPropertiesSyntaxChecker() {
-            super(ValidateDimPropertiesValidator.KEYWORD, NodeType.BOOLEAN);
-        }
-
-        @Override
-        protected void checkValue(Collection<JsonPointer> pointers, MessageBundle bundle, ProcessingReport report,
-                        SchemaTree tree) throws ProcessingException {
-            // AbstractSyntaxChecker has already verified that value is of type Boolean
-            // No additional Checks Required
-        }
-    }
-
-    /**
-     * Defines custom Digester for {@code validateDimensionProperties}.
-     */
-    private class ValidateDimPropertiesDigester extends AbstractDigester {
-
-        public ValidateDimPropertiesDigester() {
-            super(ValidateDimPropertiesValidator.KEYWORD, NodeType.OBJECT);
-        }
-
-        @Override
-        public JsonNode digest(final JsonNode schema) {
-            final ObjectNode node = FACTORY.objectNode();
-            node.put(keyword, schema.get(keyword).asBoolean(true));
-            return node;
+    @Override
+    public JsonValidator newValidator(String schemaPath, JsonNode schemaNode, JsonSchema parentSchema,
+            ValidationContext validationContext) throws JsonSchemaException, Exception {
+        boolean validate = schemaNode.booleanValue();
+        if (validate) {
+            return new ValidateDimPropertiesValidator(messageSource, schemaPath, schemaNode, parentSchema,
+                    validationContext);
+        } else {
+            return new AbstractJsonValidator() {
+                @Override
+                public Set<ValidationMessage> validate(ExecutionContext executionContext, JsonNode node,
+                        JsonNode rootNode, String at) {
+                    return Collections.emptySet();
+                }
+            };
         }
     }
 }
