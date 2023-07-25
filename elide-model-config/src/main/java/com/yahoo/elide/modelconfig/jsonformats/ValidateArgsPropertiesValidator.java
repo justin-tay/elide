@@ -5,15 +5,15 @@
  */
 package com.yahoo.elide.modelconfig.jsonformats;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jsonschema.core.exceptions.ProcessingException;
-import com.github.fge.jsonschema.core.processing.Processor;
-import com.github.fge.jsonschema.core.report.ProcessingReport;
-import com.github.fge.jsonschema.keyword.validator.AbstractKeywordValidator;
-import com.github.fge.jsonschema.processors.data.FullData;
-import com.github.fge.msgsimple.bundle.MessageBundle;
-import com.google.common.collect.Sets;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.Sets;
+import com.networknt.schema.ExecutionContext;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.ValidationContext;
+import com.networknt.schema.ValidationMessage;
+
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -22,37 +22,28 @@ import java.util.Set;
  * This validator checks not both {@code tableSource} and {@code values} property is defined for any argument.
  * </p>
  */
-public class ValidateArgsPropertiesValidator extends AbstractKeywordValidator {
+public class ValidateArgsPropertiesValidator extends BaseJsonValidator {
 
     public static final String KEYWORD = "validateArgumentProperties";
     public static final String ATMOST_ONE_KEY = "validateArgumentProperties.error.atmostOne";
     public static final String ATMOST_ONE_MSG =
-                    "tableSource and values cannot both be defined for an argument. Choose One or None.";
+                    "{0}: tableSource and values cannot both be defined for an argument. Choose One or None.";
 
-    private boolean validate;
-
-    public ValidateArgsPropertiesValidator(final JsonNode digest) {
-        super(KEYWORD);
-        validate = digest.get(keyword).booleanValue();
+    public ValidateArgsPropertiesValidator(MessageSource messageSource, String schemaPath, JsonNode schemaNode,
+            JsonSchema parentSchema, ValidationContext validationContext) {
+        super(KEYWORD, messageSource, schemaPath, schemaNode, parentSchema, validationContext);
     }
 
     @Override
-    public void validate(Processor<FullData, FullData> processor, ProcessingReport report, MessageBundle bundle,
-                    FullData data) throws ProcessingException {
+    public Set<ValidationMessage> validate(ExecutionContext executionContext, JsonNode node, JsonNode rootNode,
+            String at) {
+        Set<ValidationMessage> messages = new LinkedHashSet<>();
+        JsonNode instance = node;
+        Set<String> fields = Sets.newHashSet(instance.fieldNames());
 
-        if (validate) {
-            JsonNode instance = data.getInstance().getNode();
-            Set<String> fields = Sets.newHashSet(instance.fieldNames());
-
-            if (fields.contains("values") && fields.contains("tableSource")) {
-                report.error(newMsg(data, bundle, ATMOST_ONE_KEY));
-            }
-
+        if (fields.contains("values") && fields.contains("tableSource")) {
+            messages.add(constructValidationMessage(ATMOST_ONE_KEY, ATMOST_ONE_MSG, at, schemaPath));
         }
-    }
-
-    @Override
-    public String toString() {
-        return keyword;
+        return messages;
     }
 }
