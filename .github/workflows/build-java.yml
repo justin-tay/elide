@@ -1,0 +1,57 @@
+name: Build Java
+
+on:
+  push:
+    branches: [ "verify_permission" ]
+  pull_request:
+    branches: [ "verify_permission" ]
+
+jobs:
+  build:
+    name: Build java on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        java-version: ['17']
+    steps:
+      - name: Set git to use LF
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Set up JDK (Java ${{ matrix.java-version }})
+        uses: actions/setup-java@v3
+        with:
+          java-version: '${{ matrix.java-version }}'
+          distribution: 'temurin'
+      - name: Java version
+        run: |
+          java --version
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven          
+# The public Windows runner typically only has 7 GB ram which is insufficient
+      - name: Configure virtual memory (Windows)
+        uses: al-cheb/configure-pagefile-action@v1.3
+        if: runner.os == 'Windows'
+        with:
+          minimum-size: 11GB
+          maximum-size: 11GB
+      - name: Build java
+        run: mvn -B clean verify
+      - name: Generate build reports (On Failure)
+        run: |
+          mvn surefire-report:report-only -Daggregate=true
+        if: failure()
+      - name: Upload build reports (On Failure)
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: build-reports-${{ matrix.os }}
+          path: 'target/site/'
