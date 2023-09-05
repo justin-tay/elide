@@ -103,7 +103,7 @@ public class JsonApi {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse get(Route route, User opaqueUser,
+    public ElideResponse<String> get(Route route, User opaqueUser,
                              UUID requestId) {
         UUID requestUuid = requestId != null ? requestId : UUID.randomUUID();
 
@@ -140,7 +140,7 @@ public class JsonApi {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse post(Route route, String jsonApiDocument,
+    public ElideResponse<String> post(Route route, String jsonApiDocument,
                               User opaqueUser, UUID requestId) {
         UUID requestUuid = requestId != null ? requestId : UUID.randomUUID();
 
@@ -172,7 +172,7 @@ public class JsonApi {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse patch(Route route, String jsonApiDocument, User opaqueUser, UUID requestId) {
+    public ElideResponse<String> patch(Route route, String jsonApiDocument, User opaqueUser, UUID requestId) {
         UUID requestUuid = requestId != null ? requestId : UUID.randomUUID();
 
         String accept = route.getHeaders().get("accept").stream().findFirst().orElse("");
@@ -220,7 +220,7 @@ public class JsonApi {
      * @param requestId the request ID
      * @return Elide response object
      */
-    public ElideResponse delete(Route route, String jsonApiDocument,
+    public ElideResponse<String> delete(Route route, String jsonApiDocument,
                                 User opaqueUser, UUID requestId) {
         UUID requestUuid = requestId != null ? requestId : UUID.randomUUID();
 
@@ -252,7 +252,7 @@ public class JsonApi {
      * @return Elide response object
      * @return
      */
-    public ElideResponse operations(Route route,
+    public ElideResponse<String> operations(Route route,
             String jsonApiDocument, User opaqueUser, UUID requestId) {
 
         UUID requestUuid = requestId != null ? requestId : UUID.randomUUID();
@@ -275,7 +275,7 @@ public class JsonApi {
                 }
             };
         } else {
-            return new ElideResponse(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type");
+            return ElideResponse.status(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).body("Unsupported Media Type");
         }
 
         return handleRequest(false, opaqueUser, dataStore::beginTransaction, requestUuid, handler);
@@ -301,7 +301,7 @@ public class JsonApi {
      * @param <T> The response type (JsonNode or JsonApiDocument)
      * @return the response
      */
-    protected <T> ElideResponse handleRequest(boolean isReadOnly, User user,
+    protected <T> ElideResponse<String> handleRequest(boolean isReadOnly, User user,
                                           Supplier<DataStoreTransaction> transaction, UUID requestId,
                                           Handler<DataStoreTransaction, User, HandlerResult> handler) {
         boolean isVerbose = false;
@@ -322,7 +322,7 @@ public class JsonApi {
 
             requestScope.runQueuedPreCommitTriggers();
 
-            ElideResponse response = buildResponse(responder.get());
+            ElideResponse<String> response = buildResponse(responder.get());
 
             auditLogger.commit();
             tx.commit(requestScope);
@@ -343,7 +343,7 @@ public class JsonApi {
         }
     }
 
-    protected ElideResponse buildErrorResponse(HttpStatusException error, boolean isVerbose) {
+    protected ElideResponse<String> buildErrorResponse(HttpStatusException error, boolean isVerbose) {
         if (error instanceof InternalServerErrorException) {
             log.error("Internal Server Error", error);
         }
@@ -352,7 +352,7 @@ public class JsonApi {
                 : error.getErrorResponse());
     }
 
-    private ElideResponse handleNonRuntimeException(Exception error, boolean isVerbose) {
+    private ElideResponse<String> handleNonRuntimeException(Exception error, boolean isVerbose) {
         CustomErrorException mappedException = getElide().mapError(error);
         if (mappedException != null) {
             return buildErrorResponse(mappedException, isVerbose);
@@ -376,7 +376,7 @@ public class JsonApi {
         throw new RuntimeException(error);
     }
 
-    private ElideResponse handleRuntimeException(RuntimeException error, boolean isVerbose) {
+    private ElideResponse<String> handleRuntimeException(RuntimeException error, boolean isVerbose) {
         CustomErrorException mappedException = getElide().mapError(error);
 
         if (mappedException != null) {
@@ -438,14 +438,14 @@ public class JsonApi {
         throw error;
     }
 
-    protected <T> ElideResponse buildResponse(Pair<Integer, T> response) {
+    protected <T> ElideResponse<String> buildResponse(Pair<Integer, T> response) {
         try {
             T responseNode = response.getRight();
             Integer responseCode = response.getLeft();
             String body = responseNode == null ? null : mapper.writeJsonApiDocument(responseNode);
-            return new ElideResponse(responseCode, body);
+            return ElideResponse.status(responseCode).body(body);
         } catch (JsonProcessingException e) {
-            return new ElideResponse(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.toString());
+            return ElideResponse.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).body(e.toString());
         }
     }
 
