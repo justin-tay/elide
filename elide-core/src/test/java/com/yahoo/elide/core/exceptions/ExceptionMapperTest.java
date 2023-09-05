@@ -18,6 +18,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.yahoo.elide.Elide;
+import com.yahoo.elide.ElideErrorResponse;
+import com.yahoo.elide.ElideErrors;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.ElideSettings;
 import com.yahoo.elide.core.TransactionRegistry;
@@ -41,22 +43,21 @@ import java.io.IOException;
 /**
  * Tests the error mapping logic.
  */
-public class ErrorMapperTest {
+public class ExceptionMapperTest {
 
     private final String baseUrl = "http://localhost:8080/api/v1";
-    private static final ErrorMapper MOCK_ERROR_MAPPER = mock(ErrorMapper.class);
+    private static final ExceptionMappers MOCK_ERROR_MAPPER = mock(ExceptionMappers.class);
     private static final Exception EXPECTED_EXCEPTION = new IllegalStateException("EXPECTED_EXCEPTION");
-    private static final CustomErrorException MAPPED_EXCEPTION = new CustomErrorException(
+    private static final ErrorResponseException MAPPED_EXCEPTION = new ErrorResponseException(
             422,
             "MAPPED_EXCEPTION",
-            ErrorObjects.builder()
-                    .addError()
-                    .withCode("SOME_ERROR")
+            ElideErrors.builder()
+                    .error(error -> error.attribute("code", "SOME_ERROR"))
                     .build()
     );
     private EntityDictionary dictionary;
 
-    ErrorMapperTest() throws Exception {
+    ExceptionMapperTest() throws Exception {
         dictionary = TestDictionary.getTestDictionary();
         dictionary.bindEntity(FieldTestModel.class);
         dictionary.bindEntity(PropertyTestModel.class);
@@ -69,7 +70,7 @@ public class ErrorMapperTest {
     }
 
     @Test
-    public void testElideRuntimeExceptionNoErrorMapper() throws Exception {
+    public void testElideRuntimeExceptionNoErrorResponseMapper() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
@@ -91,7 +92,7 @@ public class ErrorMapperTest {
     }
 
     @Test
-    public void testElideIOExceptionNoErrorMapper() throws Exception {
+    public void testElideIOExceptionNoErrorResponseMapper() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
@@ -107,7 +108,7 @@ public class ErrorMapperTest {
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
         ElideResponse response = jsonApi.post(route, body, null, null);
-        assertEquals(400, response.getResponseCode());
+        assertEquals(400, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"detail\":\"Unexpected character (&#39;&#34;&#39; (code 34)): was expecting comma to separate Object entries\\n at [Source: (String)&#34;{&#34;data&#34;: {&#34;type&#34;:&#34;testModel&#34;&#34;id&#34;:&#34;1&#34;,&#34;attributes&#34;: {&#34;field&#34;:&#34;Foo&#34;}}}&#34;; line: 1, column: 30]\"}]}",
                 response.getBody());
@@ -116,7 +117,7 @@ public class ErrorMapperTest {
     }
 
     @Test
-    public void testElideRuntimeExceptionWithErrorMapperUnmapped() throws Exception {
+    public void testElideRuntimeExceptionWithErrorResponseMapperUnmapped() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
@@ -138,7 +139,7 @@ public class ErrorMapperTest {
     }
 
     @Test
-    public void testElideIOExceptionWithErrorMapperUnmapped() throws Exception {
+    public void testElideIOExceptionWithErrorResponseMapperUnmapped() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
@@ -154,7 +155,7 @@ public class ErrorMapperTest {
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
         ElideResponse response = jsonApi.post(route, body, null, null);
-        assertEquals(400, response.getResponseCode());
+        assertEquals(400, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"detail\":\"Unexpected character (&#39;&#34;&#39; (code 34)): was expecting comma to separate Object entries\\n at [Source: (String)&#34;{&#34;data&#34;: {&#34;type&#34;:&#34;testModel&#34;&#34;id&#34;:&#34;1&#34;,&#34;attributes&#34;: {&#34;field&#34;:&#34;Foo&#34;}}}&#34;; line: 1, column: 30]\"}]}",
                 response.getBody());
@@ -163,7 +164,7 @@ public class ErrorMapperTest {
     }
 
     @Test
-    public void testElideRuntimeExceptionWithErrorMapperMapped() throws Exception {
+    void testElideRuntimeExceptionWithErrorResponseMapperMapped() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
@@ -176,11 +177,11 @@ public class ErrorMapperTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
         doThrow(EXPECTED_EXCEPTION).when(tx).preCommit(any());
-        when(MOCK_ERROR_MAPPER.map(EXPECTED_EXCEPTION)).thenReturn(MAPPED_EXCEPTION);
+        when(MOCK_ERROR_MAPPER.toErrorResponse(eq(EXPECTED_EXCEPTION), any())).thenReturn((ElideErrorResponse<Object>) MAPPED_EXCEPTION.getErrorResponse());
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
         ElideResponse response = jsonApi.post(route, body, null, null);
-        assertEquals(422, response.getResponseCode());
+        assertEquals(422, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"code\":\"SOME_ERROR\"}]}",
                 response.getBody());
@@ -189,7 +190,7 @@ public class ErrorMapperTest {
     }
 
     @Test
-    public void testElideIOExceptionWithErrorMapperMapped() throws Exception {
+    void testElideIOExceptionWithErrorResponseMapperMapped() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
@@ -203,11 +204,11 @@ public class ErrorMapperTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
-        when(MOCK_ERROR_MAPPER.map(isA(IOException.class))).thenReturn(MAPPED_EXCEPTION);
+        when(MOCK_ERROR_MAPPER.toErrorResponse(isA(IOException.class), any())).thenReturn((ElideErrorResponse<Object>) MAPPED_EXCEPTION.getErrorResponse());
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
         ElideResponse response = jsonApi.post(route, body, null, null);
-        assertEquals(422, response.getResponseCode());
+        assertEquals(422, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"code\":\"SOME_ERROR\"}]}",
                 response.getBody());
@@ -215,16 +216,16 @@ public class ErrorMapperTest {
         verify(tx).close();
     }
 
-    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ErrorMapper errorMapper) {
-        ElideSettings settings = getElideSettings(dataStore, dictionary, errorMapper);
+    private Elide getElide(DataStore dataStore, EntityDictionary dictionary, ExceptionMappers exceptionMappers) {
+        ElideSettings settings = getElideSettings(dataStore, dictionary, exceptionMappers);
         return new Elide(settings, new TransactionRegistry(), settings.getEntityDictionary().getScanner(), false);
     }
 
-    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ErrorMapper errorMapper) {
+    private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ExceptionMappers exceptionMappers) {
         JsonApiSettings.JsonApiSettingsBuilder jsonApiSettings = JsonApiSettings.builder();
         return ElideSettings.builder().dataStore(dataStore)
                 .entityDictionary(dictionary)
-                .errorMapper(errorMapper)
+                .exceptionMappers(exceptionMappers)
                 .verboseErrors(true)
                 .settings(jsonApiSettings)
                 .objectMapper(jsonApiSettings.build().getJsonApiMapper().getObjectMapper())

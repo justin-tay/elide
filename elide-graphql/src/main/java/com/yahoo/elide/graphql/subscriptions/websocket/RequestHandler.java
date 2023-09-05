@@ -119,8 +119,14 @@ public class RequestHandler implements Closeable {
             //This would be a subscription creation error.
         } catch (RuntimeException e) {
             log.error("UNEXPECTED RuntimeException: {}", e.getMessage());
-            ElideResponse response = QueryRunner.handleRuntimeException(elide, e, verboseErrors);
-            safeSendError(response.getBody());
+            ElideResponse<?> response = QueryRunner.handleRuntimeException(elide, e, verboseErrors);
+            String responseBody;
+            try {
+                responseBody = elide.getObjectMapper().writeValueAsString(response.getBody());
+                safeSendError(responseBody);
+            } catch (JsonProcessingException e1) {
+                safeSendError(e1.toString());
+            }
             safeClose();
         }
 

@@ -286,9 +286,10 @@ public class FetcherFetchTest extends PersistentResourceFetcherTest {
     public void testFederationServiceIntrospection() throws Exception {
         String graphQLRequest = "{ _service { sdl }}";
 
-        ElideResponse response = runGraphQLRequest(graphQLRequest, new HashMap<>());
+        ElideResponse<?> response = runGraphQLRequest(graphQLRequest, new HashMap<>());
+        String body = mapper.writeValueAsString(response.getBody());
 
-        assertTrue(! response.getBody().contains("errors"));
+        assertTrue(! body.contains("errors"));
     }
 
     @Test
@@ -301,9 +302,10 @@ public class FetcherFetchTest extends PersistentResourceFetcherTest {
                 + "}"
                 + "}";
 
-        ElideResponse response = runGraphQLRequest(graphQLRequest, new HashMap<>());
+        ElideResponse<?> response = runGraphQLRequest(graphQLRequest, new HashMap<>());
+        String body = mapper.writeValueAsString(response.getBody());
 
-        assertTrue(! response.getBody().contains("errors"));
+        assertTrue(! body.contains("errors"));
     }
 
     @Test
@@ -318,9 +320,10 @@ public class FetcherFetchTest extends PersistentResourceFetcherTest {
             + "}"
             + "}";
 
-        ElideResponse response = runGraphQLRequest(graphQLRequest, new HashMap<>());
+        ElideResponse<?> response = runGraphQLRequest(graphQLRequest, new HashMap<>());
+        String body = mapper.writeValueAsString(response.getBody());
 
-        assertTrue(! response.getBody().contains("errors"));
+        assertTrue(! body.contains("errors"));
     }
 
     @Override
