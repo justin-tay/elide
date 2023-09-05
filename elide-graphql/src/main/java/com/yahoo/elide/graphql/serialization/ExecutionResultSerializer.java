@@ -3,7 +3,7 @@
  * Licensed under the Apache License, Version 2.0
  * See LICENSE file in project root for terms.
  */
-package com.yahoo.elide.graphql;
+package com.yahoo.elide.graphql.serialization;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import graphql.ExecutionResult;
 import graphql.GraphQLError;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,8 +22,8 @@ import java.util.Map;
  * a GraphQL call. {@link GraphQLError} objects should be handed off to a {@link GraphQLErrorSerializer} to handle
  * optional encoding of the error message.
  */
-@Slf4j
 public class ExecutionResultSerializer extends StdSerializer<ExecutionResult> {
+    private static final long serialVersionUID = 1L;
     private final GraphQLErrorSerializer errorSerializer;
 
     public ExecutionResultSerializer() {
