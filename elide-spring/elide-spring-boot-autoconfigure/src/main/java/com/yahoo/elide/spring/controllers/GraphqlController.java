@@ -99,7 +99,7 @@ public class GraphqlController {
         return new Callable<ResponseEntity<String>>() {
             @Override
             public ResponseEntity<String> call() throws Exception {
-                ElideResponse response;
+                ElideResponse<String> response;
 
                 if (runner == null) {
                     response = buildErrorResponse(mapper, new InvalidOperationException("Invalid API Version"), false);
@@ -108,7 +108,7 @@ public class GraphqlController {
                             requestHeadersCleaned);
                 }
 
-                return ResponseEntity.status(response.getResponseCode()).body(response.getBody());
+                return ResponseEntity.status(response.getStatus()).body(response.getBody());
             }
         };
     }

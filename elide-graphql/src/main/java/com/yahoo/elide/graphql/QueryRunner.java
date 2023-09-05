@@ -115,7 +115,7 @@ public class QueryRunner {
      * @param user The user who issued the query.
      * @return The response.
      */
-    public ElideResponse run(String baseUrlEndPoint, String graphQLDocument, User user) {
+    public ElideResponse<String> run(String baseUrlEndPoint, String graphQLDocument, User user) {
         return run(baseUrlEndPoint, graphQLDocument, user, UUID.randomUUID());
     }
 
@@ -165,7 +165,7 @@ public class QueryRunner {
      * @param requestId the Request ID.
      * @return The response.
      */
-    public ElideResponse run(String baseUrlEndPoint, String graphQLDocument, User user, UUID requestId) {
+    public ElideResponse<String> run(String baseUrlEndPoint, String graphQLDocument, User user, UUID requestId) {
         return run(baseUrlEndPoint, graphQLDocument, user, requestId, null);
     }
 
@@ -176,7 +176,7 @@ public class QueryRunner {
      * @param requestId the Request ID.
      * @return The response.
      */
-    public ElideResponse run(String baseUrlEndPoint, String graphQLDocument, User user, UUID requestId,
+    public ElideResponse<String> run(String baseUrlEndPoint, String graphQLDocument, User user, UUID requestId,
                              Map<String, List<String>> requestHeaders) {
         ObjectMapper mapper = elide.getObjectMapper();
 
@@ -191,7 +191,7 @@ public class QueryRunner {
             return buildErrorResponse(mapper, new InvalidEntityBodyException(graphQLDocument), false);
         }
 
-        List<ElideResponse> responses = new ArrayList<>();
+        List<ElideResponse<String>> responses = new ArrayList<>();
         for (GraphQLQuery query : queries) {
             responses.add(executeGraphQLRequest(baseUrlEndPoint, mapper, user,
                     graphQLDocument, query, requestId, requestHeaders));
@@ -218,14 +218,10 @@ public class QueryRunner {
         try {
 
             //Build and elide response from the array of responses.
-            return ElideResponse.builder()
-                    .responseCode(HttpStatus.SC_OK)
-                    .body(mapper.writeValueAsString(result))
-                    .build();
+            return ElideResponse.ok(mapper.writeValueAsString(result));
         } catch (IOException e) {
             log.error("An unexpected error occurred trying to serialize array response.", e);
-            return ElideResponse.builder()
-                    .responseCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+            return ElideResponse.status(HttpStatus.SC_INTERNAL_SERVER_ERROR)
                     .build();
         }
     }
@@ -268,7 +264,7 @@ public class QueryRunner {
         return null;
     }
 
-    private ElideResponse executeGraphQLRequest(String baseUrlEndPoint, ObjectMapper mapper, User principal,
+    private ElideResponse<String> executeGraphQLRequest(String baseUrlEndPoint, ObjectMapper mapper, User principal,
                                                 String graphQLDocument, GraphQLQuery query, UUID requestId,
                                                 Map<String, List<String>> requestHeaders) {
         boolean isVerbose = false;
@@ -281,8 +277,7 @@ public class QueryRunner {
 
             elide.getTransactionRegistry().addRunningTransaction(requestId, tx);
             if (query.getQuery() == null || query.getQuery().isEmpty()) {
-                return ElideResponse.builder().responseCode(HttpStatus.SC_BAD_REQUEST)
-                        .body("A `query` key is required.").build();
+                return ElideResponse.badRequest("A `query` key is required.");
             }
 
             // get variables from request for constructing entityProjections
@@ -346,8 +341,7 @@ public class QueryRunner {
                 requestScope.getPermissionExecutor().logCheckStats();
             }
 
-            return ElideResponse.builder().responseCode(HttpStatus.SC_OK).body(mapper.writeValueAsString(result))
-                    .build();
+            return ElideResponse.ok(mapper.writeValueAsString(result));
         } catch (IOException e) {
             return handleNonRuntimeException(elide, e, graphQLDocument, isVerbose);
         } catch (RuntimeException e) {
@@ -394,7 +388,7 @@ public class QueryRunner {
         return result;
     }
 
-    public static ElideResponse handleNonRuntimeException(
+    public static ElideResponse<String> handleNonRuntimeException(
             Elide elide,
             Exception error,
             String graphQLDocument,
@@ -421,7 +415,7 @@ public class QueryRunner {
         throw new RuntimeException(error);
     }
 
-    public static ElideResponse handleRuntimeException(Elide elide, RuntimeException error, boolean isVerbose) {
+    public static ElideResponse<String> handleRuntimeException(Elide elide, RuntimeException error, boolean isVerbose) {
         CustomErrorException mappedException = elide.mapError(error);
         ObjectMapper mapper = elide.getObjectMapper();
 
@@ -433,7 +427,7 @@ public class QueryRunner {
             GraphQLException e = (GraphQLException) error;
             log.debug("GraphQLException", e);
             String body = e.getMessage();
-            return ElideResponse.builder().responseCode(HttpStatus.SC_OK).body(body).build();
+            return ElideResponse.ok(body);
         }
 
         if (error instanceof HttpStatusException) {
@@ -501,7 +495,8 @@ public class QueryRunner {
         throw new RuntimeException(error);
     }
 
-    public static ElideResponse buildErrorResponse(ObjectMapper mapper, HttpStatusException error, boolean isVerbose) {
+    public static ElideResponse<String> buildErrorResponse(ObjectMapper mapper, HttpStatusException error,
+            boolean isVerbose) {
         JsonNode errorNode;
         if (!(error instanceof CustomErrorException)) {
             // get the error message and optionally encode it
@@ -521,9 +516,6 @@ public class QueryRunner {
         } catch (JsonProcessingException e) {
             errorBody = errorNode.toString();
         }
-        return ElideResponse.builder()
-                .responseCode(error.getStatus())
-                .body(errorBody)
-                .build();
+        return ElideResponse.status(error.getStatus()).body(errorBody);
     }
 }
