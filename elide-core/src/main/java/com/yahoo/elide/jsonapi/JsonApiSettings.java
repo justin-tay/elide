@@ -7,7 +7,9 @@ package com.yahoo.elide.jsonapi;
 
 import com.yahoo.elide.Settings;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.exceptions.HttpStatus;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.filter.dialect.jsonapi.DefaultFilterDialect;
 import com.yahoo.elide.core.filter.dialect.jsonapi.JoinFilterDialect;
@@ -19,6 +21,7 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Settings for JsonApi.
@@ -69,10 +72,12 @@ public class JsonApiSettings implements Settings {
     private final boolean strictQueryParameters;
     private final List<JoinFilterDialect> joinFilterDialects;
     private final List<SubqueryFilterDialect> subqueryFilterDialects;
+    private final Function<ExceptionMappers, JsonApiExceptionHandler> jsonApiExceptionHandlerFactory;
 
     public JsonApiSettings(boolean enabled, String path, JsonApiMapper jsonApiMapper, Links links, int updateStatusCode,
             boolean strictQueryParameters, List<JoinFilterDialect> joinFilterDialects,
-            List<SubqueryFilterDialect> subqueryFilterDialects) {
+            List<SubqueryFilterDialect> subqueryFilterDialects,
+            Function<ExceptionMappers, JsonApiExceptionHandler> jsonApiExceptionHandlerFactory) {
         this.enabled = enabled;
         this.path = path;
         this.jsonApiMapper = jsonApiMapper;
@@ -81,6 +86,7 @@ public class JsonApiSettings implements Settings {
         this.strictQueryParameters = strictQueryParameters;
         this.joinFilterDialects = joinFilterDialects;
         this.subqueryFilterDialects = subqueryFilterDialects;
+        this.jsonApiExceptionHandlerFactory = jsonApiExceptionHandlerFactory;
     }
 
     /**
@@ -95,7 +101,8 @@ public class JsonApiSettings implements Settings {
                 .jsonApiMapper(this.jsonApiMapper)
                 .links(newLinks -> newLinks.enabled(this.getLinks().isEnabled())
                         .jsonApiLinks(this.getLinks().getJsonApiLinks()))
-                .strictQueryParameters(this.isStrictQueryParameters());
+                .strictQueryParameters(this.isStrictQueryParameters())
+                .jsonApiExceptionHandlerFactory(this.jsonApiExceptionHandlerFactory);
 
         builder.updateStatusCode = this.updateStatusCode;
         builder.joinFilterDialects.addAll(this.joinFilterDialects);
@@ -131,7 +138,7 @@ public class JsonApiSettings implements Settings {
             }
             return new JsonApiSettings(this.enabled, this.path, this.jsonApiMapper, this.links.build(),
                     this.updateStatusCode, this.strictQueryParameters, this.joinFilterDialects,
-                    this.subqueryFilterDialects);
+                    this.subqueryFilterDialects, this.jsonApiExceptionHandlerFactory);
         }
 
         @Override
@@ -169,6 +176,9 @@ public class JsonApiSettings implements Settings {
         protected boolean strictQueryParameters = true;
         protected List<JoinFilterDialect> joinFilterDialects = new ArrayList<>();
         protected List<SubqueryFilterDialect> subqueryFilterDialects = new ArrayList<>();
+        protected Function<ExceptionMappers, JsonApiExceptionHandler> jsonApiExceptionHandlerFactory =
+                exceptionMappers -> new DefaultJsonApiExceptionHandler(new Slf4jExceptionLogger(), exceptionMappers,
+                        new DefaultJsonApiErrorMapper());
 
         protected abstract S self();
 
@@ -310,6 +320,18 @@ public class JsonApiSettings implements Settings {
          */
         public S subqueryFilterDialects(Consumer<List<SubqueryFilterDialect>> subqueryFilterDialects) {
             subqueryFilterDialects.accept(this.subqueryFilterDialects);
+            return self();
+        }
+
+        /**
+         * Sets factory that produces {@link JsonApiExceptionHandler}.
+         *
+         * @param jsonApiExceptionHandlerFactory the exception handler factory
+         * @return
+         */
+        public S jsonApiExceptionHandlerFactory(
+                Function<ExceptionMappers, JsonApiExceptionHandler> jsonApiExceptionHandlerFactory) {
+            this.jsonApiExceptionHandlerFactory = jsonApiExceptionHandlerFactory;
             return self();
         }
     }

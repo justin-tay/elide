@@ -128,12 +128,6 @@
     "allDeclaredConstructors": true
   },
   {
-    "name": "com.yahoo.elide.core.exceptions.ErrorObjects",
-    "allDeclaredFields": true,
-    "allDeclaredMethods": true,
-    "allDeclaredConstructors": true
-  },
-  {
     "name": "com.yahoo.elide.core.security.checks.prefab.Collections$AppendOnly",
     "allDeclaredMethods": true,
     "allDeclaredConstructors": true
@@ -191,6 +185,30 @@
   },
   {
     "name": "com.yahoo.elide.jsonapi.models.JsonApiDocument",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.yahoo.elide.jsonapi.models.JsonApiError",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.yahoo.elide.jsonapi.models.JsonApiError$Links",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.yahoo.elide.jsonapi.models.JsonApiError$Source",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.yahoo.elide.jsonapi.models.JsonApiErrors",
     "allDeclaredFields": true,
     "allDeclaredMethods": true,
     "allDeclaredConstructors": true

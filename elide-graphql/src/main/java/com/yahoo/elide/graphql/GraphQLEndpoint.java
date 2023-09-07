@@ -5,12 +5,10 @@
  */
 package com.yahoo.elide.graphql;
 
-import static com.yahoo.elide.graphql.QueryRunner.buildErrorResponse;
-
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.exceptions.InvalidOperationException;
+import com.yahoo.elide.core.exceptions.InvalidApiVersionException;
 import com.yahoo.elide.core.request.route.BasicApiVersionValidator;
 import com.yahoo.elide.core.request.route.FlexibleRouteResolver;
 import com.yahoo.elide.core.request.route.NullRouteResolver;
@@ -112,8 +110,8 @@ public class GraphQLEndpoint {
 
         ElideResponse<String> response;
         if (runner == null) {
-            response = buildErrorResponse(elide.getObjectMapper(),
-                    new InvalidOperationException("Invalid API Version"), false);
+            response = QueryRunner.handleRuntimeException(elide,
+                    new InvalidApiVersionException("Invalid API Version"), false);
         } else {
             response = runner.run(route.getBaseUrl(),
                                   graphQLDocument, user, UUID.randomUUID(), requestHeaders);
