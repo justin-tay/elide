@@ -38,7 +38,6 @@ public class GraphQLAsyncQueryOperation extends AsyncQueryOperation {
             throw new InvalidOperationException("Invalid API Version");
         }
         UUID requestUUID = UUID.fromString(queryObj.getRequestId());
-        ElideResponse response = runner.run(scope.getRoute().getBaseUrl(), queryObj.getQuery(), user, requestUUID,
         ElideResponse<String> response = runner.run(scope.getRoute().getBaseUrl(), queryObj.getQuery(), user,
                 requestUUID, scope.getRoute().getHeaders());
         log.debug("GRAPHQL_V1_0 getResponseCode: {}, GRAPHQL_V1_0 getBody: {}",

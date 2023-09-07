@@ -15,7 +15,7 @@ import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.request.route.RouteResolver;
 import com.yahoo.elide.datastores.jms.JMSDataStore;
@@ -23,7 +23,6 @@ import com.yahoo.elide.graphql.GraphQLSettings;
 import com.yahoo.elide.graphql.serialization.GraphQLModule;
 import com.yahoo.elide.graphql.subscriptions.websocket.SubscriptionWebSocket;
 import com.yahoo.elide.jsonapi.JsonApiSettings;
-
 import graphql.execution.DataFetcherExceptionHandler;
 import graphql.execution.SimpleDataFetcherExceptionHandler;
 import jakarta.jms.ConnectionFactory;
@@ -54,7 +53,7 @@ public class SubscriptionWebSocketConfigurator extends ServerEndpointConfig.Conf
     protected AuditLogger auditLogger = new Slf4jLogger();
 
     @Builder.Default
-    protected ErrorMapper errorMapper = error -> null;
+    protected ExceptionMappers exceptionMappers = null;
 
     @Builder.Default
     protected String baseUrl = "/";
@@ -157,7 +156,7 @@ public class SubscriptionWebSocketConfigurator extends ServerEndpointConfig.Conf
         ElideSettings.ElideSettingsBuilder builder = ElideSettings.builder().dataStore(store)
                 .objectMapper(jsonApiSettings.build().getJsonApiMapper().getObjectMapper())
                 .auditLogger(auditLogger)
-                .errorMapper(errorMapper)
+                .exceptionMappers(exceptionMappers)
                 .baseUrl(baseUrl)
                 .settings(jsonApiSettings, graphqlSettings)
                 .entityDictionary(dictionary)

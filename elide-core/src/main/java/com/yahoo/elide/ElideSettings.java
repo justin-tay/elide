@@ -12,7 +12,7 @@ import com.yahoo.elide.core.audit.AuditLogger;
 import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.exceptions.ErrorMapper;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.request.Pagination;
 import com.yahoo.elide.core.security.PermissionExecutor;
 import com.yahoo.elide.core.security.executors.ActivePermissionExecutor;
@@ -40,7 +40,7 @@ public class ElideSettings {
     private final DataStore dataStore;
     private final EntityDictionary entityDictionary;
     private final ObjectMapper objectMapper;
-    private final ErrorMapper errorMapper;
+    private final ExceptionMappers exceptionMappers;
     private final Function<RequestScope, PermissionExecutor> permissionExecutor;
     private final HeaderProcessor headerProcessor;
     private final int defaultMaxPageSize;
@@ -50,7 +50,7 @@ public class ElideSettings {
     private final Map<Class<? extends Settings>, Settings> settings;
 
     public ElideSettings(AuditLogger auditLogger, DataStore dataStore, EntityDictionary entityDictionary,
-            ObjectMapper objectMapper, ErrorMapper errorMapper,
+            ObjectMapper objectMapper, ExceptionMappers exceptionMappers,
             Function<RequestScope, PermissionExecutor> permissionExecutor, HeaderProcessor headerProcessor,
             int defaultMaxPageSize, int defaultPageSize, Serdes serdes, String baseUrl,
             Map<Class<? extends Settings>, Settings> settings) {
@@ -59,7 +59,7 @@ public class ElideSettings {
         this.dataStore = dataStore;
         this.entityDictionary = entityDictionary;
         this.objectMapper = objectMapper;
-        this.errorMapper = errorMapper;
+        this.exceptionMappers = exceptionMappers;
         this.permissionExecutor = permissionExecutor;
         this.headerProcessor = headerProcessor;
         this.defaultMaxPageSize = defaultMaxPageSize;
@@ -80,7 +80,7 @@ public class ElideSettings {
                 .dataStore(this.dataStore)
                 .entityDictionary(this.entityDictionary)
                 .objectMapper(this.objectMapper)
-                .errorMapper(this.errorMapper)
+                .exceptionMappers(this.exceptionMappers)
                 .permissionExecutor(this.permissionExecutor)
                 .headerProcessor(this.headerProcessor)
                 .defaultMaxPageSize(this.defaultMaxPageSize)
@@ -133,7 +133,7 @@ public class ElideSettings {
                 settings.put(result.getClass(), result);
             });
             return new ElideSettings(this.auditLogger, this.dataStore, this.entityDictionary, this.objectMapper,
-                    this.errorMapper, this.permissionExecutor, this.headerProcessor, this.defaultMaxPageSize,
+                    this.exceptionMappers, this.permissionExecutor, this.headerProcessor, this.defaultMaxPageSize,
                     this.defaultPageSize, this.serdes.build(), this.baseUrl, settings);
         }
     }
@@ -150,7 +150,7 @@ public class ElideSettings {
         protected Map<Class<?>, Settings.SettingsBuilder> settings = new LinkedHashMap<>();
         protected DataStore dataStore;
         protected EntityDictionary entityDictionary;
-        protected ErrorMapper errorMapper;
+        protected ExceptionMappers exceptionMappers;
 
         protected ElideSettingsBuilderSupport() {
             // By default, Elide supports epoch based dates.
@@ -314,13 +314,13 @@ public class ElideSettings {
         }
 
         /**
-         * Sets the {@link ErrorMapper} for customizing error messages.
+         * Sets the {@link ErrorResponseMapper} for customizing error messages.
          *
-         * @param errorMapper the error mapper
+         * @param errorResponseMapper the error response mapper
          * @return the builder
          */
-        public S errorMapper(ErrorMapper errorMapper) {
-            this.errorMapper = errorMapper;
+        public S exceptionMappers(ExceptionMappers exceptionMappers) {
+            this.exceptionMappers = exceptionMappers;
             return self();
         }
 
