@@ -9,6 +9,8 @@ import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.InvalidApiVersionException;
+import com.yahoo.elide.core.exceptions.InvalidOperationException;
+import com.yahoo.elide.core.jaxrs.ResponseConverter;
 import com.yahoo.elide.core.request.route.BasicApiVersionValidator;
 import com.yahoo.elide.core.request.route.FlexibleRouteResolver;
 import com.yahoo.elide.core.request.route.NullRouteResolver;
@@ -57,6 +59,7 @@ public class GraphQLEndpoint {
     private final Elide elide;
     private final HeaderProcessor headerProcessor;
     protected final RouteResolver routeResolver;
+    private final ResponseConverter responseConverter;
 
     @Inject
     public GraphQLEndpoint(@Named("elide") Elide elide,
@@ -79,6 +82,7 @@ public class GraphQLEndpoint {
                 return new FlexibleRouteResolver(new BasicApiVersionValidator(), elide.getElideSettings()::getBaseUrl);
             }
         });
+        this.responseConverter = new ResponseConverter(new GraphQLBodyMapper(elide.getObjectMapper()));
     }
 
     /**
@@ -108,7 +112,7 @@ public class GraphQLEndpoint {
 
         QueryRunner runner = runners.getOrDefault(route.getApiVersion(), null);
 
-        ElideResponse<String> response;
+        ElideResponse<?> response;
         if (runner == null) {
             response = QueryRunner.handleRuntimeException(elide,
                     new InvalidApiVersionException("Invalid API Version"), false);
@@ -116,7 +120,7 @@ public class GraphQLEndpoint {
             response = runner.run(route.getBaseUrl(),
                                   graphQLDocument, user, UUID.randomUUID(), requestHeaders);
         }
-        return Response.status(response.getStatus()).entity(response.getBody()).build();
+        return this.responseConverter.convert(response);
     }
 
     @POST

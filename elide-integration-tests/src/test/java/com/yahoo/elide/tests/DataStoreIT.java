@@ -266,7 +266,7 @@ public class DataStoreIT extends IntegrationTest {
 
         Route route = Route.builder().baseUrl(BASEURL).path("filtered").apiVersion(NO_VERSION)
                 .build();
-        ElideResponse<String> response = jsonApi.get(route, goodUser, null);
+        ElideResponse response = jsonApi.get(route, goodUser, null);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
         assertEquals(data.toJSON(), response.getBody());
     }
@@ -279,7 +279,7 @@ public class DataStoreIT extends IntegrationTest {
         );
         Route route = Route.builder().baseUrl(BASEURL).path("filtered").apiVersion(NO_VERSION)
                 .build();
-        ElideResponse<String> response = jsonApi.get(route, badUser, null);
+        ElideResponse response = jsonApi.get(route, badUser, null);
         assertEquals(HttpStatus.SC_OK, response.getStatus());
         assertEquals(data.toJSON(), response.getBody());
     }

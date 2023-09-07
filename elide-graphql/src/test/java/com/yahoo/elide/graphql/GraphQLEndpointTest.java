@@ -62,10 +62,14 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.AbstractMap;
 import java.util.Arrays;
@@ -1106,6 +1110,14 @@ public class GraphQLEndpointTest {
 
     private static String extract200ResponseString(Response response) {
         assertEquals(200, response.getStatus());
+        if (response.getEntity() instanceof StreamingOutput streamingOutput) {
+            try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+                streamingOutput.write(stream);
+                return new String(stream.toByteArray(), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
         return (String) response.getEntity();
     }
 
