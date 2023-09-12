@@ -68,7 +68,7 @@ public abstract class AsyncQueryOperation implements Callable<AsyncApiResult> {
      * @param response ElideResponse object.
      * @throws IllegalStateException IllegalStateException Exception.
      */
-    public void nullResponseCheck(ElideResponse<String> response) {
+    public void nullResponseCheck(ElideResponse<?> response) {
         if (response == null) {
             throw new IllegalStateException("No Response for request returned");
         }
