@@ -16,12 +16,17 @@ import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.Injector;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.request.route.RouteResolver;
 import com.yahoo.elide.datastores.jms.JMSDataStore;
+import com.yahoo.elide.graphql.DefaultGraphQLErrorMapper;
+import com.yahoo.elide.graphql.DefaultGraphQLExceptionHandler;
 import com.yahoo.elide.graphql.GraphQLSettings;
 import com.yahoo.elide.graphql.serialization.GraphQLModule;
 import com.yahoo.elide.graphql.subscriptions.websocket.SubscriptionWebSocket;
+import com.yahoo.elide.jsonapi.DefaultJsonApiErrorMapper;
+import com.yahoo.elide.jsonapi.DefaultJsonApiExceptionHandler;
 import com.yahoo.elide.jsonapi.JsonApiSettings;
 import graphql.execution.DataFetcherExceptionHandler;
 import graphql.execution.SimpleDataFetcherExceptionHandler;
@@ -149,14 +154,17 @@ public class SubscriptionWebSocketConfigurator extends ServerEndpointConfig.Conf
 
         JsonApiSettings.JsonApiSettingsBuilder jsonApiSettings = JsonApiSettings.builder()
                 .joinFilterDialect(rsqlFilterStrategy)
-                .subqueryFilterDialect(rsqlFilterStrategy);
+                .subqueryFilterDialect(rsqlFilterStrategy)
+                .jsonApiExceptionHandler(new DefaultJsonApiExceptionHandler(
+                        new Slf4jExceptionLogger(), exceptionMappers, new DefaultJsonApiErrorMapper()));
 
-        GraphQLSettings.GraphQLSettingsBuilder graphqlSettings = GraphQLSettings.builder();
+        GraphQLSettings.GraphQLSettingsBuilder graphqlSettings = GraphQLSettings.builder()
+                .graphqlExceptionHandler(new DefaultGraphQLExceptionHandler(new Slf4jExceptionLogger(),
+                        exceptionMappers, new DefaultGraphQLErrorMapper()));
 
         ElideSettings.ElideSettingsBuilder builder = ElideSettings.builder().dataStore(store)
                 .objectMapper(jsonApiSettings.build().getJsonApiMapper().getObjectMapper())
                 .auditLogger(auditLogger)
-                .exceptionMappers(exceptionMappers)
                 .baseUrl(baseUrl)
                 .settings(jsonApiSettings, graphqlSettings)
                 .entityDictionary(dictionary)

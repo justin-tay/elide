@@ -25,6 +25,7 @@ import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.graphql.models.GraphQLErrors;
 import com.yahoo.elide.graphql.serialization.GraphQLErrorDeserializer;
@@ -144,9 +145,10 @@ public class QueryRunnerTest extends GraphQLTest {
     private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ExceptionMappers exceptionMappers) {
         return ElideSettings.builder().dataStore(dataStore)
                 .entityDictionary(dictionary)
-                .exceptionMappers(exceptionMappers)
                 .verboseErrors(true)
-                .settings(GraphQLSettings.builder())
+                .settings(GraphQLSettings.builder().graphqlExceptionHandler(
+                        new DefaultGraphQLExceptionHandler(new Slf4jExceptionLogger(), exceptionMappers,
+                                new DefaultGraphQLErrorMapper())))
                 .build();
     }
 

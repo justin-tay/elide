@@ -76,8 +76,7 @@ public class JsonApi {
         this.elideSettings = this.elide.getElideSettings();
         this.transactionRegistry = this.elide.getTransactionRegistry();
         this.auditLogger = this.elide.getAuditLogger();
-        this.jsonApiExceptionHandler = this.jsonApiSettings.getJsonApiExceptionHandlerFactory()
-                .apply(this.elide.getExceptionMappers());
+        this.jsonApiExceptionHandler = this.jsonApiSettings.getJsonApiExceptionHandler();
     }
 
     /**

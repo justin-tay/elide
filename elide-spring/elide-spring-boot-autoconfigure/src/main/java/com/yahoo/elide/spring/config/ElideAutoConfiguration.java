@@ -31,11 +31,13 @@ import com.yahoo.elide.core.dictionary.EntityDictionary.EntityDictionaryBuilder;
 import com.yahoo.elide.core.dictionary.EntityDictionaryBuilderCustomizer;
 import com.yahoo.elide.core.dictionary.Injector;
 import com.yahoo.elide.core.exceptions.BasicExceptionMappers;
+import com.yahoo.elide.core.exceptions.ExceptionLogger;
 import com.yahoo.elide.core.exceptions.ExceptionMapper;
 import com.yahoo.elide.core.exceptions.ExceptionMapperRegistration;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.exceptions.ExceptionMappers.ExceptionMappersBuilder;
 import com.yahoo.elide.core.exceptions.ExceptionMappersBuilderCustomizer;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.request.route.ApiVersionValidator;
 import com.yahoo.elide.core.request.route.BasicApiVersionValidator;
@@ -70,11 +72,19 @@ import com.yahoo.elide.datastores.aggregation.queryengines.sql.dialects.SQLDiale
 import com.yahoo.elide.datastores.aggregation.queryengines.sql.query.AggregateBeforeJoinOptimizer;
 import com.yahoo.elide.datastores.aggregation.validator.TemplateConfigValidator;
 import com.yahoo.elide.datastores.jpa.JpaDataStore;
+import com.yahoo.elide.graphql.DefaultGraphQLErrorMapper;
+import com.yahoo.elide.graphql.DefaultGraphQLExceptionHandler;
+import com.yahoo.elide.graphql.GraphQLErrorMapper;
+import com.yahoo.elide.graphql.GraphQLExceptionHandler;
 import com.yahoo.elide.graphql.GraphQLSettings.GraphQLSettingsBuilder;
 import com.yahoo.elide.graphql.GraphQLSettingsBuilderCustomizer;
 import com.yahoo.elide.graphql.GraphQLSettingsBuilderCustomizers;
 import com.yahoo.elide.graphql.QueryRunners;
+import com.yahoo.elide.jsonapi.DefaultJsonApiErrorMapper;
+import com.yahoo.elide.jsonapi.DefaultJsonApiExceptionHandler;
 import com.yahoo.elide.jsonapi.JsonApi;
+import com.yahoo.elide.jsonapi.JsonApiErrorMapper;
+import com.yahoo.elide.jsonapi.JsonApiExceptionHandler;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
 import com.yahoo.elide.jsonapi.JsonApiSettings.JsonApiSettingsBuilder;
 import com.yahoo.elide.jsonapi.JsonApiSettingsBuilderCustomizer;
@@ -178,7 +188,6 @@ public class ElideAutoConfiguration {
      *
      * @param settings the settings
      * @param entityDictionary the entity dictionary
-     * @param exceptionMappersBuilder the exception mappers builder
      * @param dataStore the data store
      * @param headerProcessor the header processor
      * @param elideMapper the elide mapper
@@ -190,12 +199,11 @@ public class ElideAutoConfiguration {
     @ConditionalOnMissingBean
     @Scope(SCOPE_PROTOTYPE)
     public ElideSettingsBuilder elideSettingsBuilder(ElideConfigProperties settings, EntityDictionary entityDictionary,
-            ExceptionMappersBuilder exceptionMappersBuilder, DataStore dataStore, HeaderProcessor headerProcessor,
+            DataStore dataStore, HeaderProcessor headerProcessor,
             ElideMapper elideMapper, SerdesBuilder serdesBuilder, ObjectProvider<SettingsBuilder> settingsProvider,
             ObjectProvider<ElideSettingsBuilderCustomizer> customizerProvider) {
         return ElideSettingsBuilderCustomizers.buildElideSettingsBuilder(builder -> {
             builder.dataStore(dataStore).entityDictionary(entityDictionary).objectMapper(elideMapper.getObjectMapper())
-                    .exceptionMappers(exceptionMappersBuilder.build())
                     .defaultMaxPageSize(settings.getMaxPageSize())
                     .defaultPageSize(settings.getPageSize()).auditLogger(new Slf4jLogger())
                     .baseUrl(settings.getBaseUrl())
@@ -541,14 +549,32 @@ public class ElideAutoConfiguration {
             ObjectProvider<ExceptionMapperRegistration> exceptionMapperRegistrationProvider,
             ObjectProvider<ExceptionMapper<?, ?>> exceptionMapperProvider,
             ObjectProvider<ExceptionMappersBuilderCustomizer> customizerProvider) {
-        ExceptionMappersBuilder exceptionMapperBuilder = BasicExceptionMappers.builder();
+        ExceptionMappersBuilder exceptionMappersBuilder = BasicExceptionMappers.builder();
         // Registrations have priority
-        exceptionMapperRegistrationProvider.orderedStream().forEach(exceptionMapperBuilder::register);
+        exceptionMapperRegistrationProvider.orderedStream().forEach(exceptionMappersBuilder::register);
 
-        exceptionMapperProvider.orderedStream().forEach(exceptionMapperBuilder::register);
+        exceptionMapperProvider.orderedStream().forEach(exceptionMappersBuilder::register);
 
-        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(exceptionMapperBuilder));
-        return exceptionMapperBuilder;
+        customizerProvider.orderedStream().forEach(customizer -> customizer.customize(exceptionMappersBuilder));
+        return exceptionMappersBuilder;
+    }
+
+    /**
+     * Creates the default {@link ExceptionMappersBuilder}.
+     *
+     * @param exceptionMappersBuilder the builder
+     * @return
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public ExceptionMappers exceptionMapper(ExceptionMappersBuilder exceptionMappersBuilder) {
+        return exceptionMappersBuilder.build();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public ExceptionLogger exceptionLogger() {
+        return new Slf4jExceptionLogger();
     }
 
     @Bean
@@ -832,14 +858,29 @@ public class ElideAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
+        public GraphQLErrorMapper graphqlErrorMapper() {
+            return new DefaultGraphQLErrorMapper();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        public GraphQLExceptionHandler graphqlExceptionHandler(ExceptionLogger exceptionLogger,
+                ExceptionMappers exceptionMappers, GraphQLErrorMapper graphqlErrorMapper) {
+            return new DefaultGraphQLExceptionHandler(exceptionLogger, exceptionMappers, graphqlErrorMapper);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
         @Scope(SCOPE_PROTOTYPE)
         public GraphQLSettingsBuilder graphqlSettingsBuilder(ElideConfigProperties settings,
                 EntityDictionary entityDictionary,
+                GraphQLExceptionHandler graphqlExceptionHandler,
                 ObjectProvider<GraphQLSettingsBuilderCustomizer> customizerProviders) {
             return GraphQLSettingsBuilderCustomizers.buildGraphQLSettingsBuilder(entityDictionary,
                     builder -> {
                         builder.path(settings.getGraphql().getPath()).federation(
-                                federation -> federation.enabled(settings.getGraphql().getFederation().isEnabled()));
+                                federation -> federation.enabled(settings.getGraphql().getFederation().isEnabled()))
+                                .graphqlExceptionHandler(graphqlExceptionHandler);
                         customizerProviders.orderedStream().forEach(customizer -> customizer.customize(builder));
                     });
         }
@@ -851,15 +892,29 @@ public class ElideAutoConfiguration {
     public static class JsonApiConfiguration {
         @Bean
         @ConditionalOnMissingBean
+        public JsonApiErrorMapper jsonApiErrorMapper() {
+            return new DefaultJsonApiErrorMapper();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        public JsonApiExceptionHandler jsonApiExceptionHandler(ExceptionLogger exceptionLogger,
+                ExceptionMappers exceptionMappers, JsonApiErrorMapper jsonApiErrorMapper) {
+            return new DefaultJsonApiExceptionHandler(exceptionLogger, exceptionMappers, jsonApiErrorMapper);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
         @Scope(SCOPE_PROTOTYPE)
         public JsonApiSettingsBuilder jsonApiSettingsBuilder(ElideConfigProperties settings,
                 EntityDictionary entityDictionary, JsonApiMapper jsonApiMapper,
+                JsonApiExceptionHandler jsonApiExceptionHandler,
                 ObjectProvider<JsonApiSettingsBuilderCustomizer> customizerProviders) {
             return JsonApiSettingsBuilderCustomizers.buildJsonApiSettingsBuilder(entityDictionary, builder -> {
                 builder.path(settings.getJsonApi().getPath())
                         .joinFilterDialect(RSQLFilterDialect.builder().dictionary(entityDictionary).build())
                         .subqueryFilterDialect(RSQLFilterDialect.builder().dictionary(entityDictionary).build())
-                        .jsonApiMapper(jsonApiMapper);
+                        .jsonApiMapper(jsonApiMapper).jsonApiExceptionHandler(jsonApiExceptionHandler);
                 if (settings.getJsonApi().getLinks().isEnabled()) {
                     String baseUrl = settings.getBaseUrl();
                     builder.links(links -> links.enabled(true));

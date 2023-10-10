@@ -10,8 +10,6 @@ import com.yahoo.elide.core.audit.AuditLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.inmemory.InMemoryDataStore;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ErrorContext;
-import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.utils.ClassScanner;
 import com.yahoo.elide.core.utils.coerce.CoerceUtil;
 import com.yahoo.elide.core.utils.coerce.converters.ElideTypeConverter;
@@ -39,7 +37,6 @@ public class Elide {
     @Getter private final AuditLogger auditLogger;
     @Getter private final DataStore dataStore;
     @Getter private final ObjectMapper objectMapper;
-    @Getter private final ExceptionMappers exceptionMappers;
     @Getter private final TransactionRegistry transactionRegistry;
     @Getter private final ClassScanner scanner;
     private boolean initialized = false;
@@ -87,7 +84,6 @@ public class Elide {
         this.auditLogger = elideSettings.getAuditLogger();
         this.dataStore = new InMemoryDataStore(elideSettings.getDataStore());
         this.objectMapper = elideSettings.getObjectMapper();
-        this.exceptionMappers = elideSettings.getExceptionMappers();
         this.transactionRegistry = transactionRegistry;
 
         if (doScans) {
@@ -159,22 +155,6 @@ public class Elide {
 
     protected Set<Class<?>> registerCustomSerdeScan() {
         return scanner.getAnnotatedClasses(ElideTypeConverter.class);
-    }
-
-    public ElideErrorResponse toErrorResponse(Exception exception, ErrorContext errorContext) {
-        if (exceptionMappers != null) {
-            log.trace("Attempting to map exception of type {}", exception.getClass());
-            ElideErrorResponse errorResponse = exceptionMappers.toErrorResponse(exception, errorContext);
-
-            if (errorResponse != null) {
-                log.debug("Successfully mapped exception {}", exception.getClass());
-                return errorResponse;
-            } else {
-                log.debug("No error mapping present for {}", exception.getClass());
-            }
-        }
-
-        return null;
     }
 
     public <T extends Settings> T getSettings(Class<T> clazz) {

@@ -32,6 +32,8 @@ import com.yahoo.elide.core.lifecycle.LegacyTestModel;
 import com.yahoo.elide.core.lifecycle.PropertyTestModel;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.type.ClassType;
+import com.yahoo.elide.jsonapi.DefaultJsonApiErrorMapper;
+import com.yahoo.elide.jsonapi.DefaultJsonApiExceptionHandler;
 import com.yahoo.elide.jsonapi.JsonApi;
 import com.yahoo.elide.jsonapi.JsonApiSettings;
 
@@ -46,7 +48,7 @@ import java.io.IOException;
 public class ExceptionMapperTest {
 
     private final String baseUrl = "http://localhost:8080/api/v1";
-    private static final ExceptionMappers MOCK_ERROR_MAPPER = mock(ExceptionMappers.class);
+    private static final ExceptionMappers MOCK_EXCEPTION_MAPPER = mock(ExceptionMappers.class);
     private static final Exception EXPECTED_EXCEPTION = new IllegalStateException("EXPECTED_EXCEPTION");
     private static final ErrorResponseException MAPPED_EXCEPTION = new ErrorResponseException(
             422,
@@ -66,7 +68,7 @@ public class ExceptionMapperTest {
 
     @AfterEach
     public void afterEach() {
-        reset(MOCK_ERROR_MAPPER);
+        reset(MOCK_EXCEPTION_MAPPER);
     }
 
     @Test
@@ -107,7 +109,7 @@ public class ExceptionMapperTest {
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
-        ElideResponse response = jsonApi.post(route, body, null, null);
+        ElideResponse<String> response = jsonApi.post(route, body, null, null);
         assertEquals(400, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"detail\":\"Unexpected character (&#39;&#34;&#39; (code 34)): was expecting comma to separate Object entries\\n at [Source: (String)&#34;{&#34;data&#34;: {&#34;type&#34;:&#34;testModel&#34;&#34;id&#34;:&#34;1&#34;,&#34;attributes&#34;: {&#34;field&#34;:&#34;Foo&#34;}}}&#34;; line: 1, column: 30]\"}]}",
@@ -122,7 +124,7 @@ public class ExceptionMapperTest {
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
 
-        Elide elide = getElide(store, dictionary, MOCK_ERROR_MAPPER);
+        Elide elide = getElide(store, dictionary, MOCK_EXCEPTION_MAPPER);
         JsonApi jsonApi = new JsonApi(elide);
 
         String body = "{\"data\": {\"type\":\"testModel\",\"id\":\"1\",\"attributes\": {\"field\":\"Foo\"}}}";
@@ -144,7 +146,7 @@ public class ExceptionMapperTest {
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
 
-        Elide elide = getElide(store, dictionary, MOCK_ERROR_MAPPER);
+        Elide elide = getElide(store, dictionary, MOCK_EXCEPTION_MAPPER);
         JsonApi jsonApi = new JsonApi(elide);
 
         //Invalid JSON
@@ -154,7 +156,7 @@ public class ExceptionMapperTest {
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
-        ElideResponse response = jsonApi.post(route, body, null, null);
+        ElideResponse<String> response = jsonApi.post(route, body, null, null);
         assertEquals(400, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"detail\":\"Unexpected character (&#39;&#34;&#39; (code 34)): was expecting comma to separate Object entries\\n at [Source: (String)&#34;{&#34;data&#34;: {&#34;type&#34;:&#34;testModel&#34;&#34;id&#34;:&#34;1&#34;,&#34;attributes&#34;: {&#34;field&#34;:&#34;Foo&#34;}}}&#34;; line: 1, column: 30]\"}]}",
@@ -169,7 +171,7 @@ public class ExceptionMapperTest {
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
 
-        Elide elide = getElide(store, dictionary, MOCK_ERROR_MAPPER);
+        Elide elide = getElide(store, dictionary, MOCK_EXCEPTION_MAPPER);
         JsonApi jsonApi = new JsonApi(elide);
 
         String body = "{\"data\": {\"type\":\"testModel\",\"id\":\"1\",\"attributes\": {\"field\":\"Foo\"}}}";
@@ -177,10 +179,10 @@ public class ExceptionMapperTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
         doThrow(EXPECTED_EXCEPTION).when(tx).preCommit(any());
-        when(MOCK_ERROR_MAPPER.toErrorResponse(eq(EXPECTED_EXCEPTION), any())).thenReturn((ElideErrorResponse<Object>) MAPPED_EXCEPTION.getErrorResponse());
+        when(MOCK_EXCEPTION_MAPPER.toErrorResponse(eq(EXPECTED_EXCEPTION), any())).thenReturn((ElideErrorResponse<Object>) MAPPED_EXCEPTION.getErrorResponse());
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
-        ElideResponse response = jsonApi.post(route, body, null, null);
+        ElideResponse<String> response = jsonApi.post(route, body, null, null);
         assertEquals(422, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"code\":\"SOME_ERROR\"}]}",
@@ -195,7 +197,7 @@ public class ExceptionMapperTest {
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
         FieldTestModel mockModel = mock(FieldTestModel.class);
 
-        Elide elide = getElide(store, dictionary, MOCK_ERROR_MAPPER);
+        Elide elide = getElide(store, dictionary, MOCK_EXCEPTION_MAPPER);
         JsonApi jsonApi = new JsonApi(elide);
 
         //Invalid JSON:
@@ -204,10 +206,10 @@ public class ExceptionMapperTest {
         when(store.beginTransaction()).thenReturn(tx);
         when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
 
-        when(MOCK_ERROR_MAPPER.toErrorResponse(isA(IOException.class), any())).thenReturn((ElideErrorResponse<Object>) MAPPED_EXCEPTION.getErrorResponse());
+        when(MOCK_EXCEPTION_MAPPER.toErrorResponse(isA(IOException.class), any())).thenReturn((ElideErrorResponse<Object>) MAPPED_EXCEPTION.getErrorResponse());
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
-        ElideResponse response = jsonApi.post(route, body, null, null);
+        ElideResponse<String> response = jsonApi.post(route, body, null, null);
         assertEquals(422, response.getStatus());
         assertEquals(
                 "{\"errors\":[{\"code\":\"SOME_ERROR\"}]}",
@@ -222,10 +224,11 @@ public class ExceptionMapperTest {
     }
 
     private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ExceptionMappers exceptionMappers) {
-        JsonApiSettings.JsonApiSettingsBuilder jsonApiSettings = JsonApiSettings.builder();
+        JsonApiSettings.JsonApiSettingsBuilder jsonApiSettings = JsonApiSettings.builder()
+                .jsonApiExceptionHandler(new DefaultJsonApiExceptionHandler(new Slf4jExceptionLogger(),
+                        exceptionMappers, new DefaultJsonApiErrorMapper()));
         return ElideSettings.builder().dataStore(dataStore)
                 .entityDictionary(dictionary)
-                .exceptionMappers(exceptionMappers)
                 .verboseErrors(true)
                 .settings(jsonApiSettings)
                 .objectMapper(jsonApiSettings.build().getJsonApiMapper().getObjectMapper())

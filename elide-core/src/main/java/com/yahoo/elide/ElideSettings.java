@@ -40,7 +40,6 @@ public class ElideSettings {
     private final DataStore dataStore;
     private final EntityDictionary entityDictionary;
     private final ObjectMapper objectMapper;
-    private final ExceptionMappers exceptionMappers;
     private final Function<RequestScope, PermissionExecutor> permissionExecutor;
     private final HeaderProcessor headerProcessor;
     private final int defaultMaxPageSize;
@@ -50,16 +49,14 @@ public class ElideSettings {
     private final Map<Class<? extends Settings>, Settings> settings;
 
     public ElideSettings(AuditLogger auditLogger, DataStore dataStore, EntityDictionary entityDictionary,
-            ObjectMapper objectMapper, ExceptionMappers exceptionMappers,
-            Function<RequestScope, PermissionExecutor> permissionExecutor, HeaderProcessor headerProcessor,
-            int defaultMaxPageSize, int defaultPageSize, Serdes serdes, String baseUrl,
+            ObjectMapper objectMapper, Function<RequestScope, PermissionExecutor> permissionExecutor,
+            HeaderProcessor headerProcessor, int defaultMaxPageSize, int defaultPageSize, Serdes serdes, String baseUrl,
             Map<Class<? extends Settings>, Settings> settings) {
         super();
         this.auditLogger = auditLogger;
         this.dataStore = dataStore;
         this.entityDictionary = entityDictionary;
         this.objectMapper = objectMapper;
-        this.exceptionMappers = exceptionMappers;
         this.permissionExecutor = permissionExecutor;
         this.headerProcessor = headerProcessor;
         this.defaultMaxPageSize = defaultMaxPageSize;
@@ -80,7 +77,6 @@ public class ElideSettings {
                 .dataStore(this.dataStore)
                 .entityDictionary(this.entityDictionary)
                 .objectMapper(this.objectMapper)
-                .exceptionMappers(this.exceptionMappers)
                 .permissionExecutor(this.permissionExecutor)
                 .headerProcessor(this.headerProcessor)
                 .defaultMaxPageSize(this.defaultMaxPageSize)
@@ -133,7 +129,7 @@ public class ElideSettings {
                 settings.put(result.getClass(), result);
             });
             return new ElideSettings(this.auditLogger, this.dataStore, this.entityDictionary, this.objectMapper,
-                    this.exceptionMappers, this.permissionExecutor, this.headerProcessor, this.defaultMaxPageSize,
+                    this.permissionExecutor, this.headerProcessor, this.defaultMaxPageSize,
                     this.defaultPageSize, this.serdes.build(), this.baseUrl, settings);
         }
     }
@@ -310,17 +306,6 @@ public class ElideSettings {
          */
         public S entityDictionary(EntityDictionary entityDictionary) {
             this.entityDictionary = entityDictionary;
-            return self();
-        }
-
-        /**
-         * Sets the {@link ErrorResponseMapper} for customizing error messages.
-         *
-         * @param errorResponseMapper the error response mapper
-         * @return the builder
-         */
-        public S exceptionMappers(ExceptionMappers exceptionMappers) {
-            this.exceptionMappers = exceptionMappers;
             return self();
         }
 

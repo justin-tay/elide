@@ -7,7 +7,7 @@ package com.yahoo.elide.graphql;
 
 import com.yahoo.elide.Settings;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.BasicExceptionMappers;
 import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.filter.dialect.graphql.FilterDialect;
@@ -15,7 +15,6 @@ import com.yahoo.elide.core.filter.dialect.graphql.FilterDialect;
 import lombok.Getter;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Settings for GraphQL.
@@ -54,15 +53,15 @@ public class GraphQLSettings implements Settings {
     private final String path;
     private final Federation federation;
     private final FilterDialect filterDialect;
-    private final Function<ExceptionMappers, GraphQLExceptionHandler> graphqlExceptionHandlerFactory;
+    private final GraphQLExceptionHandler graphqlExceptionHandler;
 
     public GraphQLSettings(boolean enabled, String path, Federation federation, FilterDialect filterDialect,
-            Function<ExceptionMappers, GraphQLExceptionHandler> graphqlExceptionHandlerFactory) {
+            GraphQLExceptionHandler graphqlExceptionHandler) {
         this.enabled = enabled;
         this.path = path;
         this.federation = federation;
         this.filterDialect = filterDialect;
-        this.graphqlExceptionHandlerFactory = graphqlExceptionHandlerFactory;
+        this.graphqlExceptionHandler = graphqlExceptionHandler;
     }
 
     /**
@@ -76,7 +75,7 @@ public class GraphQLSettings implements Settings {
                 .path(this.path)
                 .filterDialect(this.filterDialect)
                 .federation(newFederation -> newFederation.enabled(this.getFederation().isEnabled()))
-                .graphqlExceptionHandlerFactory(this.graphqlExceptionHandlerFactory);
+                .graphqlExceptionHandler(this.graphqlExceptionHandler);
     }
 
     /**
@@ -105,7 +104,7 @@ public class GraphQLSettings implements Settings {
                 this.processor.accept(this);
             }
             return new GraphQLSettings(this.enabled, this.path, this.federation.build(), this.filterDialect,
-                    this.graphqlExceptionHandlerFactory);
+                    this.graphqlExceptionHandler);
         }
 
         @Override
@@ -133,9 +132,8 @@ public class GraphQLSettings implements Settings {
         protected String path = "/";
         protected final Federation.FederationBuilder federation = Federation.builder();
         protected FilterDialect filterDialect;
-        protected Function<ExceptionMappers, GraphQLExceptionHandler> graphqlExceptionHandlerFactory =
-                exceptionMappers -> new DefaultGraphQLExceptionHandler(new Slf4jExceptionLogger(), exceptionMappers,
-                        new DefaultGraphQLErrorMapper());
+        protected GraphQLExceptionHandler graphqlExceptionHandler = new DefaultGraphQLExceptionHandler(
+                new Slf4jExceptionLogger(), BasicExceptionMappers.builder().build(), new DefaultGraphQLErrorMapper());
 
         protected abstract S self();
 
@@ -184,14 +182,13 @@ public class GraphQLSettings implements Settings {
         }
 
         /**
-         * Sets factory that produces {@link GraphQLExceptionHandler}.
+         * Sets the {@link GraphQLExceptionHandler}.
          *
-         * @param graphqlExceptionHandlerFactory the exception handler factory
+         * @param graphqlExceptionHandler the exception handler
          * @return
          */
-        public S graphqlExceptionHandlerFactory(
-                Function<ExceptionMappers, GraphQLExceptionHandler> graphqlExceptionHandlerFactory) {
-            this.graphqlExceptionHandlerFactory = graphqlExceptionHandlerFactory;
+        public S graphqlExceptionHandler(GraphQLExceptionHandler graphqlExceptionHandler) {
+            this.graphqlExceptionHandler = graphqlExceptionHandler;
             return self();
         }
     }

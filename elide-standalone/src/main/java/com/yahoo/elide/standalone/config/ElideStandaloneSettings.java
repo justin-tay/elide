@@ -18,7 +18,9 @@ import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.Injector;
+import com.yahoo.elide.core.exceptions.ExceptionLogger;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.request.route.RouteResolver;
 import com.yahoo.elide.core.security.checks.Check;
@@ -45,7 +47,15 @@ import com.yahoo.elide.datastores.aggregation.validator.TemplateConfigValidator;
 import com.yahoo.elide.datastores.jpa.JpaDataStore;
 import com.yahoo.elide.datastores.jpa.transaction.NonJtaTransaction;
 import com.yahoo.elide.datastores.multiplex.MultiplexManager;
+import com.yahoo.elide.graphql.DefaultGraphQLErrorMapper;
+import com.yahoo.elide.graphql.DefaultGraphQLExceptionHandler;
+import com.yahoo.elide.graphql.GraphQLErrorMapper;
+import com.yahoo.elide.graphql.GraphQLExceptionHandler;
 import com.yahoo.elide.graphql.GraphQLSettings.GraphQLSettingsBuilder;
+import com.yahoo.elide.jsonapi.DefaultJsonApiErrorMapper;
+import com.yahoo.elide.jsonapi.DefaultJsonApiExceptionHandler;
+import com.yahoo.elide.jsonapi.JsonApiErrorMapper;
+import com.yahoo.elide.jsonapi.JsonApiExceptionHandler;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
 import com.yahoo.elide.jsonapi.JsonApiSettings.JsonApiSettingsBuilder;
 import com.yahoo.elide.modelconfig.DBPasswordExtractor;
@@ -165,7 +175,8 @@ public interface ElideStandaloneSettings {
                 .path(getJsonApiPathSpec().replace("/*", ""))
                 .joinFilterDialect(RSQLFilterDialect.builder().dictionary(dictionary).build())
                 .subqueryFilterDialect(RSQLFilterDialect.builder().dictionary(dictionary).build())
-                .jsonApiMapper(mapper);
+                .jsonApiMapper(mapper)
+                .jsonApiExceptionHandler(getJsonApiExceptionHandler());
     }
 
     /**
@@ -176,7 +187,8 @@ public interface ElideStandaloneSettings {
      */
     default GraphQLSettingsBuilder getGraphQLSettingsBuilder(EntityDictionary dictionary) {
         return GraphQLSettingsBuilder.withDefaults(dictionary)
-                .path(getGraphQLApiPathSpec().replace("/*", ""));
+                .path(getGraphQLApiPathSpec().replace("/*", ""))
+                .graphqlExceptionHandler(getGraphQLExceptionHandler());
     }
 
     /**
@@ -216,7 +228,6 @@ public interface ElideStandaloneSettings {
             JsonApiMapper mapper) {
         ElideSettingsBuilder builder = ElideSettings.builder().dataStore(dataStore)
                 .entityDictionary(dictionary)
-                .exceptionMappers(getExceptionMappers())
                 .baseUrl(getBaseUrl())
                 .objectMapper(mapper.getObjectMapper())
                 .auditLogger(getAuditLogger());
@@ -706,12 +717,59 @@ public interface ElideStandaloneSettings {
     }
 
     /**
-     * Get the error mapper for this Elide instance. By default no errors will be mapped.
+     * Get the exception mappers for this Elide instance. By default no exceptions will be mapped.
      *
-     * @return error mapper implementation
+     * @return the exception mappers.
      */
     default ExceptionMappers getExceptionMappers() {
         return null;
+    }
+
+    /**
+     * Gets the json api error mapper.
+     *
+     * @return the json api error mapper.
+     */
+    default JsonApiErrorMapper getJsonApiErrorMapper() {
+        return new DefaultJsonApiErrorMapper();
+    }
+
+    /**
+     * Gets the json api exception handler.
+     *
+     * @return the json api exception handler.
+     */
+    default JsonApiExceptionHandler getJsonApiExceptionHandler() {
+        return new DefaultJsonApiExceptionHandler(getExceptionLogger(), getExceptionMappers(),
+                getJsonApiErrorMapper());
+    }
+
+    /**
+     * Gets the graphql error mapper.
+     *
+     * @return the graphql error mapper.
+     */
+    default GraphQLErrorMapper getGraphQLErrorMapper() {
+        return new DefaultGraphQLErrorMapper();
+    }
+
+    /**
+     * Gets the graphql exception handler.
+     *
+     * @return the graphql exception handler.
+     */
+    default GraphQLExceptionHandler getGraphQLExceptionHandler() {
+        return new DefaultGraphQLExceptionHandler(getExceptionLogger(), getExceptionMappers(),
+                getGraphQLErrorMapper());
+    }
+
+    /**
+     * Gets the exception logger.
+     *
+     * @return the exception logger.
+     */
+    default ExceptionLogger getExceptionLogger() {
+        return new Slf4jExceptionLogger();
     }
 
     /**

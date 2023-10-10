@@ -27,6 +27,7 @@ import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.TestDictionary;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.lifecycle.FieldTestModel;
 import com.yahoo.elide.core.lifecycle.LegacyTestModel;
 import com.yahoo.elide.core.lifecycle.PropertyTestModel;
@@ -637,9 +638,9 @@ public class JsonApiTest {
     private ElideSettings getElideSettings(DataStore dataStore, EntityDictionary dictionary, ExceptionMappers exceptionMappers) {
         return ElideSettings.builder().dataStore(dataStore)
                 .entityDictionary(dictionary)
-                .exceptionMappers(exceptionMappers)
                 .verboseErrors(true)
-                .settings(JsonApiSettings.builder())
+                .settings(JsonApiSettings.builder().jsonApiExceptionHandler(new DefaultJsonApiExceptionHandler(
+                        new Slf4jExceptionLogger(), exceptionMappers, new DefaultJsonApiErrorMapper())))
                 .build();
     }
 

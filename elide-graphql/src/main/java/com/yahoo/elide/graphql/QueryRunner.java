@@ -396,7 +396,7 @@ public class QueryRunner {
         GraphQLErrorContext errorContext = GraphQLErrorContext.builder().verbose(verbose).objectMapper(mapper)
                 .graphQLDocument(graphQLDocument).build();
         GraphQLExceptionHandler exceptionHandler = elide.getSettings(GraphQLSettings.class)
-                .getGraphqlExceptionHandlerFactory().apply(elide.getElideSettings().getExceptionMappers());
+                .getGraphqlExceptionHandler();
         return map(exceptionHandler.handleException(exception, errorContext), mapper);
     }
 
@@ -405,7 +405,7 @@ public class QueryRunner {
         ObjectMapper mapper = elide.getObjectMapper();
         GraphQLErrorContext errorContext = GraphQLErrorContext.builder().verbose(verbose).objectMapper(mapper).build();
         GraphQLExceptionHandler exceptionHandler = elide.getSettings(GraphQLSettings.class)
-                .getGraphqlExceptionHandlerFactory().apply(elide.getElideSettings().getExceptionMappers());
+                .getGraphqlExceptionHandler();
         return map(exceptionHandler.handleException(exception, errorContext), mapper);
     }
 }

@@ -32,6 +32,7 @@ import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.datastore.inmemory.HashMapDataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.security.checks.Check;
 import com.yahoo.elide.core.utils.DefaultClassScanner;
 import com.yahoo.elide.graphql.GraphQLSettings.GraphQLSettingsBuilder;
@@ -150,9 +151,10 @@ public class GraphQLEndpointTest {
                     ElideSettings.builder().dataStore(inMemoryStore)
                             .entityDictionary(entityDictionary)
                             .auditLogger(audit)
-                            .settings(GraphQLSettingsBuilder.withDefaults(entityDictionary))
-                            .exceptionMappers(exceptionMappers)
-                            .build())
+                                .settings(GraphQLSettingsBuilder.withDefaults(entityDictionary).graphqlExceptionHandler(
+                                        new DefaultGraphQLExceptionHandler(new Slf4jExceptionLogger(), exceptionMappers,
+                                                new DefaultGraphQLErrorMapper())))
+                                .build())
 
                 );
 
