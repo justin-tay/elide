@@ -199,7 +199,6 @@ public class SubscriptionWebSocketConfigurator extends ServerEndpointConfig.Conf
                 .maxIdleTimeout(maxIdleTimeout)
                 .userFactory(userFactory)
                 .sendPingOnSubscribe(sendPingOnSubscribe)
-                .verboseErrors(verboseErrors)
                 .dataFetcherExceptionHandler(dataFetcherExceptionHandler)
                 .routeResolver(routeResolver)
                 .build();

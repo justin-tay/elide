@@ -100,7 +100,7 @@ public class GraphqlController {
 
                 if (runner == null) {
                     response = QueryRunner.handleRuntimeException(elide,
-                            new InvalidApiVersionException("Invalid API Version"), false);
+                            new InvalidApiVersionException("Invalid API Version"));
                 } else {
                     response = runner.run(route.getBaseUrl(), graphQLDocument, user, UUID.randomUUID(),
                             requestHeadersCleaned);

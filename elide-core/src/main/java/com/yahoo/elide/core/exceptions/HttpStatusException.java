@@ -70,16 +70,16 @@ public abstract class HttpStatusException extends RuntimeException {
     }
 
     public String getVerboseMessage() {
-        String result = verboseMessageSupplier.map(Supplier::get)
-                .orElseGet(this::getMessage);
-
-        if (result.equals(this.getMessage())) {
-            return result;
-        } else {
-
-            //return both the message and the verbose message.
-            return this.getMessage() + "\n" + result;
+        String verboseMessage = verboseMessageSupplier.map(Supplier::get).orElse(null);
+        if (verboseMessage != null) {
+            if (verboseMessage.equals(this.getMessage())) {
+                return verboseMessage;
+            } else {
+                //return both the message and the verbose message.
+                return this.getMessage() + "\n" + verboseMessage;
+            }
         }
+        return this.getMessage();
     }
 
     public int getStatus() {

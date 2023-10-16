@@ -16,7 +16,6 @@ import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.request.Pagination;
 import com.yahoo.elide.core.security.PermissionExecutor;
 import com.yahoo.elide.core.security.executors.ActivePermissionExecutor;
-import com.yahoo.elide.core.security.executors.VerbosePermissionExecutor;
 import com.yahoo.elide.utils.HeaderProcessor;
 import com.yahoo.elide.utils.Headers;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,12 +45,13 @@ public class ElideSettings {
     private final int defaultPageSize;
     private final Serdes serdes;
     private final String baseUrl;
+    private final boolean verboseErrors;
     private final Map<Class<? extends Settings>, Settings> settings;
 
     public ElideSettings(AuditLogger auditLogger, DataStore dataStore, EntityDictionary entityDictionary,
             ObjectMapper objectMapper, Function<RequestScope, PermissionExecutor> permissionExecutor,
             HeaderProcessor headerProcessor, int defaultMaxPageSize, int defaultPageSize, Serdes serdes, String baseUrl,
-            Map<Class<? extends Settings>, Settings> settings) {
+            boolean verboseErrors, Map<Class<? extends Settings>, Settings> settings) {
         super();
         this.auditLogger = auditLogger;
         this.dataStore = dataStore;
@@ -63,6 +63,7 @@ public class ElideSettings {
         this.defaultPageSize = defaultPageSize;
         this.serdes = serdes;
         this.baseUrl = baseUrl;
+        this.verboseErrors = verboseErrors;
         this.settings = settings;
     }
 
@@ -81,7 +82,8 @@ public class ElideSettings {
                 .headerProcessor(this.headerProcessor)
                 .defaultMaxPageSize(this.defaultMaxPageSize)
                 .defaultPageSize(this.defaultPageSize)
-                .baseUrl(this.baseUrl);
+                .baseUrl(this.baseUrl)
+                .verboseErrors(this.verboseErrors);
 
         builder.serdes(newSerdes -> newSerdes.entries(entries -> {
             entries.clear(); // Clear the defaults when copying
@@ -130,7 +132,7 @@ public class ElideSettings {
             });
             return new ElideSettings(this.auditLogger, this.dataStore, this.entityDictionary, this.objectMapper,
                     this.permissionExecutor, this.headerProcessor, this.defaultMaxPageSize,
-                    this.defaultPageSize, this.serdes.build(), this.baseUrl, settings);
+                    this.defaultPageSize, this.serdes.build(), this.baseUrl, this.verboseErrors, settings);
         }
     }
 
@@ -147,6 +149,7 @@ public class ElideSettings {
         protected DataStore dataStore;
         protected EntityDictionary entityDictionary;
         protected ExceptionMappers exceptionMappers;
+        protected boolean verboseErrors = false;
 
         protected ElideSettingsBuilderSupport() {
             // By default, Elide supports epoch based dates.
@@ -193,20 +196,12 @@ public class ElideSettings {
 
         /**
          * Enable or disable verbose error message generation.
-         * <p>
-         * This sets the appropriate {@link PermissionExecutor}.
          *
          * @param verboseErrors set true to enable
          * @return the builder
-         * @see VerbosePermissionExecutor
-         * @see ActivePermissionExecutor
          */
         public S verboseErrors(boolean verboseErrors) {
-            if (verboseErrors) {
-                this.permissionExecutor = VerbosePermissionExecutor::new;
-            } else {
-                this.permissionExecutor = ActivePermissionExecutor::new;
-            }
+            this.verboseErrors = verboseErrors;
             return self();
         }
 

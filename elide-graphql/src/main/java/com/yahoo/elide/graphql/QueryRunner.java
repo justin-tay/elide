@@ -176,11 +176,7 @@ public class QueryRunner {
             }.parseDocument(graphQLDocument, mapper);
         } catch (IOException e) {
             log.debug("Invalid json body provided to GraphQL", e);
-            // NOTE: Can't get at isVerbose setting here for hardcoding to false. If necessary, we can refactor
-            // so this can be set appropriately.
-            return QueryRunner.handleRuntimeException(elide,
-                    new InvalidEntityBodyException(graphQLDocument, e), false);
-
+            return QueryRunner.handleRuntimeException(elide, new InvalidEntityBodyException(graphQLDocument, e));
         }
 
         List<ElideResponse<?>> responses = new ArrayList<>();
@@ -266,7 +262,6 @@ public class QueryRunner {
     private ElideResponse<?> executeGraphQLRequest(String baseUrlEndPoint, ObjectMapper mapper, User principal,
                                                 String graphQLDocument, GraphQLQuery query, UUID requestId,
                                                 Map<String, List<String>> requestHeaders) {
-        boolean isVerbose = false;
         String queryText = query.getQuery();
         boolean isMutation = isMutation(queryText);
 
@@ -297,8 +292,6 @@ public class QueryRunner {
                     .elideSettings(elide.getElideSettings())
                     .projectionInfo(projectionInfo)
                     .build();
-
-            isVerbose = requestScope.getPermissionExecutor().isVerbose();
 
             // Logging all queries. It is recommended to put any private information that shouldn't be logged into
             // the "variables" section of your query. Variable values are not logged.
@@ -341,9 +334,9 @@ public class QueryRunner {
 
             return ElideResponse.ok(result);
         } catch (IOException e) {
-            return handleNonRuntimeException(elide, e, graphQLDocument, isVerbose);
+            return handleNonRuntimeException(elide, e, graphQLDocument);
         } catch (RuntimeException e) {
-            return handleRuntimeException(elide, e, isVerbose);
+            return handleRuntimeException(elide, e);
         } finally {
             elide.getTransactionRegistry().removeRunningTransaction(requestId);
             elide.getAuditLogger().clear();
@@ -389,9 +382,9 @@ public class QueryRunner {
     public static ElideResponse<String> handleNonRuntimeException(
             Elide elide,
             Exception exception,
-            String graphQLDocument,
-            boolean verbose
+            String graphQLDocument
     ) {
+        boolean verbose = elide.getElideSettings().isVerboseErrors();
         ObjectMapper mapper = elide.getObjectMapper();
         GraphQLErrorContext errorContext = GraphQLErrorContext.builder().verbose(verbose).objectMapper(mapper)
                 .graphQLDocument(graphQLDocument).build();
@@ -400,8 +393,8 @@ public class QueryRunner {
         return map(exceptionHandler.handleException(exception, errorContext), mapper);
     }
 
-    public static ElideResponse<String> handleRuntimeException(Elide elide, RuntimeException exception,
-            boolean verbose) {
+    public static ElideResponse<String> handleRuntimeException(Elide elide, RuntimeException exception) {
+        boolean verbose = elide.getElideSettings().isVerboseErrors();
         ObjectMapper mapper = elide.getObjectMapper();
         GraphQLErrorContext errorContext = GraphQLErrorContext.builder().verbose(verbose).objectMapper(mapper).build();
         GraphQLExceptionHandler exceptionHandler = elide.getSettings(GraphQLSettings.class)

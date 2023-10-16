@@ -295,13 +295,12 @@ public class JsonApi {
     protected <T> ElideResponse<String> handleRequest(boolean isReadOnly, User user,
                                           Supplier<DataStoreTransaction> transaction, UUID requestId,
                                           Handler<DataStoreTransaction, User, HandlerResult> handler) {
-        JsonApiErrorContext errorContext = JsonApiErrorContext.builder().mapper(this.mapper).verbose(false).build();
+        JsonApiErrorContext errorContext = JsonApiErrorContext.builder().mapper(this.mapper)
+                .verbose(elideSettings.isVerboseErrors()).build();
         try (DataStoreTransaction tx = transaction.get()) {
             transactionRegistry.addRunningTransaction(requestId, tx);
             HandlerResult result = handler.handle(tx, user);
             JsonApiRequestScope requestScope = result.getRequestScope();
-            errorContext = JsonApiErrorContext.builder().mapper(this.mapper)
-                    .verbose(requestScope.getPermissionExecutor().isVerbose()).build();
             Supplier<Pair<Integer, T>> responder = result.getResponder();
             tx.preCommit(requestScope);
             requestScope.runQueuedPreSecurityTriggers();
