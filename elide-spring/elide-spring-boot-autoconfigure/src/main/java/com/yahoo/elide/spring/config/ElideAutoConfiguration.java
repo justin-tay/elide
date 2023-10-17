@@ -24,6 +24,7 @@ import com.yahoo.elide.async.models.AsyncQuery;
 import com.yahoo.elide.async.models.TableExport;
 import com.yahoo.elide.async.service.storageengine.ResultStorageEngine;
 import com.yahoo.elide.core.TransactionRegistry;
+import com.yahoo.elide.core.audit.AuditLogger;
 import com.yahoo.elide.core.audit.Slf4jLogger;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
@@ -180,6 +181,16 @@ import javax.sql.DataSource;
 @EnableConfigurationProperties(ElideConfigProperties.class)
 @Slf4j
 public class ElideAutoConfiguration {
+    /**
+     * Creates the {@link AuditLogger}.
+     *
+     * @return the AuditLogger
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public AuditLogger auditLogger() {
+        return new Slf4jLogger();
+    }
 
     /**
      * Creates the {@link ElideSettingsBuilder}.
@@ -199,13 +210,13 @@ public class ElideAutoConfiguration {
     @ConditionalOnMissingBean
     @Scope(SCOPE_PROTOTYPE)
     public ElideSettingsBuilder elideSettingsBuilder(ElideConfigProperties settings, EntityDictionary entityDictionary,
-            DataStore dataStore, HeaderProcessor headerProcessor,
-            ElideMapper elideMapper, SerdesBuilder serdesBuilder, ObjectProvider<SettingsBuilder> settingsProvider,
+            DataStore dataStore, HeaderProcessor headerProcessor, ElideMapper elideMapper, AuditLogger auditLogger,
+            SerdesBuilder serdesBuilder, ObjectProvider<SettingsBuilder> settingsProvider,
             ObjectProvider<ElideSettingsBuilderCustomizer> customizerProvider) {
         return ElideSettingsBuilderCustomizers.buildElideSettingsBuilder(builder -> {
             builder.dataStore(dataStore).entityDictionary(entityDictionary).objectMapper(elideMapper.getObjectMapper())
-                    .defaultMaxPageSize(settings.getMaxPageSize())
-                    .defaultPageSize(settings.getPageSize()).auditLogger(new Slf4jLogger())
+                    .maxPageSize(settings.getMaxPageSize())
+                    .defaultPageSize(settings.getPageSize()).auditLogger(auditLogger)
                     .baseUrl(settings.getBaseUrl())
                     .serdes(serdes -> serdes.entries(entries -> {
                         entries.clear();

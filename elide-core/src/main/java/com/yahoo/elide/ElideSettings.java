@@ -41,7 +41,7 @@ public class ElideSettings {
     private final ObjectMapper objectMapper;
     private final Function<RequestScope, PermissionExecutor> permissionExecutor;
     private final HeaderProcessor headerProcessor;
-    private final int defaultMaxPageSize;
+    private final int maxPageSize;
     private final int defaultPageSize;
     private final Serdes serdes;
     private final String baseUrl;
@@ -50,7 +50,7 @@ public class ElideSettings {
 
     public ElideSettings(AuditLogger auditLogger, DataStore dataStore, EntityDictionary entityDictionary,
             ObjectMapper objectMapper, Function<RequestScope, PermissionExecutor> permissionExecutor,
-            HeaderProcessor headerProcessor, int defaultMaxPageSize, int defaultPageSize, Serdes serdes, String baseUrl,
+            HeaderProcessor headerProcessor, int maxPageSize, int defaultPageSize, Serdes serdes, String baseUrl,
             boolean verboseErrors, Map<Class<? extends Settings>, Settings> settings) {
         super();
         this.auditLogger = auditLogger;
@@ -59,7 +59,7 @@ public class ElideSettings {
         this.objectMapper = objectMapper;
         this.permissionExecutor = permissionExecutor;
         this.headerProcessor = headerProcessor;
-        this.defaultMaxPageSize = defaultMaxPageSize;
+        this.maxPageSize = maxPageSize;
         this.defaultPageSize = defaultPageSize;
         this.serdes = serdes;
         this.baseUrl = baseUrl;
@@ -80,7 +80,7 @@ public class ElideSettings {
                 .objectMapper(this.objectMapper)
                 .permissionExecutor(this.permissionExecutor)
                 .headerProcessor(this.headerProcessor)
-                .defaultMaxPageSize(this.defaultMaxPageSize)
+                .maxPageSize(this.maxPageSize)
                 .defaultPageSize(this.defaultPageSize)
                 .baseUrl(this.baseUrl)
                 .verboseErrors(this.verboseErrors);
@@ -131,7 +131,7 @@ public class ElideSettings {
                 settings.put(result.getClass(), result);
             });
             return new ElideSettings(this.auditLogger, this.dataStore, this.entityDictionary, this.objectMapper,
-                    this.permissionExecutor, this.headerProcessor, this.defaultMaxPageSize,
+                    this.permissionExecutor, this.headerProcessor, this.maxPageSize,
                     this.defaultPageSize, this.serdes.build(), this.baseUrl, this.verboseErrors, settings);
         }
     }
@@ -142,7 +142,7 @@ public class ElideSettings {
         protected AuditLogger auditLogger = new Slf4jLogger();
         protected HeaderProcessor headerProcessor = Headers::removeAuthorizationHeaders;
         protected ObjectMapper objectMapper = new ObjectMapper();
-        protected int defaultMaxPageSize = Pagination.MAX_PAGE_LIMIT;
+        protected int maxPageSize = Pagination.MAX_PAGE_LIMIT;
         protected int defaultPageSize = Pagination.DEFAULT_PAGE_LIMIT;
         protected Function<RequestScope, PermissionExecutor> permissionExecutor = ActivePermissionExecutor::new;
         protected Map<Class<?>, Settings.SettingsBuilder> settings = new LinkedHashMap<>();
@@ -250,13 +250,13 @@ public class ElideSettings {
         }
 
         /**
-         * Sets the default max page size.
+         * Sets the max page size.
          *
-         * @param defaultMaxPageSize the default max page size
+         * @param maxPageSize the max page size
          * @return the builder
          */
-        public S defaultMaxPageSize(int defaultMaxPageSize) {
-            this.defaultMaxPageSize = defaultMaxPageSize;
+        public S maxPageSize(int maxPageSize) {
+            this.maxPageSize = maxPageSize;
             return self();
         }
 

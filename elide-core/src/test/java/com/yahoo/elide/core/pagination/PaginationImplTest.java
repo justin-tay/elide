@@ -96,7 +96,7 @@ public class PaginationImplTest {
                 1,
                 10,
                 elideSettings.getDefaultPageSize(),
-                elideSettings.getDefaultMaxPageSize(),
+                elideSettings.getMaxPageSize(),
                 false,
                 false);
 
@@ -112,7 +112,7 @@ public class PaginationImplTest {
                 10,
                 100000,
                 elideSettings.getDefaultPageSize(),
-                elideSettings.getDefaultMaxPageSize(),
+                elideSettings.getMaxPageSize(),
                 false,
                 false));
     }
@@ -125,7 +125,7 @@ public class PaginationImplTest {
                         -1,
                         1000,
                         elideSettings.getDefaultPageSize(),
-                        elideSettings.getDefaultMaxPageSize(),
+                        elideSettings.getMaxPageSize(),
                         false,
                         false));
     }
@@ -138,7 +138,7 @@ public class PaginationImplTest {
                         0,
                         -1,
                         elideSettings.getDefaultPageSize(),
-                        elideSettings.getDefaultMaxPageSize(),
+                        elideSettings.getMaxPageSize(),
                         false,
                         false));
     }
@@ -221,7 +221,7 @@ public class PaginationImplTest {
                 queryParams, ElideSettings.builder().dataStore(null)
                     .entityDictionary(EntityDictionary.builder().build())
                     .defaultPageSize(10)
-                    .defaultMaxPageSize(10)
+                    .maxPageSize(10)
                     .build());
         assertEquals(0, pageData.getOffset());
         assertEquals(10, pageData.getLimit());
@@ -238,7 +238,7 @@ public class PaginationImplTest {
                 ElideSettings.builder().dataStore(null)
                     .entityDictionary(EntityDictionary.builder().build())
                     .defaultPageSize(1)
-                    .defaultMaxPageSize(1)
+                    .maxPageSize(1)
                     .build());
 
         assertEquals(0, pageData.getOffset());

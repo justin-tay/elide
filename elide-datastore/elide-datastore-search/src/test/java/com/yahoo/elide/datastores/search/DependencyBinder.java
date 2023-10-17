@@ -70,7 +70,7 @@ public class DependencyBinder extends ResourceConfig {
                         .auditLogger(new Slf4jLogger())
                         .entityDictionary(dictionary)
                         .verboseErrors(true)
-                        .defaultMaxPageSize(PaginationImpl.MAX_PAGE_LIMIT)
+                        .maxPageSize(PaginationImpl.MAX_PAGE_LIMIT)
                         .defaultPageSize(PaginationImpl.DEFAULT_PAGE_LIMIT)
                         .serdes(serdes -> serdes.withISO8601Dates("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone("UTC")))
                         .settings(jsonApiSettings)

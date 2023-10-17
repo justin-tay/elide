@@ -213,8 +213,9 @@ public class QueryRunner {
             return ElideResponse.status(response.getStatus()).body(string);
         } else {
             try {
+                Object body = response.getBody();
                 return ElideResponse.status(response.getStatus())
-                        .body(objectMapper.writeValueAsString(response.getBody()));
+                        .body(body != null ? objectMapper.writeValueAsString(body) : null);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

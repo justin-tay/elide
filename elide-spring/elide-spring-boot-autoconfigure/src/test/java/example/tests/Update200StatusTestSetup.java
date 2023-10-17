@@ -57,7 +57,7 @@ public class Update200StatusTestSetup {
         ElideSettings.ElideSettingsBuilder builder = ElideSettings.builder().dataStore(dataStore)
                 .entityDictionary(dictionary)
                 .objectMapper(mapper.getObjectMapper())
-                .defaultMaxPageSize(settings.getMaxPageSize())
+                .maxPageSize(settings.getMaxPageSize())
                 .defaultPageSize(settings.getPageSize())
                 .auditLogger(new Slf4jLogger())
                 .baseUrl(settings.getBaseUrl())

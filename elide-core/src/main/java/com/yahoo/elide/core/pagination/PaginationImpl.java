@@ -237,7 +237,7 @@ public class PaginationImpl implements Pagination {
                 offset,
                 limit,
                 elideSettings.getDefaultPageSize(),
-                elideSettings.getDefaultMaxPageSize(),
+                elideSettings.getMaxPageSize(),
                 pageData.containsKey(PaginationKey.totals) ? true : null,
                 pageByPages);
     }
@@ -259,7 +259,7 @@ public class PaginationImpl implements Pagination {
                 null,
                 null,
                 elideSettings.getDefaultPageSize(),
-                elideSettings.getDefaultMaxPageSize(),
+                elideSettings.getMaxPageSize(),
                 null,
                 false);
     }

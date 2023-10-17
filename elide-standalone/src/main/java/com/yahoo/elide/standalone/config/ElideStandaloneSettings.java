@@ -9,6 +9,8 @@ import static com.yahoo.elide.datastores.jpa.JpaDataStore.DEFAULT_LOGGER;
 
 import com.yahoo.elide.ElideSettings;
 import com.yahoo.elide.ElideSettings.ElideSettingsBuilder;
+import com.yahoo.elide.Serdes;
+import com.yahoo.elide.Serdes.SerdesBuilder;
 import com.yahoo.elide.async.AsyncSettings;
 import com.yahoo.elide.async.AsyncSettings.AsyncSettingsBuilder;
 import com.yahoo.elide.async.models.AsyncQuery;
@@ -103,6 +105,8 @@ import java.util.function.Function;
  * Interface for configuring an ElideStandalone application.
  */
 public interface ElideStandaloneSettings {
+    public static final ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper();
+
     /**
      * The OpenAPI Specification Version.
      */
@@ -205,13 +209,13 @@ public interface ElideStandaloneSettings {
     /**
      * Override this to customize the {@link ElideSettingsBuilder}.
      * <p>
-     * The following example only customizes the {@link ElideSettingsBuilder#defaultMaxPageSize}.
+     * The following example only customizes the {@link ElideSettingsBuilder#maxPageSize}.
      *
      * <pre>
      * public ElideSettingsBuilder getElideSettingsBuilder(EntityDictionary dictionary, DataStore dataStore,
      *         JsonApiMapper mapper) {
      *     return ElideStandaloneSettings.super.getElideSettingsBuilder(dictionary, dataStore, mapper)
-     *           .defaultMaxPageSize(1000);
+     *           .maxPageSize(1000);
      * }
      * </pre>
      *
@@ -248,10 +252,26 @@ public interface ElideStandaloneSettings {
             builder.settings(getAsyncSettingsBuilder());
         }
 
-        if (enableISO8601Dates()) {
-            builder.serdes(serdes -> serdes.withISO8601Dates("yyyy-MM-dd'T'HH:mm'Z'", TimeZone.getTimeZone("UTC")));
-        }
+        builder.serdes(serdes -> serdes.entries(entries -> {
+            entries.clear();
+            getSerdesBuilder().build().entrySet().stream().forEach(entry -> {
+                entries.put(entry.getKey(), entry.getValue());
+            });
+        }));
         return builder;
+    }
+
+    /**
+     * Override this to customize the {@link SerdesBuilder}.
+     *
+     * @return the SerdesBuilder
+     */
+    default SerdesBuilder getSerdesBuilder() {
+        SerdesBuilder serdesBuilder = Serdes.builder().withDefaults();
+        if (enableISO8601Dates()) {
+            serdesBuilder.withISO8601Dates("yyyy-MM-dd'T'HH:mm'Z'", TimeZone.getTimeZone("UTC"));
+        }
+        return serdesBuilder;
     }
 
     /**
@@ -787,7 +807,7 @@ public interface ElideStandaloneSettings {
      * @return object mapper.
      */
     default ObjectMapper getObjectMapper() {
-        return new ObjectMapper();
+        return DEFAULT_OBJECT_MAPPER;
     }
 
     /**

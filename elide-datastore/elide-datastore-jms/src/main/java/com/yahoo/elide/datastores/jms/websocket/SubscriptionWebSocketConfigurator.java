@@ -10,24 +10,17 @@ import static com.yahoo.elide.graphql.subscriptions.websocket.SubscriptionWebSoc
 
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideSettings;
-import com.yahoo.elide.core.audit.AuditLogger;
-import com.yahoo.elide.core.audit.Slf4jLogger;
+import com.yahoo.elide.ElideSettingsBuilderCustomizer;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.Injector;
-import com.yahoo.elide.core.exceptions.ExceptionMappers;
-import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
-import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.request.route.RouteResolver;
 import com.yahoo.elide.datastores.jms.JMSDataStore;
-import com.yahoo.elide.graphql.DefaultGraphQLErrorMapper;
-import com.yahoo.elide.graphql.DefaultGraphQLExceptionHandler;
 import com.yahoo.elide.graphql.GraphQLSettings;
+import com.yahoo.elide.graphql.GraphQLSettings.GraphQLSettingsBuilder;
 import com.yahoo.elide.graphql.serialization.GraphQLModule;
 import com.yahoo.elide.graphql.subscriptions.websocket.SubscriptionWebSocket;
-import com.yahoo.elide.jsonapi.DefaultJsonApiErrorMapper;
-import com.yahoo.elide.jsonapi.DefaultJsonApiExceptionHandler;
-import com.yahoo.elide.jsonapi.JsonApiSettings;
+
 import graphql.execution.DataFetcherExceptionHandler;
 import graphql.execution.SimpleDataFetcherExceptionHandler;
 import jakarta.jms.ConnectionFactory;
@@ -55,16 +48,10 @@ public class SubscriptionWebSocketConfigurator extends ServerEndpointConfig.Conf
     protected ConnectionFactory connectionFactory;
 
     @Builder.Default
-    protected AuditLogger auditLogger = new Slf4jLogger();
-
-    @Builder.Default
-    protected ExceptionMappers exceptionMappers = null;
+    protected ElideSettingsBuilderCustomizer elideSettingsBuilderCustomizer = null;
 
     @Builder.Default
     protected String baseUrl = "/";
-
-    @Builder.Default
-    protected boolean verboseErrors = false;
 
     @Builder.Default
     protected Duration connectionTimeout = Duration.ofMillis(5000L);
@@ -150,29 +137,17 @@ public class SubscriptionWebSocketConfigurator extends ServerEndpointConfig.Conf
     }
 
     protected Elide buildElide(DataStore store, EntityDictionary dictionary) {
-        RSQLFilterDialect rsqlFilterStrategy = RSQLFilterDialect.builder().dictionary(dictionary).build();
-
-        JsonApiSettings.JsonApiSettingsBuilder jsonApiSettings = JsonApiSettings.builder()
-                .joinFilterDialect(rsqlFilterStrategy)
-                .subqueryFilterDialect(rsqlFilterStrategy)
-                .jsonApiExceptionHandler(new DefaultJsonApiExceptionHandler(
-                        new Slf4jExceptionLogger(), exceptionMappers, new DefaultJsonApiErrorMapper()));
-
-        GraphQLSettings.GraphQLSettingsBuilder graphqlSettings = GraphQLSettings.builder()
-                .graphqlExceptionHandler(new DefaultGraphQLExceptionHandler(new Slf4jExceptionLogger(),
-                        exceptionMappers, new DefaultGraphQLErrorMapper()));
+        GraphQLSettings.GraphQLSettingsBuilder graphqlSettings = GraphQLSettingsBuilder.withDefaults(dictionary);
 
         ElideSettings.ElideSettingsBuilder builder = ElideSettings.builder().dataStore(store)
-                .objectMapper(jsonApiSettings.build().getJsonApiMapper().getObjectMapper())
-                .auditLogger(auditLogger)
                 .baseUrl(baseUrl)
-                .settings(jsonApiSettings, graphqlSettings)
+                .settings(graphqlSettings)
                 .entityDictionary(dictionary)
                 .serdes(serdes -> serdes.withISO8601Dates("yyyy-MM-dd'T'HH:mm'Z'",
                         Calendar.getInstance().getTimeZone()));
 
-        if (verboseErrors) {
-            builder = builder.verboseErrors(true);
+        if (elideSettingsBuilderCustomizer != null) {
+            elideSettingsBuilderCustomizer.customize(builder);
         }
 
         Elide elide = new Elide(builder.build());
