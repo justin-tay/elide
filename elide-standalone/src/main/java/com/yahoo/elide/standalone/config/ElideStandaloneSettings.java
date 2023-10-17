@@ -44,6 +44,7 @@ import com.yahoo.elide.datastores.aggregation.queryengines.sql.query.AggregateBe
 import com.yahoo.elide.datastores.aggregation.validator.TemplateConfigValidator;
 import com.yahoo.elide.datastores.jpa.JpaDataStore;
 import com.yahoo.elide.datastores.jpa.transaction.NonJtaTransaction;
+import com.yahoo.elide.datastores.jpql.porting.Query;
 import com.yahoo.elide.datastores.multiplex.MultiplexManager;
 import com.yahoo.elide.graphql.GraphQLSettings.GraphQLSettingsBuilder;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
@@ -552,7 +553,7 @@ public interface ElideStandaloneSettings {
 
         DataStore jpaDataStore = new JpaDataStore(
                 () -> entityManagerFactory.createEntityManager(),
-                em -> new NonJtaTransaction(em, TXCANCEL, DEFAULT_LOGGER, true, true),
+                em -> new NonJtaTransaction(em, TXCANCEL, DEFAULT_LOGGER, true, true, null),
                 entityManagerFactory::getMetamodel);
 
         stores.add(jpaDataStore);
@@ -576,10 +577,14 @@ public interface ElideStandaloneSettings {
     default DataStore getDataStore(EntityManagerFactory entityManagerFactory) {
         DataStore jpaDataStore = new JpaDataStore(
                 () -> entityManagerFactory.createEntityManager(),
-                em -> new NonJtaTransaction(em, TXCANCEL, DEFAULT_LOGGER, true, true),
+                em -> new NonJtaTransaction(em, TXCANCEL, DEFAULT_LOGGER, true, true, getQueryCustomizer()),
                 entityManagerFactory::getMetamodel);
 
         return jpaDataStore;
+    }
+
+    default Function<Query, Query> getQueryCustomizer() {
+        return null;
     }
 
     /**

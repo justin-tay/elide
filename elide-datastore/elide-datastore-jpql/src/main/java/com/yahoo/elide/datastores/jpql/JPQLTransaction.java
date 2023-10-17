@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -49,15 +50,17 @@ public abstract class JPQLTransaction implements DataStoreTransaction {
     private final boolean isScrollEnabled;
     private final Set<Object> singleElementLoads;
     private final boolean delegateToInMemoryStore;
-
+    private final Function<Query, Query> queryCustomizer;
 
     /**
      * Constructor.
      *
      * @param session Hibernate session
      * @param isScrollEnabled Whether or not scrolling is enabled
+     * @param queryCustomizer Customize the query
      */
-    protected JPQLTransaction(Session session, boolean delegateToInMemoryStore, boolean isScrollEnabled) {
+    protected JPQLTransaction(Session session, boolean delegateToInMemoryStore, boolean isScrollEnabled,
+            Function<Query, Query> queryCustomizer) {
         this.sessionWrapper = session;
         this.isScrollEnabled = isScrollEnabled;
 
@@ -65,6 +68,8 @@ public abstract class JPQLTransaction implements DataStoreTransaction {
         // same object is loaded twice from two different collections.
         this.singleElementLoads = Collections.newSetFromMap(new IdentityHashMap<>());
         this.delegateToInMemoryStore = delegateToInMemoryStore;
+
+        this.queryCustomizer = queryCustomizer;
     }
 
     /**
@@ -106,8 +111,11 @@ public abstract class JPQLTransaction implements DataStoreTransaction {
 
         Query query =
                 new RootCollectionFetchQueryBuilder(projection, dictionary, sessionWrapper).build();
-
-        T loaded = new TimedFunction<T>(() -> query.uniqueResult(), "Query Hash: " + query.hashCode()).get();
+        if (query != null && queryCustomizer != null) {
+            query = queryCustomizer.apply(query);
+        }
+        Query loadQuery = query;
+        T loaded = new TimedFunction<T>(() -> loadQuery.uniqueResult(), "Query Hash: " + loadQuery.hashCode()).get();
 
         if (loaded != null) {
             singleElementLoads.add(loaded);
@@ -122,13 +130,16 @@ public abstract class JPQLTransaction implements DataStoreTransaction {
 
         Pagination pagination = projection.getPagination();
 
-        final Query query =
+        Query query =
                 new RootCollectionFetchQueryBuilder(projection, scope.getDictionary(), sessionWrapper)
                         .build();
-
+        if (query != null && queryCustomizer != null) {
+            query = queryCustomizer.apply(query);
+        }
+        Query loadQuery = query;
         Iterable<T> results = new TimedFunction<Iterable<T>>(() -> {
-            return isScrollEnabled ? query.scroll() : query.list();
-        }, "Query Hash: " + query.hashCode()).get();
+            return isScrollEnabled ? loadQuery.scroll() : loadQuery.list();
+        }, "Query Hash: " + loadQuery.hashCode()).get();
 
         final boolean hasResults;
         if (results instanceof Collection) {
@@ -186,9 +197,12 @@ public abstract class JPQLTransaction implements DataStoreTransaction {
                         scope.getDictionary()));
             }
 
-            final Query query =
+            Query query =
                     new SubCollectionFetchQueryBuilder(relationship, dictionary, sessionWrapper)
                             .build();
+            if (query != null && queryCustomizer != null) {
+                query = queryCustomizer.apply(query);
+            }
 
             if (query != null) {
                 return new DataStoreIterableBuilder(addSingleElement(query.list())).build();
@@ -221,13 +235,14 @@ public abstract class JPQLTransaction implements DataStoreTransaction {
      * @return The total row count.
      */
     private Long getTotalRecords(EntityProjection entityProjection, EntityDictionary dictionary) {
-
-
         Query query =
                 new RootCollectionPageTotalsQueryBuilder(entityProjection, dictionary, sessionWrapper)
                         .build();
-
-        return new TimedFunction<Long>(() -> query.uniqueResult(), "Query Hash: " + query.hashCode()).get();
+        if (query != null && queryCustomizer != null) {
+            query = queryCustomizer.apply(query);
+        }
+        Query countQuery = query;
+        return new TimedFunction<Long>(() -> countQuery.uniqueResult(), "Query Hash: " + countQuery.hashCode()).get();
     }
 
     /**
@@ -239,12 +254,14 @@ public abstract class JPQLTransaction implements DataStoreTransaction {
      */
     private Long getTotalRecords(AbstractHQLQueryBuilder.Relationship relationship,
                                  EntityDictionary dictionary) {
-
         Query query =
                 new SubCollectionPageTotalsQueryBuilder(relationship, dictionary, sessionWrapper)
                         .build();
-
-        return new TimedFunction<Long>(() -> query.uniqueResult(), "Query Hash: " + query.hashCode()).get();
+        if (query != null && queryCustomizer != null) {
+            query = queryCustomizer.apply(query);
+        }
+        Query countQuery = query;
+        return new TimedFunction<Long>(() -> countQuery.uniqueResult(), "Query Hash: " + countQuery.hashCode()).get();
     }
 
     private <R> Iterable<R> addSingleElement(Iterable<R> results) {

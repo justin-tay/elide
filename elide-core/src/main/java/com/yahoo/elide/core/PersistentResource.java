@@ -35,6 +35,7 @@ import com.yahoo.elide.core.exceptions.InvalidEntityBodyException;
 import com.yahoo.elide.core.exceptions.InvalidObjectIdentifierException;
 import com.yahoo.elide.core.filter.expression.AndFilterExpression;
 import com.yahoo.elide.core.filter.expression.FilterExpression;
+import com.yahoo.elide.core.filter.predicates.EQPredicate;
 import com.yahoo.elide.core.filter.predicates.InPredicate;
 import com.yahoo.elide.core.filter.visitors.VerifyFieldAccessFilterExpressionVisitor;
 import com.yahoo.elide.core.request.Argument;
@@ -416,6 +417,17 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
                 .filter(id -> scope.getObjectById(entityType, id) == null) // these don't exist yet
                 .map(id -> CoerceUtil.coerce(id, idType))
                 .collect(Collectors.toList());
+
+        if (coercedIds.size() == 1) {
+            // This is to allow caching as the IN clause does not allow caching
+            // @see org.hibernate.query.sqm.internal.SqmInterpretationsKey#isCachable
+            return new EQPredicate(
+                    new Path.PathElement(
+                            entityType,
+                            idType,
+                            idField),
+                    coercedIds);
+        }
 
         /* construct a new SQL like filter expression, eg: book.id IN [1,2] */
         FilterExpression idFilter = new InPredicate(

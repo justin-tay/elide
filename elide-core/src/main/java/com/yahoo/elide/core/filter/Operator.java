@@ -37,6 +37,13 @@ import java.util.stream.Stream;
  */
 @RequiredArgsConstructor
 public enum Operator {
+    EQ("eq", true) {
+        @Override
+        public <T> Predicate<T> contextualize(Path fieldPath, List<Object> values, RequestScope requestScope) {
+            return in(fieldPath, values, requestScope);
+        }
+    },
+
     IN("in", true) {
         @Override
         public <T> Predicate<T> contextualize(Path fieldPath, List<Object> values, RequestScope requestScope) {

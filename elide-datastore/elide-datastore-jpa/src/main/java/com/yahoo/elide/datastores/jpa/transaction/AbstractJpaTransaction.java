@@ -11,6 +11,7 @@ import com.yahoo.elide.core.request.EntityProjection;
 import com.yahoo.elide.datastores.jpa.porting.EntityManagerWrapper;
 import com.yahoo.elide.datastores.jpa.transaction.checker.PersistentCollectionChecker;
 import com.yahoo.elide.datastores.jpql.JPQLTransaction;
+import com.yahoo.elide.datastores.jpql.porting.Query;
 import com.yahoo.elide.datastores.jpql.porting.QueryLogger;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -25,6 +26,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -54,17 +56,18 @@ public abstract class AbstractJpaTransaction extends JPQLTransaction implements 
      * @param delegateToInMemoryStore When fetching a subcollection from another multi-element collection,
      *                                whether or not to do sorting, filtering and pagination in memory - or
      *                                do N+1 queries.
+     * @param queryCustomizer Customize the query
      */
     protected AbstractJpaTransaction(EntityManager em, Consumer<EntityManager> jpaTransactionCancel, QueryLogger logger,
-            boolean delegateToInMemoryStore, boolean isScrollEnabled) {
-        super(new EntityManagerWrapper(em, logger), delegateToInMemoryStore, isScrollEnabled);
+            boolean delegateToInMemoryStore, boolean isScrollEnabled, Function<Query, Query> queryCustomizer) {
+        super(new EntityManagerWrapper(em, logger), delegateToInMemoryStore, isScrollEnabled, queryCustomizer);
         this.em = em;
         this.jpaTransactionCancel = jpaTransactionCancel;
     }
 
     protected AbstractJpaTransaction(EntityManager em, Consumer<EntityManager> jpaTransactionCancel, QueryLogger logger,
-            boolean delegateToInMemoryStore) {
-        this(em, jpaTransactionCancel, logger, delegateToInMemoryStore, true);
+            boolean delegateToInMemoryStore, Function<Query, Query> queryCustomizer) {
+        this(em, jpaTransactionCancel, logger, delegateToInMemoryStore, true, queryCustomizer);
     }
 
     @Override

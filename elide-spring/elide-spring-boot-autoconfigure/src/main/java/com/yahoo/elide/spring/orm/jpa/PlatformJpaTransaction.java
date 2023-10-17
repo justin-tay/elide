@@ -8,6 +8,7 @@ package com.yahoo.elide.spring.orm.jpa;
 import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.datastores.jpa.SupplierEntityManager;
 import com.yahoo.elide.datastores.jpa.transaction.AbstractJpaTransaction;
+import com.yahoo.elide.datastores.jpql.porting.Query;
 import com.yahoo.elide.datastores.jpql.porting.QueryLogger;
 
 import org.springframework.orm.jpa.EntityManagerHolder;
@@ -40,7 +41,18 @@ public class PlatformJpaTransaction extends AbstractJpaTransaction {
     public PlatformJpaTransaction(PlatformTransactionManager transactionManager, TransactionDefinition definition,
             EntityManagerFactory entityManagerFactory, EntityManager em, Consumer<EntityManager> jpaTransactionCancel,
             QueryLogger logger, boolean delegateToInMemoryStore, boolean isScrollEnabled) {
-        super(em, jpaTransactionCancel, logger, delegateToInMemoryStore, isScrollEnabled);
+        super(em, jpaTransactionCancel, logger, delegateToInMemoryStore, isScrollEnabled, query -> {
+            Query result = query;
+            Object useQueryCache = entityManagerFactory.getProperties().get("hibernate.cache.use_query_cache");
+            if (useQueryCache instanceof String queryCache) {
+                if (Boolean.TRUE.equals(Boolean.valueOf(queryCache))) {
+                    result = result.setHint("org.hibernate.cacheable", true);
+                    result = result.setHint("jakarta.persistence.cache.storeMode", "USE");
+                    result = result.setHint("jakarta.persistence.cache.retrieveMode", "USE");
+                }
+            }
+            return result;
+        });
         this.transactionManager = transactionManager;
         this.definition = definition;
         this.entityManagerFactory = entityManagerFactory;

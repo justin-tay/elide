@@ -8,6 +8,7 @@ package com.yahoo.elide.datastores.jpa.transaction;
 import static com.yahoo.elide.datastores.jpa.JpaDataStore.DEFAULT_LOGGER;
 
 import com.yahoo.elide.core.RequestScope;
+import com.yahoo.elide.datastores.jpql.porting.Query;
 import com.yahoo.elide.datastores.jpql.porting.QueryLogger;
 
 import jakarta.persistence.EntityManager;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Non-JTA transaction implementation.
@@ -28,9 +30,11 @@ public class NonJtaTransaction extends AbstractJpaTransaction {
      * Creates a new Non-JTA, JPA transaction.
      * @param entityManager The entity manager / session.
      * @param jpaTransactionCancel A function which can cancel a session.
+     * @param queryCustomizer Customize the query
      */
-    public NonJtaTransaction(EntityManager entityManager, Consumer<EntityManager> jpaTransactionCancel) {
-        this(entityManager, jpaTransactionCancel, DEFAULT_LOGGER, false, true);
+    public NonJtaTransaction(EntityManager entityManager, Consumer<EntityManager> jpaTransactionCancel,
+            Function<Query, Query> queryCustomizer) {
+        this(entityManager, jpaTransactionCancel, DEFAULT_LOGGER, false, true, queryCustomizer);
     }
 
     /**
@@ -42,12 +46,14 @@ public class NonJtaTransaction extends AbstractJpaTransaction {
      *                                whether or not to do sorting, filtering and pagination in memory - or
      *                                do N+1 queries.
      * @param isScrollEnabled Enables/disables scrollable iterators.
+     * @param queryCustomizer Customize the query
      */
     public NonJtaTransaction(EntityManager entityManager, Consumer<EntityManager> jpaTransactionCancel,
                              QueryLogger logger,
                              boolean delegateToInMemoryStore,
-                             boolean isScrollEnabled) {
-        super(entityManager, jpaTransactionCancel, logger, delegateToInMemoryStore, isScrollEnabled);
+                             boolean isScrollEnabled,
+                             Function<Query, Query> queryCustomizer) {
+        super(entityManager, jpaTransactionCancel, logger, delegateToInMemoryStore, isScrollEnabled, queryCustomizer);
         this.transaction = entityManager.getTransaction();
         entityManager.clear();
     }

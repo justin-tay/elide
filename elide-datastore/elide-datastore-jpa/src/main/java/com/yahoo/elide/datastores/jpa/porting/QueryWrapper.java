@@ -50,6 +50,12 @@ public class QueryWrapper implements Query {
     }
 
     @Override
+    public Query setHint(String hintName, Object value) {
+        this.query = query.setHint(hintName, value);
+        return this;
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T> T uniqueResult() {
         return (T) query.getSingleResult();
@@ -66,5 +72,10 @@ public class QueryWrapper implements Query {
     @SuppressWarnings("unchecked")
     public <T> Iterable<T> list() {
         return query.getResultList();
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> cls) {
+        return query.unwrap(cls);
     }
 }

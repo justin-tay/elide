@@ -15,7 +15,9 @@ public interface Query {
     public Query setMaxResults(int num);
     public Query setParameter(String name, Object value);
     public Query setParameterList(String name, Collection<?> values);
+    public Query setHint(String hintName, Object value);
     public <T> T uniqueResult();
     public <T> Iterable<T> scroll();
     public <T> Iterable<T> list();
+    public <T> T unwrap(Class<T> cls);
 }

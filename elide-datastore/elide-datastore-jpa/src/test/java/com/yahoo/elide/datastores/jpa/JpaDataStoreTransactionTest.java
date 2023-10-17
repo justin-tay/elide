@@ -72,7 +72,7 @@ public class JpaDataStoreTransactionTest {
     public void testNoDelegationOnLoadRecords(boolean delegateToInMemory) {
 
         AbstractJpaTransaction tx = new AbstractJpaTransaction(entityManager, (unused) -> {
-        }, DEFAULT_LOGGER, delegateToInMemory) {
+        }, DEFAULT_LOGGER, delegateToInMemory, null) {
             @Override
             public boolean isOpen() {
                 return false;
@@ -108,7 +108,7 @@ public class JpaDataStoreTransactionTest {
             boolean usesInMemory) throws Exception {
         AbstractJpaTransaction tx = new AbstractJpaTransaction(entityManager, (unused) -> {
 
-        }, DEFAULT_LOGGER, delegateToInMemory, false) {
+        }, DEFAULT_LOGGER, delegateToInMemory, false, null) {
             @Override
             public boolean isOpen() {
                 return false;

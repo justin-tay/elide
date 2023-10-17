@@ -42,6 +42,11 @@ public class TestQueryWrapper implements Query {
     }
 
     @Override
+    public Query setHint(String hintName, Object value) {
+        return this;
+    }
+
+    @Override
     public <T> T uniqueResult() {
         return null;
     }
@@ -53,6 +58,11 @@ public class TestQueryWrapper implements Query {
 
     @Override
     public <T> Iterable<T> list() {
+        return null;
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> cls) {
         return null;
     }
 }

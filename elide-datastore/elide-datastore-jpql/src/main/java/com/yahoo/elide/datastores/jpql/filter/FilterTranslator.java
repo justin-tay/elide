@@ -6,6 +6,7 @@
 package com.yahoo.elide.datastores.jpql.filter;
 
 import static com.yahoo.elide.core.filter.Operator.BETWEEN;
+import static com.yahoo.elide.core.filter.Operator.EQ;
 import static com.yahoo.elide.core.filter.Operator.FALSE;
 import static com.yahoo.elide.core.filter.Operator.GE;
 import static com.yahoo.elide.core.filter.Operator.GT;
@@ -74,6 +75,12 @@ public class FilterTranslator implements FilterOperation<String> {
         GLOBAL_PREDICATE_OVERRIDES = new HashMap<>();
 
         GLOBAL_OPERATOR_GENERATORS = new EnumMap<>(Operator.class);
+
+        GLOBAL_OPERATOR_GENERATORS.put(EQ, new CaseAwareJPQLGenerator(
+                "%s = %s",
+                CaseAwareJPQLGenerator.Case.NONE,
+                CaseAwareJPQLGenerator.ArgumentCount.ONE)
+        );
 
         GLOBAL_OPERATOR_GENERATORS.put(IN, new CaseAwareJPQLGenerator(
                 "%s IN (%s)",
