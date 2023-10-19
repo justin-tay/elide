@@ -157,7 +157,13 @@ public abstract class MultiplexTransaction implements DataStoreTransaction {
 
     protected DataStoreTransaction getRelationTransaction(Object object, String relationName) {
         EntityDictionary dictionary = multiplexManager.getDictionary();
-        Type<?> relationClass = dictionary.getParameterizedType(EntityDictionary.getType(object), relationName);
+        Type<?> parentType = EntityDictionary.getType(object);
+        Type<?> attributeClass = dictionary.getType(parentType, relationName);
+        if (ClassType.MAP_TYPE.isAssignableFrom(attributeClass)) {
+            Type<?> valueType = dictionary.getParameterizedType(parentType, relationName, 1);
+            return getTransaction(valueType);
+        }
+        Type<?> relationClass = dictionary.getParameterizedType(parentType, relationName);
         return getTransaction(relationClass);
     }
 

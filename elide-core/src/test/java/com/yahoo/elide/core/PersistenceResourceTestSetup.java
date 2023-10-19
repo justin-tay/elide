@@ -43,6 +43,8 @@ import example.Job;
 import example.Left;
 import example.LineItem;
 import example.MapColorShape;
+import example.MapEntity;
+import example.MapEntry;
 import example.NoDeleteEntity;
 import example.NoReadEntity;
 import example.NoShareEntity;
@@ -105,6 +107,8 @@ public class PersistenceResourceTestSetup extends PersistentResource {
         dictionary.bindEntity(example.User.class);
         dictionary.bindEntity(FirstClassFields.class);
         dictionary.bindEntity(MapColorShape.class);
+        dictionary.bindEntity(MapEntity.class);
+        dictionary.bindEntity(MapEntry.class);
         dictionary.bindEntity(PersistentResourceTest.ChangeSpecModel.class);
         dictionary.bindEntity(PersistentResourceTest.ChangeSpecChild.class);
         dictionary.bindEntity(Invoice.class);

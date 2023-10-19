@@ -143,8 +143,16 @@ public class HashMapStoreTransaction implements DataStoreTransaction {
                                                        Object entity,
                                                        Relationship relationship,
                                                        RequestScope scope) {
-        return new DataStoreIterableBuilder(
-                (Iterable) dictionary.getValue(entity, relationship.getName(), scope)).allInMemory().build();
+        Object relation = dictionary.getValue(entity, relationship.getName(), scope);
+        Iterable iterable;
+        if (relation instanceof Iterable iterableRelation) {
+            iterable = iterableRelation;
+        } else if (relation instanceof Map map) {
+            iterable = map.values();
+        } else {
+            throw new IllegalArgumentException();
+        }
+        return new DataStoreIterableBuilder(iterable).allInMemory().build();
     }
 
     @Override

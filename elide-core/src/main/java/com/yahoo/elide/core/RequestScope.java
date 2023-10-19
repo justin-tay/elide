@@ -23,6 +23,7 @@ import com.yahoo.elide.core.security.PermissionExecutor;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.core.security.executors.ActivePermissionExecutor;
 import com.yahoo.elide.core.security.executors.MultiplexPermissionExecutor;
+import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.core.type.Type;
 
 import lombok.Getter;
@@ -223,11 +224,17 @@ public class RequestScope implements com.yahoo.elide.core.security.RequestScope 
      * @return A type specific filter expression for the given relationship
      */
     public Optional<FilterExpression> getExpressionForRelation(Type<?> parentType, String relationName) {
+        Type<?> attributeClass = dictionary.getType(parentType, relationName);
+        if (ClassType.MAP_TYPE.isAssignableFrom(attributeClass)) {
+            Type<?> valueType = dictionary.getParameterizedType(parentType, relationName, 1);
+            final String valType = dictionary.getJsonAliasFor(valueType);
+            return getFilterExpressionByType(valType);
+        }
+
         final Type<?> entityClass = dictionary.getParameterizedType(parentType, relationName);
         if (entityClass == null) {
             throw new InvalidAttributeException(relationName, dictionary.getJsonAliasFor(parentType));
         }
-
         final String valType = dictionary.getJsonAliasFor(entityClass);
         return getFilterExpressionByType(valType);
     }

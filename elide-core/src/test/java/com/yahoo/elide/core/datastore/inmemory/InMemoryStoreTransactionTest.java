@@ -594,6 +594,8 @@ public class InMemoryStoreTransactionTest {
             "example.Left",
             "example.LineItem",
             "example.MapColorShape",
+            "example.MapEntity",
+            "example.MapEntry",
             "example.NoDeleteEntity",
             "example.NoReadEntity",
             "example.NoShareEntity",

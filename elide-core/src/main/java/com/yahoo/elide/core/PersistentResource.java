@@ -1276,10 +1276,26 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
         checkFieldAwareDeferPermissions(ReadPermission.class, relationName, null, null);
 
         return !shouldSkipCollection(
-                dictionary.getParameterizedType(obj, relationName),
+                getRelationType(relationName),
                 ReadPermission.class,
                 requestScope,
                 relationship.getProjection().getRequestedFields());
+    }
+
+    /**
+     * Gets the type of the relation.
+     *
+     * @param relationName the relation name
+     * @return the type
+     */
+    protected Type<?> getRelationType(String relationName) {
+        Type<?> parentType = EntityDictionary.getType(obj);
+        Type<?> attributeClass = dictionary.getType(parentType, relationName);
+        if (ClassType.MAP_TYPE.isAssignableFrom(attributeClass)) {
+            return dictionary.getParameterizedType(parentType, relationName, 1);
+        } else {
+            return dictionary.getParameterizedType(obj, relationName);
+        }
     }
 
     /**
@@ -1307,7 +1323,7 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
         Sorting sorting = relationship.getProjection().getSorting();
 
         RelationshipType type = getRelationshipType(relationName);
-        final Type<?> relationClass = dictionary.getParameterizedType(obj, relationName);
+        final Type<?> relationClass = getRelationType(relationName);
         if (relationClass == null) {
             throw new InvalidAttributeException(relationName, this.getTypeName());
         }
