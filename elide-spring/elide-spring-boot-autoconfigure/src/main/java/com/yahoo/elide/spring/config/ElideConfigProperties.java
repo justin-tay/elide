@@ -5,6 +5,8 @@
  */
 package com.yahoo.elide.spring.config;
 
+import com.yahoo.elide.core.request.Pagination;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
@@ -61,13 +63,19 @@ public class ElideConfigProperties {
 
     /**
      * Default pagination size for collections if the client doesn't paginate.
+     * <p>
+     * The {@link com.yahoo.elide.annotation.Paginate#defaultLimit()} annotation
+     * takes precendence.
      */
-    private int pageSize = 500;
+    private int pageSize = Pagination.DEFAULT_PAGE_LIMIT;
 
     /**
      * The maximum pagination size a client can request.
+     * <p>
+     * The {@link com.yahoo.elide.annotation.Paginate#maxLimit()} annotation
+     * takes precendence.
      */
-    private int maxPageSize = 10000;
+    private int maxPageSize = Pagination.MAX_PAGE_LIMIT;
 
     /**
      * The base service URL that clients use in queries.  Elide will reference this name

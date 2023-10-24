@@ -59,9 +59,8 @@ public class JsonApi {
     private final JsonApiMapper mapper;
     private final TransactionRegistry transactionRegistry;
     private final AuditLogger auditLogger;
-    private boolean strictQueryParameters;
-    private JsonApiExceptionHandler jsonApiExceptionHandler;
-
+    private final JsonApiExceptionHandler jsonApiExceptionHandler;
+    private final boolean strictQueryParameters;
 
     public JsonApi(RefreshableElide refreshableElide) {
         this(refreshableElide.getElide());
@@ -117,7 +116,6 @@ public class JsonApi {
         });
     }
 
-
     /**
      * Handle POST.
      *
@@ -146,7 +144,6 @@ public class JsonApi {
             return visit(route.getPath(), requestScope, visitor);
         });
     }
-
 
     /**
      * Handle PATCH.

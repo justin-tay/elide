@@ -11,7 +11,10 @@ import com.yahoo.elide.ElideErrors;
 import java.util.Objects;
 
 /**
- * Define your business exception extend this.
+ * {@link RuntimeException} that can produce the verbose and basic error
+ * response.
+ * <p>
+ * This can be extended for business exceptions.
  */
 public class ErrorResponseException extends HttpStatusException {
     private static final long serialVersionUID = 1L;
@@ -44,15 +47,15 @@ public class ErrorResponseException extends HttpStatusException {
 
     @Override
     public ElideErrorResponse<?> getErrorResponse() {
-        return buildCustomResponse();
+        return buildResponse(this.errors);
     }
 
     @Override
     public ElideErrorResponse<?> getVerboseErrorResponse() {
-        return buildCustomResponse();
+        return buildResponse(this.errors);
     }
 
-    private ElideErrorResponse<?> buildCustomResponse() {
-        return ElideErrorResponse.status(getStatus()).body(this.errors);
+    protected ElideErrorResponse<?> buildResponse(Object body) {
+        return ElideErrorResponse.status(getStatus()).body(body);
     }
 }

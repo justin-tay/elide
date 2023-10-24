@@ -98,6 +98,14 @@ class DefaultGraphQLExceptionHandlerTest {
     }
 
     @Test
+    void errorShouldReturn500() {
+        GraphQLErrorContext errorContext = GraphQLErrorContext.builder().build();
+        Error error = new OutOfMemoryError();
+        ElideResponse<?> response = graphqlExceptionHandler.handleException(error, errorContext);
+        assertEquals(500, response.getStatus());
+    }
+
+    @Test
     void constraintViolationException() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();

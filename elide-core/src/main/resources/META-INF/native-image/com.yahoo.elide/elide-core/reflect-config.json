@@ -232,6 +232,12 @@
     "allDeclaredConstructors": true
   },
   {
+    "name": "com.yahoo.elide.jsonapi.models.Operation$OperationCode",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
     "name": "com.yahoo.elide.jsonapi.models.Operations",
     "allDeclaredFields": true,
     "allDeclaredMethods": true,
@@ -288,11 +294,19 @@
     "allDeclaredConstructors": true
   },
   {
-    "name": "com.yahoo.elide.jsonapi.serialization.MetaDeserializer",
+    "name": "com.yahoo.elide.jsonapi.serialization.JsonApiErrorSerializer",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.yahoo.elide.jsonapi.serialization.JsonApiSetSerializer",
     "allDeclaredConstructors": true
   },
   {
     "name": "com.yahoo.elide.jsonapi.serialization.KeySerializer",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.yahoo.elide.jsonapi.serialization.MetaDeserializer",
     "allDeclaredConstructors": true
   },
   {

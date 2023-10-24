@@ -49,7 +49,7 @@ import java.util.Set;
  */
 class DefaultJsonApiExceptionHandlerTest {
 
-    private DefaultJsonApiExceptionHandler graphqlExceptionHandler = new DefaultJsonApiExceptionHandler(
+    private DefaultJsonApiExceptionHandler jsonApiExceptionHandler = new DefaultJsonApiExceptionHandler(
             new Slf4jExceptionLogger(), BasicExceptionMappers.builder().build(), new DefaultJsonApiErrorMapper());
 
     enum ExceptionStatusInput {
@@ -79,7 +79,7 @@ class DefaultJsonApiExceptionHandlerTest {
     @ParameterizedTest
     @EnumSource(ExceptionStatusInput.class)
     void exception(ExceptionStatusInput input) {
-        ElideResponse<?> elideResponse = graphqlExceptionHandler.handleException(input.exception, input.errorContext);
+        ElideResponse<?> elideResponse = jsonApiExceptionHandler.handleException(input.exception, input.errorContext);
         assertEquals(input.status, elideResponse.getStatus());
     }
 
@@ -87,7 +87,7 @@ class DefaultJsonApiExceptionHandlerTest {
     void webApplicationExceptionShouldRethrow() {
         JsonApiErrorContext errorContext = JsonApiErrorContext.builder().build();
         assertThrows(WebApplicationException.class,
-                () -> graphqlExceptionHandler.handleException(new WebApplicationException(), errorContext));
+                () -> jsonApiExceptionHandler.handleException(new WebApplicationException(), errorContext));
     }
 
     @Test
@@ -95,12 +95,20 @@ class DefaultJsonApiExceptionHandlerTest {
         JsonApiErrorContext errorContext = JsonApiErrorContext.builder().build();
         Exception exception = new Exception();
         assertThrows(RuntimeException.class,
-                () -> graphqlExceptionHandler.handleException(exception, errorContext));
+                () -> jsonApiExceptionHandler.handleException(exception, errorContext));
         try {
-            graphqlExceptionHandler.handleException(exception, errorContext);
+            jsonApiExceptionHandler.handleException(exception, errorContext);
         } catch (RuntimeException e) {
             assertSame(exception, e.getCause());
         }
+    }
+
+    @Test
+    void errorShouldReturn500() {
+        JsonApiErrorContext errorContext = JsonApiErrorContext.builder().build();
+        Error error = new OutOfMemoryError();
+        ElideResponse<?> response = jsonApiExceptionHandler.handleException(error, errorContext);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -110,7 +118,7 @@ class DefaultJsonApiExceptionHandlerTest {
         TestObject testObject = new TestObject();
         Set<ConstraintViolation<TestObject>> violations = validator.validate(testObject);
         ConstraintViolationException e = new ConstraintViolationException("message", violations);
-        ElideResponse<?> elideResponse = graphqlExceptionHandler.handleException(e, JsonApiErrorContext.builder().build());
+        ElideResponse<?> elideResponse = jsonApiExceptionHandler.handleException(e, JsonApiErrorContext.builder().build());
         assertEquals(400, elideResponse.getStatus());
         List<JsonApiError> errors = elideResponse.getBody(JsonApiErrors.class).getErrors();
         assertEquals(3, errors.size());

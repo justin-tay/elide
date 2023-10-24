@@ -24,7 +24,7 @@ public abstract class ExceptionHandlerSupport<C extends ErrorContext> implements
 
     @Override
     public ElideResponse<?> handleException(Throwable exception, C errorContext) {
-        exceptionLogger.log(exception);
+        this.exceptionLogger.log(exception);
 
         if (this.exceptionMappers != null) {
             ElideErrorResponse<?> errorResponse = this.exceptionMappers.toErrorResponse(exception, errorContext);
@@ -60,6 +60,6 @@ public abstract class ExceptionHandlerSupport<C extends ErrorContext> implements
     protected abstract ElideResponse<?> handleNonRuntimeException(Exception exception, C errorContext);
 
     protected ElideResponse<?> handleThrowable(Throwable exception, ErrorContext errorContext) {
-        return null;
+        return ElideResponse.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).build();
     }
 }
