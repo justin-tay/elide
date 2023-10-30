@@ -85,36 +85,36 @@
         <delombok.output>${project.basedir}/target/lombok</delombok.output>
 
         <!-- dependency versions -->
-        <ant.version>1.10.13</ant.version>
+        <ant.version>1.10.14</ant.version>
         <antlr4.version>4.13.1</antlr4.version>
         <artemis.version>2.28.0</artemis.version>
         <atomikos.version>6.0.0</atomikos.version>
         <calcite.version>1.35.0</calcite.version>
-        <caffeine.version>3.1.6</caffeine.version>
-        <classgraph.version>4.8.162</classgraph.version>
+        <caffeine.version>3.1.8</caffeine.version>
+        <classgraph.version>4.8.163</classgraph.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
-        <commons-cli.version>1.5.0</commons-cli.version>
+        <commons-cli.version>1.6.0</commons-cli.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <commons-compress.version>1.24.0</commons-compress.version>
-        <commons-io.version>2.12.0</commons-io.version>
-        <commons-lang3.version>3.12.0</commons-lang3.version>
+        <commons-io.version>2.15.0</commons-io.version>
+        <commons-lang3.version>3.13.0</commons-lang3.version>
         <dom4j.version>2.1.4</dom4j.version>
         <embedded-redis.version>0.11.0</embedded-redis.version>
         <encoder.version>1.2.3</encoder.version>
-        <federation-graphql-java-support-api.version>4.1.1</federation-graphql-java-support-api.version>
-        <graphql-java.version>20.2</graphql-java.version>
-        <graal-sdk.version>23.1.0</graal-sdk.version>
-        <guava.version>32.1.1-jre</guava.version>
+        <federation-graphql-java-support-api.version>4.2.0</federation-graphql-java-support-api.version>
+        <graphql-java.version>21.0</graphql-java.version>
+        <graal-sdk.version>23.1.1</graal-sdk.version>
+        <guava.version>32.1.3-jre</guava.version>
         <handlebars.version>4.3.1</handlebars.version>
         <hibernate.version>6.3.1.Final</hibernate.version>
-        <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
-        <hibernate-search.version>6.2.1.Final</hibernate-search.version>
+        <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
+        <hibernate-search.version>6.2.2.Final</hibernate-search.version>
         <hjson.version>3.0.1</hjson.version>
         <httpclient5.version>5.2.1</httpclient5.version>
         <gson.version>2.10.1</gson.version>
         <h2.version>2.2.224</h2.version>
         <hikaricp.version>5.0.1</hikaricp.version>
-        <jackson-bom.version>2.15.2</jackson-bom.version>
+        <jackson-bom.version>2.15.3</jackson-bom.version>
         <jakarta-inject.version>2.0.1</jakarta-inject.version>
         <jakarta-jms.version>3.1.0</jakarta-jms.version>
         <jakarta-persistence.version>3.1.0</jakarta-persistence.version>
@@ -123,30 +123,30 @@
         <jakarta-ws-rs.version>3.1.0</jakarta-ws-rs.version>
         <jakarta-validation.version>3.0.2</jakarta-validation.version>
         <javaassist.version>3.29.2-GA</javaassist.version>
-        <jansi.version>2.4.0</jansi.version>
+        <jansi.version>2.4.1</jansi.version>
         <jersey.version>3.1.3</jersey.version>
-        <jetty.version>11.0.15</jetty.version>
-        <jedis.version>4.4.1</jedis.version>
+        <jetty.version>11.0.17</jetty.version>
+        <jedis.version>5.0.2</jedis.version>
         <jsonassert.version>1.5.1</jsonassert.version>
         <json2flat.version>1.0.3</json2flat.version>
         <json-path.version>2.8.0</json-path.version>
         <json-schema-validator.version>2.2.14</json-schema-validator.version>
         <junit.version>5.10.0</junit.version>
-        <logback.version>1.4.7</logback.version>
-        <lombok.version>1.18.28</lombok.version>
+        <logback.version>1.4.11</logback.version>
+        <lombok.version>1.18.30</lombok.version>
         <rest-assured.version>5.3.2</rest-assured.version>
         <rxjava.version>2.2.21</rxjava.version>
         <rsql-parser.version>2.1.0</rsql-parser.version>
         <slf4j.version>2.0.9</slf4j.version>
-        <snakeyaml.version>2.0</snakeyaml.version>
-        <spring-boot.version>3.1.3</spring-boot.version>
-        <spring-framework.version>6.0.11</spring-framework.version>
+        <snakeyaml.version>2.2</snakeyaml.version>
+        <spring-boot.version>3.1.5</spring-boot.version>
+        <spring-framework.version>6.0.13</spring-framework.version>
 
         <spring-cloud-commons.version>4.0.2</spring-cloud-commons.version>
         <springdoc.version>2.1.0</springdoc.version>
-        <swagger-api.version>2.2.15</swagger-api.version>
+        <swagger-api.version>2.2.18</swagger-api.version>
         <system-lambda.version>1.2.1</system-lambda.version>
-        <tomcat.version>10.1.13</tomcat.version>
+        <tomcat.version>10.1.15</tomcat.version>
         <mockito.version>5.6.0</mockito.version>
 
 
@@ -154,18 +154,18 @@
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
         <checkstyle.version>10.12.4</checkstyle.version>
         <gmaven-plugin.version>1.5</gmaven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <jaxb-api.version>2.3.1</jaxb-api.version>
-        <maven-checkstyle-plugin.version>3.2.1</maven-checkstyle-plugin.version>
-        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+        <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
-        <maven-enforcer-plugin.version>3.4.0</maven-enforcer-plugin.version>
+        <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
-        <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
+        <maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-        <maven-surefire-plugin.version>3.0.0</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>3.2.1</maven-surefire-plugin.version>
         <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
-        <maven-failsafe-plugin.version>3.1.2</maven-failsafe-plugin.version>
+        <maven-failsafe-plugin.version>3.2.1</maven-failsafe-plugin.version>
         <maven-site-plugin.version>3.12.1</maven-site-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <maven-scm-provider-gitexe.version>1.13.0</maven-scm-provider-gitexe.version>
