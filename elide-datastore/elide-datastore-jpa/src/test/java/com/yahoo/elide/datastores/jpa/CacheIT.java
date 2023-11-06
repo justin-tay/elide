@@ -9,10 +9,14 @@ package com.yahoo.elide.datastores.jpa;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.yahoo.elide.ElideSettings;
+import com.yahoo.elide.core.Path;
+import com.yahoo.elide.core.Path.PathElement;
 import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
+import com.yahoo.elide.core.filter.expression.FilterExpression;
+import com.yahoo.elide.core.filter.predicates.InPredicate;
 import com.yahoo.elide.core.request.EntityProjection;
 import com.yahoo.elide.core.request.route.Route;
 
@@ -25,6 +29,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -86,6 +91,49 @@ public class CacheIT {
             assertEquals(1, statistics.getSecondLevelCacheHitCount());
             assertEquals(0, statistics.getSecondLevelCachePutCount());
             assertEquals(0, statistics.getSecondLevelCacheMissCount());
+            tx.delete(loaded, requestScope);
+            statistics.clear();
+        }
+    }
+
+    /**
+     * Verify that the query plan cache is used.
+     *
+     * @throws IOException exception
+     * @see org.hibernate.query.sqm.internal.SqmInterpretationsKey#isCacheable
+     */
+    @Test
+    void shouldHaveQueryPlanCacheHit() throws IOException {
+        DataStore dataStore = dataStoreHarness.getDataStore();
+        Statistics statistics = dataStoreHarness.getEntityManagerFactory().unwrap(SessionFactory.class).getStatistics();
+        long book1Id;
+        Path path = new Path(List.of(new PathElement(Book.class, String.class, "title")));
+        FilterExpression filterExpression = new InPredicate(path, "Test Book1");
+        try (DataStoreTransaction tx = dataStore.beginTransaction()) {
+            Book book1 = new Book();
+            book1.setTitle("Test Book1");
+            tx.createObject(book1, null);
+            tx.commit(null);
+            book1Id = book1.getId();
+        }
+
+        try (DataStoreTransaction tx = dataStore.beginTransaction()) {
+            RequestScope requestScope = RequestScope.builder().elideSettings(elideSettings)
+                    .route(Route.builder().build()).build();
+            Book loaded = (Book) tx.loadObjects(EntityProjection.builder().type(Book.class).filterExpression(filterExpression).build(), requestScope).iterator().next();
+            assertEquals(book1Id, loaded.getId());
+            assertEquals(1, statistics.getQueryPlanCacheMissCount());
+            assertEquals(0, statistics.getQueryPlanCacheHitCount());
+            statistics.clear();
+        }
+
+        try (DataStoreTransaction tx = dataStore.beginTransaction()) {
+            RequestScope requestScope = RequestScope.builder().elideSettings(elideSettings)
+                    .route(Route.builder().build()).build();
+            Book loaded = (Book) tx.loadObjects(EntityProjection.builder().type(Book.class).filterExpression(filterExpression).build(), requestScope).iterator().next();
+            assertEquals(book1Id, loaded.getId());
+            assertEquals(0, statistics.getQueryPlanCacheMissCount());
+            assertEquals(1, statistics.getQueryPlanCacheHitCount());
             tx.delete(loaded, requestScope);
             statistics.clear();
         }
