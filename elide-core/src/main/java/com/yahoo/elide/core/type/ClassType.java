@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -30,20 +31,22 @@ public class ClassType<T> implements Type<T> {
     public static final List<Method> OBJ_METHODS = ImmutableList.copyOf(
             Arrays.stream(Object.class.getMethods()).map(ClassType::constructMethod).collect(Collectors.toList()));
 
-    public static final ClassType<Map> MAP_TYPE = ClassType.of(Map.class);
-    public static final ClassType<Collection> COLLECTION_TYPE = ClassType.of(Collection.class);
-    public static final ClassType<String> STRING_TYPE = ClassType.of(String.class);
-    public static final ClassType<Boolean> BOOLEAN_TYPE = ClassType.of(Boolean.class);
-    public static final ClassType<Long> LONG_TYPE = ClassType.of(Long.class);
-    public static final ClassType<BigDecimal> BIGDECIMAL_TYPE = ClassType.of(BigDecimal.class);
-    public static final ClassType<Number> NUMBER_TYPE = ClassType.of(Number.class);
-    public static final ClassType<Date> DATE_TYPE = ClassType.of(Date.class);
-    public static final ClassType<Object> OBJECT_TYPE = ClassType.of(Object.class);
-    public static final ClassType<Class> CLASS_TYPE = ClassType.of(Class.class);
-    public static final ClassType<Integer> INTEGER_TYPE = ClassType.of(Integer.class);
+    public static final ClassType<Map> MAP_TYPE = new ClassType<>(Map.class);
+    public static final ClassType<Collection> COLLECTION_TYPE = new ClassType<>(Collection.class);
+    public static final ClassType<String> STRING_TYPE = new ClassType<>(String.class);
+    public static final ClassType<Boolean> BOOLEAN_TYPE = new ClassType<>(Boolean.class);
+    public static final ClassType<Long> LONG_TYPE = new ClassType<>(Long.class);
+    public static final ClassType<BigDecimal> BIGDECIMAL_TYPE = new ClassType<>(BigDecimal.class);
+    public static final ClassType<Number> NUMBER_TYPE = new ClassType<>(Number.class);
+    public static final ClassType<Date> DATE_TYPE = new ClassType<>(Date.class);
+    public static final ClassType<Object> OBJECT_TYPE = new ClassType<>(Object.class);
+    public static final ClassType<Class> CLASS_TYPE = new ClassType<>(Class.class);
+    public static final ClassType<Integer> INTEGER_TYPE = new ClassType<>(Integer.class);
+
+    private static final Map<Class<?>, Type<?>> TYPE_MAP = new ConcurrentHashMap<>();
 
     @Getter
-    private Class<T> cls;
+    private final Class<T> cls;
 
     /**
      * Constructor.
@@ -75,7 +78,7 @@ public class ClassType<T> implements Type<T> {
             return null;
         }
 
-        return new ClassType(superClass);
+        return (Type<T>) ClassType.of(superClass);
     }
 
     @Override
@@ -259,7 +262,36 @@ public class ClassType<T> implements Type<T> {
      * @param cls The underlying java class.
      * @return wrapped Type
      */
+    @SuppressWarnings("unchecked")
     public static <T> ClassType<T> of(Class<T> cls) {
-        return cls == null ? null : new ClassType<>(cls);
+        if (cls == null) {
+            return null;
+        } else if (String.class.equals(cls)) {
+            return (ClassType<T>) STRING_TYPE;
+        } else if (Integer.class.equals(cls)) {
+            return (ClassType<T>) INTEGER_TYPE;
+        } else if (Long.class.equals(cls)) {
+            return (ClassType<T>) LONG_TYPE;
+        } else if (Object.class.equals(cls)) {
+            return (ClassType<T>) OBJECT_TYPE;
+        } else if (Date.class.equals(cls)) {
+            return (ClassType<T>) DATE_TYPE;
+        } else if (Class.class.equals(cls)) {
+            return (ClassType<T>) CLASS_TYPE;
+        } else if (Map.class.equals(cls)) {
+            return (ClassType<T>) MAP_TYPE;
+        } else if (Collection.class.equals(cls)) {
+            return (ClassType<T>) COLLECTION_TYPE;
+        } else if (Boolean.class.equals(cls)) {
+            return (ClassType<T>) BOOLEAN_TYPE;
+        } else if (BigDecimal.class.equals(cls)) {
+            return (ClassType<T>) BIGDECIMAL_TYPE;
+        } else if (Number.class.equals(cls)) {
+            return (ClassType<T>) NUMBER_TYPE;
+        }
+        ClassType<T> classType = (ClassType<T>) TYPE_MAP.computeIfAbsent(
+                cls,
+                ClassType::new);
+        return classType;
     }
 }

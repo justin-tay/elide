@@ -2100,7 +2100,7 @@ public class EntityDictionary {
         } else {
             ClassType<T> classType = (ClassType<T>) TYPE_MAP.computeIfAbsent(
                     object.getClass(),
-                    ClassType::new);
+                    ClassType::of);
             return classType;
         }
     }
