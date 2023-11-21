@@ -17,6 +17,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -51,6 +53,7 @@ public class Book extends BaseId {
     private Publisher publisher;
     private Collection<String> awards = new ArrayList<>();
     private Price price;
+    private BookCategory bookCategory = BookCategory.SCIENCE_FICTION;
 
     public String getTitle() {
         return title;
@@ -156,6 +159,15 @@ public class Book extends BaseId {
 
     public void setPublisher(Publisher publisher) {
         this.publisher = publisher;
+    }
+
+    @Enumerated(EnumType.STRING)
+    public BookCategory getBookCategory() {
+        return bookCategory;
+    }
+
+    public void setBookCategory(BookCategory bookCategory) {
+        this.bookCategory = bookCategory;
     }
 
     @Transient

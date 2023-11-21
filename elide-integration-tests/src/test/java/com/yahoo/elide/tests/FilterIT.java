@@ -2123,6 +2123,19 @@ public class FilterIT extends IntegrationTest {
         );
     }
 
+    @Test
+    void testEnumPostfixFilter() throws JsonProcessingException {
+        /* Test Default */
+        //JsonNode result = getAsNode("/book?filter[book.bookCategory][ini]=*FICTION");
+
+        //assertEquals(1, result.get("data").size());
+
+        /* Test RSQL Typed */
+        JsonNode result = getAsNode("/book?filter[book]=bookCategory=ini=FICTION");
+
+        assertEquals(result.get("data").size(), 1);
+    }
+
     @AfterAll
     void cleanUp() {
         for (int id : authorIds) {
