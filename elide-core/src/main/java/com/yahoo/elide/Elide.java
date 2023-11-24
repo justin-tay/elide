@@ -121,10 +121,10 @@ public class Elide {
             injector.inject(serde);
 
             ElideTypeConverter converter = clazz.getAnnotation(ElideTypeConverter.class);
-            Class baseType = converter.type();
+            Class<?> baseType = converter.type();
             registerCustomSerde(baseType, serde, converter.name());
 
-            for (Class type : converter.subTypes()) {
+            for (Class<?> type : converter.subTypes()) {
                 if (!baseType.isAssignableFrom(type)) {
                     throw new IllegalArgumentException("Mentioned type " + type
                             + " not subtype of " + baseType);
@@ -134,7 +134,7 @@ public class Elide {
         }
     }
 
-    protected void registerCustomSerde(Class<?> type, Serde serde, String name) {
+    protected <S, T> void registerCustomSerde(Class<T> type, Serde<S, T> serde, String name) {
         log.info("Registering serde for type : {}", type);
         CoerceUtil.register(type, serde);
         registerCustomSerdeInObjectMapper(type, serde, name);

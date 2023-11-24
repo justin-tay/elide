@@ -24,7 +24,7 @@ public class ToUUIDConverter implements Converter {
     @Override
     public <T> T convert(Class<T> cls, Object value) {
         if (cls == UUID.class) {
-            return (T) UUID.fromString(String.valueOf(value));
+            return cls.cast(UUID.fromString(String.valueOf(value)));
         }
         throw new UnsupportedOperationException("Cannot convert to " + cls.getSimpleName());
     }

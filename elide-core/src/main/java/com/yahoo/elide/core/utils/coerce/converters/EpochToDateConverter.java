@@ -27,7 +27,7 @@ public class EpochToDateConverter<T extends Date> implements Converter, Serde<Ob
     }
 
     @Override
-    public <T> T convert(Class<T> cls, Object value) {
+    public <A> A convert(Class<A> cls, Object value) {
         try {
             if (ClassUtils.isAssignable(value.getClass(), String.class)) {
                 return stringToDate(cls, (String) value);

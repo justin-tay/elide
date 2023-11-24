@@ -49,6 +49,7 @@ public interface ClassScanner {
      */
     Set<Class<?>> getAnnotatedClasses(List<Class<? extends Annotation>> annotations);
 
+    @SuppressWarnings("unchecked")
     Set<Class<?>> getAnnotatedClasses(Class<? extends Annotation> ... annotations);
 
     /**
@@ -63,6 +64,6 @@ public interface ClassScanner {
      */
     @FunctionalInterface
     interface FilterExpression {
-        boolean include(Class clazz);
+        boolean include(Class<?> clazz);
     }
 }

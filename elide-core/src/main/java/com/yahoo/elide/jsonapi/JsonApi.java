@@ -161,9 +161,9 @@ public class JsonApi {
                 try {
                     Supplier<Pair<Integer, JsonNode>> responder = JsonApiJsonPatch.processJsonPatch(dataStore,
                             route.getPath(), jsonApiDocument, requestScope);
-                    return new HandlerResult(requestScope, responder);
+                    return new HandlerResult<>(requestScope, responder);
                 } catch (RuntimeException e) {
-                    return new HandlerResult(requestScope, e);
+                    return new HandlerResult<>(requestScope, e);
                 }
             };
         } else {
@@ -234,9 +234,9 @@ public class JsonApi {
                 try {
                     Supplier<Pair<Integer, JsonNode>> responder = JsonApiAtomicOperations
                             .processAtomicOperations(dataStore, route.getPath(), jsonApiDocument, requestScope);
-                    return new HandlerResult(requestScope, responder);
+                    return new HandlerResult<>(requestScope, responder);
                 } catch (RuntimeException e) {
-                    return new HandlerResult(requestScope, e);
+                    return new HandlerResult<>(requestScope, e);
                 }
             };
         } else {
@@ -246,12 +246,12 @@ public class JsonApi {
         return handleRequest(false, opaqueUser, dataStore::beginTransaction, requestUuid, handler);
     }
 
-    public HandlerResult visit(String path, JsonApiRequestScope requestScope, BaseVisitor visitor) {
+    public HandlerResult<JsonApiDocument> visit(String path, JsonApiRequestScope requestScope, BaseVisitor visitor) {
         try {
             Supplier<Pair<Integer, JsonApiDocument>> responder = visitor.visit(JsonApiParser.parse(path));
-            return new HandlerResult(requestScope, responder);
+            return new HandlerResult<>(requestScope, responder);
         } catch (RuntimeException e) {
-            return new HandlerResult(requestScope, e);
+            return new HandlerResult<>(requestScope, e);
         }
     }
 

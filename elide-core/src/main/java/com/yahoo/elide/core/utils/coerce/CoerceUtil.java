@@ -62,15 +62,15 @@ public class CoerceUtil {
         // null value of number type would be converted to 0, as 'null' would cause exception for primitive
         // number classes
         if (value == null && isNumberType(cls)) {
-            return (T) Array.get(Array.newInstance(cls, 1), 0);
+            return cls.cast(Array.get(Array.newInstance(cls, 1), 0));
         }
 
         if (value == null || cls == null || cls.isInstance(value)) {
-            return (T) value;
+            return cls.cast(value);
         }
 
         try {
-            return (T) ConvertUtils.convert(value, cls);
+            return cls.cast(ConvertUtils.convert(value, cls));
         } catch (ConversionException | InvalidAttributeException | IllegalArgumentException e) {
             throw new InvalidValueException(value, e.getMessage());
         }
@@ -83,8 +83,8 @@ public class CoerceUtil {
         ConvertUtils.register(new Converter() {
 
             @Override
-            public <T> T convert(Class<T> aClass, Object o) {
-                return (T) serde.deserialize(aClass, (S) o);
+            public <A> A convert(Class<A> aClass, Object o) {
+                return aClass.cast(serde.deserialize((S) o));
             }
 
         }, targetType);
