@@ -286,7 +286,7 @@
                     "title": "Dimension cardinality",
                     "description": "Dimension cardinality: (tiny, small, medium, large, huge). The relative sizes are decided by the table designer(s).",
                     "type": "string",
-                    "format": "elideCardiality"
+                    "format": "elideCardinality"
                 },
                 "tags": {
                     "title": "Dimension tags",
@@ -456,7 +456,7 @@
                         "title": "Table cardinality",
                         "description": "Table cardinality: (tiny, small, medium, large, huge). The relative sizes are decided by the table designer(s).",
                         "type": "string",
-                        "format": "elideCardiality"
+                        "format": "elideCardinality"
                     },
                     "readAccess": {
                         "title": "Table read access",

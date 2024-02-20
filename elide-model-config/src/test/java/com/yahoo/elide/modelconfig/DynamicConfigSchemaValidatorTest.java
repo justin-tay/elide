@@ -35,11 +35,11 @@ public class DynamicConfigSchemaValidatorTest {
                 () -> testClass.verifySchema(Config.SECURITY, jsonConfig, "security_invalid.hjson"));
         String expectedMessage = """
                 Schema validation failed for: security_invalid.hjson
-                .name: is not defined in the schema and the schema does not allow additional properties
-                .table: is not defined in the schema and the schema does not allow additional properties
-                .schema$: is not defined in the schema and the schema does not allow additional properties
-                .description: is not defined in the schema and the schema does not allow additional properties
-                .cardinality: is not defined in the schema and the schema does not allow additional properties""";
+                : property 'name' is not defined in the schema and the schema does not allow additional properties
+                : property 'table' is not defined in the schema and the schema does not allow additional properties
+                : property 'schema$' is not defined in the schema and the schema does not allow additional properties
+                : property 'description' is not defined in the schema and the schema does not allow additional properties
+                : property 'cardinality' is not defined in the schema and the schema does not allow additional properties""";
         assertEquals(expectedMessage.replaceAll("\n", System.lineSeparator()), e.getMessage());
     }
 
@@ -56,8 +56,8 @@ public class DynamicConfigSchemaValidatorTest {
                 () -> testClass.verifySchema(Config.MODELVARIABLE, jsonConfig, "variables.hjson"));
         String expectedMessage = """
                 Schema validation failed for: variables.hjson
-                /cardinality: null found, but [string, number, boolean, array, object] is required
-                .schema$: is not defined in the schema and the schema does not allow additional properties""";
+                /cardinality: null found, [string, number, boolean, array, object] expected
+                : property 'schema$' is not defined in the schema and the schema does not allow additional properties""";
         assertEquals(expectedMessage.replaceAll("\n", System.lineSeparator()), e.getMessage());
     }
 
@@ -100,32 +100,36 @@ public class DynamicConfigSchemaValidatorTest {
                 Schema validation failed for: table_schema_with_multiple_errors.hjson
                 /tables/0/name: does not match the elideName pattern must start with an alphabetic character and can include alphabets, numbers and '_' only.
                 /tables/0/filterTemplate: does not match the elideRSQLFilter pattern is not a valid RSQL filter expression. Please visit page https://elide.io/pages/guide/v5/11-graphql.html#operators for samples.
-                /tables/0/cardinality: does not match the elideCardiality pattern must be one of [Tiny, Small, Medium, Large, Huge].
+                /tables/0/cardinality: does not match the elideCardinality pattern must be one of [Tiny, Small, Medium, Large, Huge].
                 /tables/0/measures/0/maker: does not match the javaClassName pattern is not a valid Java class name.
-                /tables/0/measures/0: should be valid to one and only one schema, but 2 are valid
-                /tables/0/dimensions/0: should be valid to one and only one schema, but 0 are valid
+                /tables/0/measures/0: must be valid to one and only one schema, but 2 are valid with indexes '0, 1'
+                /tables/0/dimensions/0: must be valid to one and only one schema, but 0 are valid
                 /tables/0/dimensions/0/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
-                /tables/0/dimensions/0/cardinality: does not match the elideCardiality pattern must be one of [Tiny, Small, Medium, Large, Huge].
+                /tables/0/dimensions/0/cardinality: does not match the elideCardinality pattern must be one of [Tiny, Small, Medium, Large, Huge].
                 /tables/0/dimensions/0/type: does not match the elideFieldType pattern must be one of [Integer, Decimal, Money, Text, Coordinate, Boolean, Enum_Text, Enum_Ordinal].
+                /tables/0/dimensions/0/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
+                /tables/0/dimensions/0/cardinality: does not match the elideCardinality pattern must be one of [Tiny, Small, Medium, Large, Huge].
                 /tables/0/dimensions/0/type: does not match the elideTimeFieldType pattern must be [Time] for any time dimension.
-                #/definitions/timeDimension: Properties [tableSource] are not allowed for time dimensions.
-                /tables/0/dimensions/1: should be valid to one and only one schema, but 0 are valid
+                /tables/0/dimensions/0: properties [tableSource] are not allowed for time dimensions.
+                /tables/0/dimensions/1: must be valid to one and only one schema, but 0 are valid
                 /tables/0/dimensions/1/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
                 /tables/0/dimensions/1/tags: string found, array expected
-                tableSource and values cannot both be defined for a dimension. Choose One or None.
+                /tables/0/dimensions/1: tableSource and values cannot both be defined for a dimension. Choose One or None.
+                /tables/0/dimensions/1/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
+                /tables/0/dimensions/1/tags: string found, array expected
                 /tables/0/dimensions/1/type: does not match the elideTimeFieldType pattern must be [Time] for any time dimension.
-                #/definitions/timeDimension: Properties [values, tableSource] are not allowed for time dimensions.
-                /tables/0/dimensions/2: should be valid to one and only one schema, but 0 are valid
+                /tables/0/dimensions/1: properties [values, tableSource] are not allowed for time dimensions.
+                /tables/0/dimensions/2: must be valid to one and only one schema, but 0 are valid
                 /tables/0/dimensions/2/type: does not match the elideFieldType pattern must be one of [Integer, Decimal, Money, Text, Coordinate, Boolean, Enum_Text, Enum_Ordinal].
-                #/definitions/dimension: Properties [grains] are not allowed for dimensions.
+                /tables/0/dimensions/2: properties [grains] are not allowed for dimensions.
                 /tables/0/dimensions/2/type: does not match the elideTimeFieldType pattern must be [Time] for any time dimension.
                 /tables/0/dimensions/2/grains/0/type: does not match the elideGrainType pattern must be one of [Second, Minute, Hour, Day, IsoWeek, Week, Month, Quarter, Year].
-                /tables/0/arguments/0.default: is missing but it is required
                 /tables/0/arguments/0/type: does not match the elideFieldType pattern must be one of [Integer, Decimal, Money, Text, Coordinate, Boolean, Enum_Text, Enum_Ordinal].
+                /tables/0/arguments/0: required property 'default' not found
                 /tables/0/arguments/1/name: does not match the elideArgumentName pattern must start with an alphabetic character and can include alphabets, numbers and '_' only and cannot be 'grain'.
-                /tables/0/arguments/1.default: is missing but it is required
-                #/definitions/argument: tableSource and values cannot both be defined for an argument. Choose One or None.
-                .name: is not defined in the schema and the schema does not allow additional properties""";
+                /tables/0/arguments/1: required property 'default' not found
+                /tables/0/arguments/2: tableSource and values cannot both be defined for an argument. Choose One or None.
+                : property 'name' is not defined in the schema and the schema does not allow additional properties""";
 
         assertEquals(expectedMessage.replaceAll("\n", System.lineSeparator()), e.getMessage());
     }
@@ -151,7 +155,7 @@ public class DynamicConfigSchemaValidatorTest {
                 Schema validation failed for: db_invalid.hjson
                 /dbconfigs/0/name: does not match the elideName pattern must start with an alphabetic character and can include alphabets, numbers and '_' only.
                 /dbconfigs/0/driver: does not match the javaClassName pattern is not a valid Java class name.
-                /dbconfigs/0/propertyMap/hibernate.show_sql: null found, but [string, number, boolean, array, object] is required
+                /dbconfigs/0/propertyMap/hibernate.show_sql: null found, [string, number, boolean, array, object] expected
                 /dbconfigs/1/url: does not match the elideJdbcUrl pattern must start with 'jdbc:'.
                 /dbconfigs/1/dialect: integer found, string expected""";
         assertEquals(expectedMessage.replaceAll("\n", System.lineSeparator()), e.getMessage());

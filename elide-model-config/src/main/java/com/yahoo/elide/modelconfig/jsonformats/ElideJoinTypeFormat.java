@@ -5,7 +5,8 @@
  */
 package com.yahoo.elide.modelconfig.jsonformats;
 
-import com.networknt.schema.format.AbstractFormat;
+import com.networknt.schema.ExecutionContext;
+import com.networknt.schema.Format;
 
 import java.util.regex.Pattern;
 
@@ -15,22 +16,28 @@ import java.util.regex.Pattern;
  * This specifier will check if a string instance is one of {@code left, inner, full, cross}.
  * </p>
  */
-public class ElideJoinTypeFormat extends AbstractFormat {
+public class ElideJoinTypeFormat implements Format {
     private static final Pattern JOIN_TYPE_PATTERN = Pattern.compile("^(?i)(left|inner|full|cross)$");
 
     public static final String NAME = "elideJoinType";
     public static final String ERROR_MESSAGE_DESCRIPTION =
-                    "must be one of [left, inner, full, cross].";
-
-    public ElideJoinTypeFormat() {
-        super(NAME, ERROR_MESSAGE_DESCRIPTION);
-    }
+                    "{0}: does not match the elideJoinType pattern must be one of [left, inner, full, cross].";
 
     @Override
-    public boolean matches(String value) {
+    public boolean matches(ExecutionContext executionContext, String value) {
         if (!JOIN_TYPE_PATTERN.matcher(value).matches()) {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getMessageKey() {
+        return ERROR_MESSAGE_DESCRIPTION;
     }
 }

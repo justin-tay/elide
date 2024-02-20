@@ -5,7 +5,8 @@
  */
 package com.yahoo.elide.modelconfig.jsonformats;
 
-import com.networknt.schema.format.AbstractFormat;
+import com.networknt.schema.ExecutionContext;
+import com.networknt.schema.Format;
 
 import java.util.Set;
 import java.util.TreeSet;
@@ -17,7 +18,7 @@ import java.util.regex.Pattern;
  * This specifier will check if a string instance is a valid Elide Field Name.
  * </p>
  */
-public class ElideFieldNameFormat extends AbstractFormat {
+public class ElideFieldNameFormat implements Format {
     private static final Pattern FIELD_NAME_FORMAT_REGEX = Pattern.compile("^[a-z][0-9A-Za-z_]*$");
     private static final Set<String> RESERVED_KEYWORDS_FOR_COLUMN_NAME = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -28,16 +29,13 @@ public class ElideFieldNameFormat extends AbstractFormat {
 
     public static final String NAME = "elideFieldName";
     public static final String NAME_KEY = "elideFieldName.error.name";
-    public static final String ERROR_MESSAGE_DESCRIPTION = "must start with "
-                    + "lower case alphabet and can include alphabets, numbers and '_' only and "
+    public static final String ERROR_MESSAGE_DESCRIPTION = "{0}: does not match the elideFieldName pattern"
+            + " must start with "
+                    + "lower case alphabet and can include alphabets, numbers and ''_'' only and "
                     + "cannot be one of " + RESERVED_KEYWORDS_FOR_COLUMN_NAME;
 
-    public ElideFieldNameFormat() {
-        super(NAME, ERROR_MESSAGE_DESCRIPTION);
-    }
-
     @Override
-    public boolean matches(String value) {
+    public boolean matches(ExecutionContext executionContext, String value) {
         if (!FIELD_NAME_FORMAT_REGEX.matcher(value).matches()) {
             return false;
         }
@@ -46,5 +44,15 @@ public class ElideFieldNameFormat extends AbstractFormat {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getMessageKey() {
+        return ERROR_MESSAGE_DESCRIPTION;
     }
 }

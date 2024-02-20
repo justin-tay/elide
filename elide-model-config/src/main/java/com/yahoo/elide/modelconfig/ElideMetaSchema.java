@@ -21,8 +21,6 @@ import com.yahoo.elide.modelconfig.jsonformats.ElideTimeFieldTypeFormat;
 import com.yahoo.elide.modelconfig.jsonformats.JavaClassNameFormat;
 import com.yahoo.elide.modelconfig.jsonformats.JavaClassNameWithExtFormat;
 
-import com.yahoo.elide.modelconfig.jsonformats.MessageSource;
-import com.yahoo.elide.modelconfig.jsonformats.ResourceBundleMessageSource;
 import com.yahoo.elide.modelconfig.jsonformats.ValidateArgsPropertiesKeyword;
 import com.yahoo.elide.modelconfig.jsonformats.ValidateDimPropertiesKeyword;
 import com.yahoo.elide.modelconfig.jsonformats.ValidateTimeDimPropertiesKeyword;
@@ -69,8 +67,6 @@ public class ElideMetaSchema {
             String id = "$id";
             List<Format> builtInFormats = new ArrayList<>(JsonMetaSchema.COMMON_BUILTIN_FORMATS);
 
-            MessageSource messageSource = new ResourceBundleMessageSource();
-
             INSTANCE = JsonMetaSchema.builder(uri)
                     .idKeyword(id)
                     .addFormats(builtInFormats)
@@ -81,9 +77,9 @@ public class ElideMetaSchema {
                             new NonValidationKeyword("examples")
                     ))
                     // add your custom keyword
-                    .addKeyword(new ValidateArgsPropertiesKeyword(messageSource))
-                    .addKeyword(new ValidateDimPropertiesKeyword(messageSource))
-                    .addKeyword(new ValidateTimeDimPropertiesKeyword(messageSource))
+                    .addKeyword(new ValidateArgsPropertiesKeyword())
+                    .addKeyword(new ValidateDimPropertiesKeyword())
+                    .addKeyword(new ValidateTimeDimPropertiesKeyword())
                     .build();
 
         }

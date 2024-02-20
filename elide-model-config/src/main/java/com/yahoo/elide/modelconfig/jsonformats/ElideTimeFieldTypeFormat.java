@@ -5,7 +5,8 @@
  */
 package com.yahoo.elide.modelconfig.jsonformats;
 
-import com.networknt.schema.format.AbstractFormat;
+import com.networknt.schema.ExecutionContext;
+import com.networknt.schema.Format;
 
 import java.util.regex.Pattern;
 
@@ -15,22 +16,28 @@ import java.util.regex.Pattern;
  * This specifier will check if a string instance is {@code Time}.
  * </p>
  */
-public class ElideTimeFieldTypeFormat extends AbstractFormat {
+public class ElideTimeFieldTypeFormat implements Format {
     private static final Pattern TIME_FIELD_TYPE_PATTERN = Pattern.compile("^(?i)(Time)$");
 
     public static final String NAME = "elideTimeFieldType";
-    public static final String ERROR_MESSAGE_DESCRIPTION = "must be "
+    public static final String ERROR_MESSAGE_DESCRIPTION = "{0}: does not match the elideTimeFieldType pattern must be "
                     + "[Time] for any time dimension.";
 
-    public ElideTimeFieldTypeFormat() {
-        super(NAME, ERROR_MESSAGE_DESCRIPTION);
-    }
-
     @Override
-    public boolean matches(String value) {
+    public boolean matches(ExecutionContext executionContext, String value) {
         if (!TIME_FIELD_TYPE_PATTERN.matcher(value).matches()) {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getMessageKey() {
+        return ERROR_MESSAGE_DESCRIPTION;
     }
 }
