@@ -57,6 +57,27 @@
                   "pattern": "{0}: does not match the javaClassName pattern is not a valid Java class name."
               }
         },
+        "elideCardinality" : {
+              "type": "string",
+              "pattern": "^(?i)(Tiny|Small|Medium|Large|Huge)$",
+              "message": {
+                  "pattern": "{0}: does not match the elideCardinality pattern must be one of [Tiny, Small, Medium, Large, Huge]."
+              }
+        },
+        "elideTimeFieldType" : {
+              "type": "string",
+              "pattern": "^(?i)(Time)$",
+              "message": {
+                  "pattern": "{0}: does not match the elideTimeFieldType pattern must be [Time] for any time dimension."
+              }
+        },
+        "elideGrainType" : {
+              "type": "string",
+              "pattern": "^(?i)(Second|Minute|Hour|Day|IsoWeek|Week|Month|Quarter|Year)$",
+              "message": {
+                  "pattern": "{0}: does not match the elideGrainType pattern must be one of [Second, Minute, Hour, Day, IsoWeek, Week, Month, Quarter, Year]."
+              }
+        },
         "argument" : {
             "title" : "Arguments",
             "description" : "Arguments are supported for table, measures and dimensions.",
@@ -326,8 +347,7 @@
                 "cardinality": {
                     "title": "Dimension cardinality",
                     "description": "Dimension cardinality: (tiny, small, medium, large, huge). The relative sizes are decided by the table designer(s).",
-                    "type": "string",
-                    "format": "elideCardinality"
+                    "$ref": "#/$defs/elideCardinality"
                 },
                 "tags": {
                     "title": "Dimension tags",
@@ -404,8 +424,7 @@
                         "type": {
                             "title": "Dimension field type",
                             "description": "The data type of the dimension field",
-                            "type": "string",
-                            "format": "elideTimeFieldType"
+                            "$ref": "#/$defs/elideTimeFieldType"
                         },
                         "grains" : {
                             "title" : "Time Dimension grains",
@@ -419,8 +438,7 @@
                                     "type": {
                                         "title": "Time granularity",
                                         "description": "Indicates grain time granularity",
-                                        "type": "string",
-                                        "format": "elideGrainType"
+                                        "$ref": "#/$defs/elideGrainType"
                                     },
                                     "sql": {
                                         "title": "Grain SQL",
@@ -494,8 +512,7 @@
                     "cardinality": {
                         "title": "Table cardinality",
                         "description": "Table cardinality: (tiny, small, medium, large, huge). The relative sizes are decided by the table designer(s).",
-                        "type": "string",
-                        "format": "elideCardinality"
+                        "$ref": "#/$defs/elideCardinality"
                     },
                     "readAccess": {
                         "title": "Table read access",
