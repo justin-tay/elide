@@ -29,6 +29,13 @@
                   "pattern": "{0}: does not match the elideName pattern must start with an alphabetic character and can include alphabets, numbers and ''_'' only."
               }
         },
+        "elideNamespaceName" : {
+              "type": "string",
+              "pattern": "^default$|^(?!(?i)default$)^[A-Za-z][0-9A-Za-z_]*$",
+              "message": {
+                  "pattern": "{0}: does not match the elideNamespaceName pattern must start with an alphabetic character and can include alphabets, numbers and ''_'' only and must not clash with the ''default'' namespace."
+              }
+        },
         "argument" : {
             "title" : "Arguments",
             "description" : "Arguments are supported for table, measures and dimensions.",
@@ -92,8 +99,7 @@
                 "namespace": {
                         "title": "Join Namespace",
                         "description": "Namespace for the Join.",
-                        "type": "string",
-                        "format": "elideNamespaceName",
+                        "$ref": "#/$defs/elideNamespaceName",
                         "default": "default"
                 },
                 "to": {
@@ -138,8 +144,7 @@
                 "namespace": {
                     "title": "Source table namespace",
                     "description": "Namespace for the source table.",
-                    "type": "string",
-                    "format": "elideNamespaceName",
+                    "$ref": "#/$defs/elideNamespaceName",
                     "default": "default"
                 },
                 "column": {
@@ -485,8 +490,7 @@
                     "namespace": {
                         "title": "Table Namespace",
                         "description": "Namespace for the table.",
-                        "type": "string",
-                        "format": "elideNamespaceName",
+                        "$ref": "#/$defs/elideNamespaceName",
                         "default": "default"
                     },
                     "hints": {
