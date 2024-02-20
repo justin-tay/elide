@@ -5,7 +5,8 @@
  */
 package com.yahoo.elide.modelconfig.jsonformats;
 
-import com.networknt.schema.format.AbstractFormat;
+import com.networknt.schema.ExecutionContext;
+import com.networknt.schema.Format;
 
 /**
  * Format specifier for {@code elideJdbcUrl} format attribute.
@@ -13,20 +14,27 @@ import com.networknt.schema.format.AbstractFormat;
  * This specifier will check if a string instance is a valid JDBC url.
  * </p>
  */
-public class ElideJDBCUrlFormat extends AbstractFormat {
+public class ElideJDBCUrlFormat implements Format {
 
     public static final String NAME = "elideJdbcUrl";
-    public static final String ERROR_MESSAGE_DESCRIPTION = "must start with 'jdbc:'.";
-
-    public ElideJDBCUrlFormat() {
-        super(NAME, ERROR_MESSAGE_DESCRIPTION);
-    }
+    public static final String ERROR_MESSAGE_DESCRIPTION = "{0}: does not match the elideJdbcUrl"
+            + " pattern must start with ''jdbc:''.";
 
     @Override
-    public boolean matches(String value) {
+    public boolean matches(ExecutionContext executionContext, String value) {
         if (!value.startsWith("jdbc:")) {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getMessageKey() {
+        return ERROR_MESSAGE_DESCRIPTION;
     }
 }

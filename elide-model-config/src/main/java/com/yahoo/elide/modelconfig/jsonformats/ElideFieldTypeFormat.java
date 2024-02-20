@@ -5,7 +5,8 @@
  */
 package com.yahoo.elide.modelconfig.jsonformats;
 
-import com.networknt.schema.format.AbstractFormat;
+import com.networknt.schema.ExecutionContext;
+import com.networknt.schema.Format;
 
 import java.util.regex.Pattern;
 
@@ -15,27 +16,40 @@ import java.util.regex.Pattern;
  * This specifier will check if a string instance is one of {@code Integer, Decimal, Money, Text, Coordinate, Boolean}.
  * </p>
  */
-public class ElideFieldTypeFormat extends AbstractFormat {
+public class ElideFieldTypeFormat implements Format {
     public static final Pattern FIELD_TYPE_PATTERN =
             Pattern.compile("^(?i)(Integer|Decimal|Money|Text|Coordinate|Boolean|Enum_Text|Enum_Ordinal)$");
 
     public static final String NAME = "elideFieldType";
-    public static final String ERROR_MESSAGE_DESCRIPTION = "must be one of "
+    public static final String ERROR_MESSAGE_DESCRIPTION = "{0}: does not match the elideFieldType pattern"
+            + " must be one of "
             + "[Integer, Decimal, Money, Text, Coordinate, Boolean, Enum_Text, Enum_Ordinal].";
 
+    private final String name;
+
     public ElideFieldTypeFormat() {
-        this(NAME);
+        this.name = NAME;
     }
 
     public ElideFieldTypeFormat(String formatName) {
-        super(formatName, ERROR_MESSAGE_DESCRIPTION);
+        this.name = formatName;
     }
 
     @Override
-    public boolean matches(String value) {
+    public boolean matches(ExecutionContext executionContext, String value) {
         if (!FIELD_TYPE_PATTERN.matcher(value).matches()) {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
+    public String getMessageKey() {
+        return ERROR_MESSAGE_DESCRIPTION;
     }
 }

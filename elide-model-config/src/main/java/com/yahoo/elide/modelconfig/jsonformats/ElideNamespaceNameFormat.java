@@ -5,7 +5,8 @@
  */
 package com.yahoo.elide.modelconfig.jsonformats;
 
-import com.networknt.schema.format.AbstractFormat;
+import com.networknt.schema.ExecutionContext;
+import com.networknt.schema.Format;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -16,21 +17,18 @@ import java.util.regex.Pattern;
  * This specifier will check if a string instance is a valid Elide Name.
  * </p>
  */
-public class ElideNamespaceNameFormat extends AbstractFormat {
+public class ElideNamespaceNameFormat implements Format {
     public static final Pattern NAME_FORMAT_REGEX = ElideNameFormat.NAME_FORMAT_REGEX;
 
     public static final String NAME = "elideNamespaceName";
     public static final String ERROR_MESSAGE_DESCRIPTION =
-                    "must start with an alphabetic character and can include "
-                    + "alphabets, numbers and '_' only and must not clash with the 'default' namespace.";
+                    "{0}: does not match the elideNamespaceName pattern "
+                    + "must start with an alphabetic character and can include "
+                    + "alphabets, numbers and ''_'' only and must not clash with the ''default'' namespace.";
     public static final String DEFAULT_NAME = "default";
 
-    public ElideNamespaceNameFormat() {
-        super(NAME, ERROR_MESSAGE_DESCRIPTION);
-    }
-
     @Override
-    public boolean matches(String value) {
+    public boolean matches(ExecutionContext executionContext, String value) {
         if (!NAME_FORMAT_REGEX.matcher(value).matches()) {
             return false;
         }
@@ -39,5 +37,15 @@ public class ElideNamespaceNameFormat extends AbstractFormat {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getMessageKey() {
+        return ERROR_MESSAGE_DESCRIPTION;
     }
 }

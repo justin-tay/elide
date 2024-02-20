@@ -5,7 +5,8 @@
  */
 package com.yahoo.elide.modelconfig.jsonformats;
 
-import com.networknt.schema.format.AbstractFormat;
+import com.networknt.schema.ExecutionContext;
+import com.networknt.schema.Format;
 
 /**
  * Format specifier for {@code elideArgumentName} format attribute.
@@ -13,18 +14,15 @@ import com.networknt.schema.format.AbstractFormat;
  * This specifier will check if a string instance is a valid Elide Argument Name.
  * </p>
  */
-public class ElideArgumentNameFormat extends AbstractFormat {
+public class ElideArgumentNameFormat implements Format {
 
     public static final String NAME = "elideArgumentName";
-    public static final String ERROR_MESSAGE_DESCRIPTION = "must start with an alphabetic character and can include"
-            + " alphabets, numbers and '_' only and cannot be 'grain'.";
-
-    public ElideArgumentNameFormat() {
-        super(NAME, ERROR_MESSAGE_DESCRIPTION);
-    }
+    public static final String ERROR_MESSAGE_DESCRIPTION = "{0}: does not match the elideArgumentName pattern"
+            + " must start with an alphabetic character and can include"
+            + " alphabets, numbers and ''_'' only and cannot be ''grain''.";
 
     @Override
-    public boolean matches(String value) {
+    public boolean matches(ExecutionContext executionContext, String value) {
         if (!ElideNameFormat.NAME_FORMAT_REGEX.matcher(value).matches()) {
             return false;
         }
@@ -33,5 +31,15 @@ public class ElideArgumentNameFormat extends AbstractFormat {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public String getMessageKey() {
+        return ERROR_MESSAGE_DESCRIPTION;
     }
 }

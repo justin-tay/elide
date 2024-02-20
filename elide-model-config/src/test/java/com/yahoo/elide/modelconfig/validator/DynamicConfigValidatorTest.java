@@ -311,10 +311,12 @@ public class DynamicConfigValidatorTest {
     public void testBadDimName() throws Exception {
         String expectedMessage = """
                 Schema validation failed for: models/tables/table1.hjson
-                /tables/0/dimensions/0: should be valid to one and only one schema, but 0 are valid
+                /tables/0/dimensions/0: must be valid to one and only one schema, but 0 are valid
+                /tables/0/dimensions/0/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
                 /tables/0/dimensions/0/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
                 /tables/0/dimensions/0/type: does not match the elideTimeFieldType pattern must be [Time] for any time dimension.
-                /tables/0/dimensions/1: should be valid to one and only one schema, but 0 are valid
+                /tables/0/dimensions/1: must be valid to one and only one schema, but 0 are valid
+                /tables/0/dimensions/1/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
                 /tables/0/dimensions/1/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
                 /tables/0/dimensions/1/type: does not match the elideTimeFieldType pattern must be [Time] for any time dimension.
                 """;
