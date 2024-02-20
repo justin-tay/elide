@@ -1,6 +1,6 @@
 {
-    "$schema": "https://json-schema.org/draft-04/schema#",
-    "definitions": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
         "argument" : {
             "title" : "Arguments",
             "description" : "Arguments are supported for table, measures and dimensions.",
@@ -8,7 +8,7 @@
             "properties": {
                 "name": {
                     "title": "Argument name",
-                    "description": "Name must start with an alphabetic character and can include alaphabets, numbers and '_' only.",
+                    "description": "Name must start with an alphabetic character and can include alphabets, numbers and '_' only.",
                     "type": "string",
                     "format": "elideArgumentName"
                 },
@@ -33,7 +33,7 @@
                     }
                 },
                 "tableSource": {
-                    "$ref": "#/definitions/tableSource"
+                    "$ref": "#/$defs/tableSource"
                 },
                 "default": {
                     "title": "Default argument value",
@@ -211,7 +211,7 @@
                     "description": "An array of supported arguments for measure",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/argument"
+                        "$ref": "#/$defs/argument"
                     }
                 },
                 "filterTemplate": {
@@ -302,7 +302,7 @@
                     "description": "An array of supported arguments for dimensions",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/argument"
+                        "$ref": "#/$defs/argument"
                     }
                 },
                 "filterTemplate": {
@@ -319,7 +319,7 @@
             "type": "object",
             "allOf": [
                 {
-                    "$ref": "#/definitions/dimensionRef"
+                    "$ref": "#/$defs/dimensionRef"
                 },
                 {
                     "properties": {
@@ -339,7 +339,7 @@
                             }
                         },
                         "tableSource": {
-                            "$ref": "#/definitions/tableSource"
+                            "$ref": "#/$defs/tableSource"
                         }
                     }
                 }
@@ -357,7 +357,7 @@
             "type": "object",
             "allOf": [
                 {
-                    "$ref": "#/definitions/dimensionRef"
+                    "$ref": "#/$defs/dimensionRef"
                 },
                 {
                     "properties": {
@@ -485,7 +485,7 @@
                         "description": "Describes SQL joins to other tables for column references.",
                         "type": "array",
                         "items": {
-                            "$ref": "#/definitions/join"
+                            "$ref": "#/$defs/join"
                         }
                     },
                     "measures": {
@@ -493,7 +493,7 @@
                         "description": "Zero or more metric definitions.",
                         "type": "array",
                         "items": {
-                            "$ref": "#/definitions/measure"
+                            "$ref": "#/$defs/measure"
                         }
                     },
                     "dimensions": {
@@ -503,10 +503,10 @@
                         "items": {
                             "oneOf": [
                                 {
-                                    "$ref": "#/definitions/dimension"
+                                    "$ref": "#/$defs/dimension"
                                 },
                                 {
-                                    "$ref": "#/definitions/timeDimension"
+                                    "$ref": "#/$defs/timeDimension"
                                 }
                             ]
                         }
@@ -525,7 +525,7 @@
                         "description": "An array of supported arguments for tables.",
                         "type": "array",
                         "items": {
-                            "$ref": "#/definitions/argument"
+                            "$ref": "#/$defs/argument"
                         }
                     }
                 },

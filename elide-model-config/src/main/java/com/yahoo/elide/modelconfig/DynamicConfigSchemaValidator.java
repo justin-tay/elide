@@ -94,6 +94,7 @@ public class DynamicConfigSchemaValidator {
         try (InputStream is = DynamicConfigHelpers.class.getResourceAsStream(resource)) {
             SchemaValidatorsConfig config = new SchemaValidatorsConfig();
             config.setPathType(PathType.JSON_POINTER);
+            config.setFormatAssertionsEnabled(true);
             return factory.getSchema(objectMapper.readTree(is), config);
         } catch (IOException e) {
             log.error("Error loading schema file " + resource + " to verify");

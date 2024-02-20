@@ -26,12 +26,8 @@ import com.yahoo.elide.modelconfig.jsonformats.ValidateDimPropertiesKeyword;
 import com.yahoo.elide.modelconfig.jsonformats.ValidateTimeDimPropertiesKeyword;
 import com.networknt.schema.Format;
 import com.networknt.schema.JsonMetaSchema;
-import com.networknt.schema.NonValidationKeyword;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidatorTypeCode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -63,20 +59,9 @@ public class ElideMetaSchema {
     private static class Holder {
         static final JsonMetaSchema INSTANCE;
         static {
-            String uri = SpecVersion.VersionFlag.V4.getId();
-            String id = "$id";
-            List<Format> builtInFormats = new ArrayList<>(JsonMetaSchema.COMMON_BUILTIN_FORMATS);
-
-            INSTANCE = JsonMetaSchema.builder(uri)
-                    .idKeyword(id)
-                    .addFormats(builtInFormats)
+            INSTANCE = JsonMetaSchema.builder(JsonMetaSchema.getV202012().getUri(), JsonMetaSchema.getV202012())
                     .addFormats(FORMATS)
-                    .addKeywords(ValidatorTypeCode.getNonFormatKeywords(SpecVersion.VersionFlag.V4))
-                    // keywords that may validly exist, but have no validation aspect to them
-                    .addKeywords(Arrays.asList(
-                            new NonValidationKeyword("examples")
-                    ))
-                    // add your custom keyword
+                    // add your custom keywords
                     .addKeyword(new ValidateArgsPropertiesKeyword())
                     .addKeyword(new ValidateDimPropertiesKeyword())
                     .addKeyword(new ValidateTimeDimPropertiesKeyword())
