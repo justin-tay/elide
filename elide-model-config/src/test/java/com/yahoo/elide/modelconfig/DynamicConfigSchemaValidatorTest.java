@@ -134,6 +134,31 @@ public class DynamicConfigSchemaValidatorTest {
         assertEquals(expectedMessage.replaceAll("\n", System.lineSeparator()), e.getMessage());
     }
 
+    @DisplayName("Invalid Table config")
+    @ParameterizedTest
+    @ValueSource(strings = {"/validator/invalid_schema/table_schema_with_arguments.hjson"})
+    public void testInvalidTableSchemaArgument(String resource) throws Exception {
+        String jsonConfig = loadHjsonFromClassPath(resource);
+        String fileName = getFileName(resource);
+        Exception e = assertThrows(InvalidSchemaException.class,
+                        () -> testClass.verifySchema(Config.TABLE, jsonConfig, fileName));
+        String expectedMessage = """
+                Schema validation failed for: table_schema_with_arguments.hjson
+                /tables/0/filterTemplate: does not match the elideRSQLFilter pattern is not a valid RSQL filter expression. Please visit page https://elide.io/pages/guide/v5/11-graphql.html#operators for samples.
+                /tables/0/cardinality: does not match the elideCardinality pattern must be one of [Tiny, Small, Medium, Large, Huge].
+                /tables/0/arguments/0: tableSource and values cannot both be defined for an argument. Choose One or None.
+                /tables/0: must be valid to one and only one schema, but 0 are valid
+                /tables/0: required property 'sql' not found
+                /tables/0: required property 'dimensions' not found
+                /tables/0: required property 'maker' not found
+                /tables/0: required property 'dimensions' not found
+                /tables/0: required property 'dimensions' not found
+                /tables/0: required property 'extend' not found
+                : property 'name' is not defined in the schema and the schema does not allow additional properties""";
+
+        assertEquals(expectedMessage.replaceAll("\n", System.lineSeparator()), e.getMessage());
+    }
+
     // DB config test
     @DisplayName("Valid DB config")
     @ParameterizedTest

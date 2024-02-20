@@ -132,8 +132,16 @@
                 "type",
                 "default"
             ],
-            "validateArgumentProperties": true,
-            "additionalProperties": false
+            "not": {
+                "required": [
+                    "tableSource",
+                    "values"
+                ]
+            },
+            "additionalProperties": false,
+            "message": {
+                "not": "{0}: tableSource and values cannot both be defined for an argument. Choose One or None."
+            }
         },
         "join": {
             "title": "Join",
