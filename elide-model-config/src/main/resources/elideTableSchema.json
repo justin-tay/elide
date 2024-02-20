@@ -57,6 +57,13 @@
                   "pattern": "{0}: does not match the javaClassName pattern is not a valid Java class name."
               }
         },
+        "javaClassNameWithExt" : {
+              "type": "string",
+              "pattern": "^(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)+(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*class$",
+              "message": {
+                  "pattern": "{0}: does not match the javaClassNameWithExt pattern is not a valid Java class name with .class extension."
+              }
+        },
         "elideCardinality" : {
               "type": "string",
               "pattern": "^(?i)(Tiny|Small|Medium|Large|Huge)$",

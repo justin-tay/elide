@@ -5,21 +5,7 @@
  */
 package com.yahoo.elide.modelconfig;
 
-import com.yahoo.elide.modelconfig.jsonformats.ElideArgumentNameFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideCardinalityFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideFieldNameFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideFieldTypeFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideGrainTypeFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideJDBCUrlFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideJoinKindFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideJoinTypeFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideNameFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideNamespaceNameFormat;
 import com.yahoo.elide.modelconfig.jsonformats.ElideRSQLFilterFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideRoleFormat;
-import com.yahoo.elide.modelconfig.jsonformats.ElideTimeFieldTypeFormat;
-import com.yahoo.elide.modelconfig.jsonformats.JavaClassNameFormat;
-import com.yahoo.elide.modelconfig.jsonformats.JavaClassNameWithExtFormat;
 
 import com.yahoo.elide.modelconfig.jsonformats.ValidateArgsPropertiesKeyword;
 import com.yahoo.elide.modelconfig.jsonformats.ValidateDimPropertiesKeyword;
@@ -38,21 +24,7 @@ public class ElideMetaSchema {
 
     static {
         List<Format> result = new ArrayList<>();
-        result.add(new ElideArgumentNameFormat());
-        result.add(new ElideCardinalityFormat());
-        result.add(new ElideFieldNameFormat());
-        result.add(new ElideFieldTypeFormat());
-        result.add(new ElideGrainTypeFormat());
-        result.add(new ElideJDBCUrlFormat());
-        result.add(new ElideJoinKindFormat());
-        result.add(new ElideJoinTypeFormat());
-        result.add(new ElideNameFormat());
-        result.add(new ElideNamespaceNameFormat());
-        result.add(new ElideRoleFormat());
         result.add(new ElideRSQLFilterFormat());
-        result.add(new ElideTimeFieldTypeFormat());
-        result.add(new JavaClassNameFormat());
-        result.add(new JavaClassNameWithExtFormat());
         FORMATS = result;
     }
 
