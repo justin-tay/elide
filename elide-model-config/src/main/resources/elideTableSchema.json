@@ -1,6 +1,34 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$defs": {
+        "elideArgumentName" : {
+              "type": "string",
+              "pattern": "^(?!(?i)grain$)^[A-Za-z][0-9A-Za-z_]*$",
+              "message": {
+                  "pattern": "{0}: does not match the elideArgumentName pattern must start with an alphabetic character and can include alphabets, numbers and ''_'' only and cannot be ''grain''."
+              }
+        },
+        "elideFieldType" : {
+              "type": "string",
+              "pattern": "^(?i)(Integer|Decimal|Money|Text|Coordinate|Boolean|Enum_Text|Enum_Ordinal)$",
+              "message": {
+                  "pattern": "{0}: does not match the elideFieldType pattern must be one of [Integer, Decimal, Money, Text, Coordinate, Boolean, Enum_Text, Enum_Ordinal]."
+              }
+        },
+        "elideFieldName" : {
+              "type": "string",
+              "pattern": "^(?!(?i)(id|sql)$)^[a-z][0-9A-Za-z_]*$",
+              "message": {
+                  "pattern": "{0}: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and ''_'' only and cannot be one of [id, sql]"
+              }
+        },
+        "elideName" : {
+              "type": "string",
+              "pattern": "^[A-Za-z][0-9A-Za-z_]*$",
+              "message": {
+                  "pattern": "{0}: does not match the elideName pattern must start with an alphabetic character and can include alphabets, numbers and ''_'' only."
+              }
+        },
         "argument" : {
             "title" : "Arguments",
             "description" : "Arguments are supported for table, measures and dimensions.",
@@ -9,8 +37,7 @@
                 "name": {
                     "title": "Argument name",
                     "description": "Name must start with an alphabetic character and can include alphabets, numbers and '_' only.",
-                    "type": "string",
-                    "format": "elideArgumentName"
+                    "$ref": "#/$defs/elideArgumentName"
                 },
                 "description": {
                     "title": "Argument description",
@@ -20,8 +47,7 @@
                 "type": {
                     "title": "Argument type",
                     "description": "Must be one of Integer, Decimal, Money, Text, Coordinate, Boolean",
-                    "type": "string",
-                    "format": "elideFieldType"
+                    "$ref": "#/$defs/elideFieldType"
                 },
                 "values": {
                     "title": "Argument values",
@@ -61,8 +87,7 @@
                 "name": {
                     "title": "Join name",
                     "description": "The name of the join relationship.",
-                    "type": "string",
-                    "format": "elideFieldName"
+                    "$ref": "#/$defs/elideFieldName"
                 },
                 "namespace": {
                         "title": "Join Namespace",
@@ -74,8 +99,7 @@
                 "to": {
                     "title": "Join table name",
                     "description": "The name of the table that is being joined to",
-                    "type": "string",
-                    "format": "elideName"
+                    "$ref": "#/$defs/elideName"
                 },
                 "type": {
                     "title": "Type of Join",
@@ -109,8 +133,7 @@
                 "table": {
                     "title": "Source table",
                     "description": "The source table that contains the colum or argument values.",
-                    "type": "string",
-                    "format": "elideName"
+                    "$ref": "#/$defs/elideName"
                 },
                 "namespace": {
                     "title": "Source table namespace",
@@ -122,8 +145,7 @@
                 "column": {
                     "title": "Primary source table column name",
                     "description": "The column that provides a unique list of values for the given column or argument",
-                    "type": "string",
-                    "format": "elideFieldName"
+                    "$ref": "#/$defs/elideFieldName"
                 },
                 "suggestionColumns": {
                     "title": "Secondary search columns",
@@ -131,8 +153,7 @@
                     "type": "array",
                     "uniqueItems": true,
                     "items": {
-                        "type": "string",
-                        "format": "elideFieldName"
+                        "$ref": "#/$defs/elideFieldName"
                     }
                 }
             },
@@ -150,8 +171,7 @@
                 "name": {
                     "title": "Metric name",
                     "description": "The name of the metric. This will be the same as the POJO field name.",
-                    "type": "string",
-                    "format": "elideFieldName"
+                    "$ref": "#/$defs/elideFieldName"
                 },
                 "friendlyName": {
                     "title": "Metric friendly name",
@@ -247,8 +267,7 @@
                 "name": {
                     "title": "Dimension name",
                     "description": "The name of the dimension. This will be the same as the POJO field name.",
-                    "type": "string",
-                    "format": "elideFieldName"
+                    "$ref": "#/$defs/elideFieldName"
                 },
                 "friendlyName": {
                     "title": "Dimension friendly name",
@@ -421,8 +440,7 @@
                     "name": {
                         "title": "Table Model Name",
                         "description": "The name of the model. This will be the same as the POJO class name.",
-                        "type": "string",
-                        "format": "elideName"
+                        "$ref": "#/$defs/elideName"
                     },
                     "friendlyName": {
                         "title": "Table friendly name",
@@ -540,8 +558,7 @@
                             "dbConnectionName": {
                                 "title": "DB Connection Name",
                                 "description": "The database connection name for this model.",
-                                "type": "string",
-                                "format": "elideName"
+                                "$ref": "#/$defs/elideName"
                             }
                         },
                         "required": [
@@ -561,8 +578,7 @@
                             "dbConnectionName": {
                                 "title": "DB Connection Name",
                                 "description": "The database connection name for this model.",
-                                "type": "string",
-                                "format": "elideName"
+                                "$ref": "#/$defs/elideName"
                             }
                         },
                         "required": [
@@ -586,8 +602,7 @@
                             "dbConnectionName": {
                                 "title": "DB Connection Name",
                                 "description": "The database connection name for this model.",
-                                "type": "string",
-                                "format": "elideName"
+                                "$ref": "#/$defs/elideName"
                             }
                         },
                         "required": [
@@ -601,8 +616,7 @@
                             "extend": {
                                 "title": "Table Extends",
                                 "description": "Extends another logical table.",
-                                "type": "string",
-                                "format": "elideName"
+                                "$ref": "#/$defs/elideName"
                             }
                         },
                         "required": [
