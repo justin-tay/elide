@@ -41,8 +41,8 @@ public class DynamicConfigSchemaValidator {
         this.objectMapper = objectMapper;
         JsonMetaSchema jsonMetaSchema = ElideMetaSchema.getInstance();
         JsonSchemaFactory factory = JsonSchemaFactory.builder()
-                .defaultMetaSchemaURI(jsonMetaSchema.getUri())
-                .addMetaSchema(jsonMetaSchema)
+                .defaultMetaSchemaIri(jsonMetaSchema.getIri())
+                .metaSchema(jsonMetaSchema)
                 .build();
 
         tableSchema = loadSchema(factory, objectMapper, Config.TABLE.getConfigSchema());
@@ -94,6 +94,7 @@ public class DynamicConfigSchemaValidator {
         try (InputStream is = DynamicConfigHelpers.class.getResourceAsStream(resource)) {
             SchemaValidatorsConfig config = new SchemaValidatorsConfig();
             config.setPathType(PathType.JSON_POINTER);
+            config.setFormatAssertionsEnabled(true);
             return factory.getSchema(objectMapper.readTree(is), config);
         } catch (IOException e) {
             log.error("Error loading schema file " + resource + " to verify");
