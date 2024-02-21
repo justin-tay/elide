@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -26,8 +25,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -40,15 +40,17 @@ public class DynamicConfigVerifierTest {
 
     private static KeyPair kp;
     private static String signature;
-    private static String tarContent = null;
     private static final String TAR_FILE_PATH = "src/test/resources/configs.tar.gz";
+    private static final String SIGNATURE_FILE_PATH = "src/test/resources/configs.tar.gz.sig";
+    private static final String INVALID_TAR_FILE_PATH = "src/test/resources/invalid.tar.gz";
 
     @BeforeAll
     public static void setUp() throws Exception {
         createTarGZ();
         kp = generateKeyPair();
-        tarContent = DynamicConfigVerifier.readTarContents(TAR_FILE_PATH);
-        signature = sign(tarContent, kp.getPrivate());
+        signature = sign(TAR_FILE_PATH, kp.getPrivate());
+        Files.writeString(Path.of(SIGNATURE_FILE_PATH), signature);
+        Files.writeString(Path.of(INVALID_TAR_FILE_PATH), "invalid-signature");
     }
 
     @AfterAll
@@ -58,16 +60,26 @@ public class DynamicConfigVerifierTest {
         } catch (IOException e) {
             // Do nothing
         }
+        try {
+            Files.deleteIfExists(Paths.get(SIGNATURE_FILE_PATH));
+        } catch (IOException e) {
+            // Do nothing
+        }
+        try {
+            Files.deleteIfExists(Paths.get(INVALID_TAR_FILE_PATH));
+        } catch (IOException e) {
+            // Do nothing
+        }
     }
 
     @Test
     public void testValidSignature() throws Exception {
-        assertTrue(DynamicConfigVerifier.verify(tarContent, signature, kp.getPublic()));
+        assertTrue(DynamicConfigVerifier.verify(TAR_FILE_PATH, SIGNATURE_FILE_PATH, kp.getPublic()));
     }
 
     @Test
     public void testInvalidSignature() throws Exception {
-        assertFalse(DynamicConfigVerifier.verify("invalid-signature", signature, kp.getPublic()));
+        assertFalse(DynamicConfigVerifier.verify(INVALID_TAR_FILE_PATH, SIGNATURE_FILE_PATH, kp.getPublic()));
     }
 
     @Test
@@ -119,24 +131,25 @@ public class DynamicConfigVerifierTest {
         return generator.generateKeyPair();
     }
 
-    private static String sign(String data, PrivateKey privateKey) throws Exception {
+    private static String sign(String file, PrivateKey privateKey) throws Exception {
+        byte[] buffer = new byte[4096];
         Signature privateSignature = Signature.getInstance("SHA256withRSA");
         privateSignature.initSign(privateKey);
-        privateSignature.update(data.getBytes(StandardCharsets.UTF_8));
+        try (InputStream inputStream = new FileInputStream(file)) {
+            int read = 0;
+            while ((read = inputStream.read(buffer)) != -1) {
+                privateSignature.update(buffer, 0, read);
+            }
+        }
         byte[] signature = privateSignature.sign();
         return Base64.getEncoder().encodeToString(signature);
     }
 
     private static void createTarGZ() throws FileNotFoundException, IOException {
-        TarArchiveOutputStream tarOutputStream = null;
-        try {
-            String configPath  = "src/test/resources/configs/";
-            tarOutputStream = new TarArchiveOutputStream(new GzipCompressorOutputStream(
-                    new BufferedOutputStream(new FileOutputStream(new File(TAR_FILE_PATH)))));
+        try (TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(new GzipCompressorOutputStream(
+                new BufferedOutputStream(new FileOutputStream(new File(TAR_FILE_PATH)))))) {
+            String configPath = "src/test/resources/validator/";
             addFileToTarGz(tarOutputStream, configPath, "");
-        } finally {
-            tarOutputStream.finish();
-            tarOutputStream.close();
         }
     }
 
@@ -147,7 +160,9 @@ public class DynamicConfigVerifierTest {
         tOut.putArchiveEntry(tarEntry);
 
         if (f.isFile()) {
-            IOUtils.copy(new FileInputStream(f), tOut);
+            try (InputStream inputStream = new FileInputStream(f)) {
+                inputStream.transferTo(tOut);
+            }
             tOut.closeArchiveEntry();
         } else {
             tOut.closeArchiveEntry();
