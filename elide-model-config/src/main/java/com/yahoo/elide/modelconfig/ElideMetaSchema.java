@@ -7,8 +7,6 @@ package com.yahoo.elide.modelconfig;
 
 import com.yahoo.elide.modelconfig.jsonformats.ElideRSQLFilterFormat;
 
-import com.yahoo.elide.modelconfig.jsonformats.ValidateDimPropertiesKeyword;
-import com.yahoo.elide.modelconfig.jsonformats.ValidateTimeDimPropertiesKeyword;
 import com.networknt.schema.Format;
 import com.networknt.schema.JsonMetaSchema;
 
@@ -33,8 +31,6 @@ public class ElideMetaSchema {
             INSTANCE = JsonMetaSchema.builder(JsonMetaSchema.getV202012().getUri(), JsonMetaSchema.getV202012())
                     .addFormats(FORMATS)
                     // add your custom keywords
-                    .addKeyword(new ValidateDimPropertiesKeyword())
-                    .addKeyword(new ValidateTimeDimPropertiesKeyword())
                     .build();
 
         }

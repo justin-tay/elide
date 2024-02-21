@@ -424,7 +424,33 @@
                 "name",
                 "type",
                 "definition"
-            ]
+            ],
+            "properties": {
+                "name": true,
+                "friendlyName": true,
+                "description": true,
+                "category": true,
+                "hidden": true,
+                "readAccess": true,
+                "definition": true,
+                "cardinality": true,
+                "tags": true,
+                "type": true,
+                "arguments": true,
+                "filterTemplate": true,
+                "values": true,
+                "tableSource": true
+            },
+            "additionalProperties": false,
+            "not": {
+                "required": [
+                    "tableSource",
+                    "values"
+                ]
+            },
+            "message": {
+                "not": "{0}: tableSource and values cannot both be defined for a dimension. Choose One or None."
+            }
         },
         "timeDimension": {
             "title": "Time Dimension",
@@ -468,12 +494,27 @@
                     }
                 }
             ],
-            "validateTimeDimensionProperties": true,
             "required": [
                 "name",
                 "type",
                 "definition"
-            ]
+            ],
+            "properties": {
+                "name": true,
+                "friendlyName": true,
+                "description": true,
+                "category": true,
+                "hidden": true,
+                "readAccess": true,
+                "definition": true,
+                "cardinality": true,
+                "tags": true,
+                "type": true,
+                "arguments": true,
+                "filterTemplate": true,
+                "grains": true
+            },
+            "additionalProperties": false
         }
     },
     "type": "object",

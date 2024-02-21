@@ -110,7 +110,7 @@ public class DynamicConfigSchemaValidatorTest {
                 /tables/0/dimensions/0/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
                 /tables/0/dimensions/0/cardinality: does not match the elideCardinality pattern must be one of [Tiny, Small, Medium, Large, Huge].
                 /tables/0/dimensions/0/type: does not match the elideTimeFieldType pattern must be [Time] for any time dimension.
-                /tables/0/dimensions/0: properties [tableSource] are not allowed for time dimensions.
+                /tables/0/dimensions/0: property 'tableSource' is not defined in the schema and the schema does not allow additional properties
                 /tables/0/dimensions/1: must be valid to one and only one schema, but 0 are valid
                 /tables/0/dimensions/1/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
                 /tables/0/dimensions/1/tags: string found, array expected
@@ -118,10 +118,11 @@ public class DynamicConfigSchemaValidatorTest {
                 /tables/0/dimensions/1/name: does not match the elideFieldName pattern must start with lower case alphabet and can include alphabets, numbers and '_' only and cannot be one of [id, sql]
                 /tables/0/dimensions/1/tags: string found, array expected
                 /tables/0/dimensions/1/type: does not match the elideTimeFieldType pattern must be [Time] for any time dimension.
-                /tables/0/dimensions/1: properties [values, tableSource] are not allowed for time dimensions.
+                /tables/0/dimensions/1: property 'values' is not defined in the schema and the schema does not allow additional properties
+                /tables/0/dimensions/1: property 'tableSource' is not defined in the schema and the schema does not allow additional properties
                 /tables/0/dimensions/2: must be valid to one and only one schema, but 0 are valid
                 /tables/0/dimensions/2/type: does not match the elideFieldType pattern must be one of [Integer, Decimal, Money, Text, Coordinate, Boolean, Enum_Text, Enum_Ordinal].
-                /tables/0/dimensions/2: properties [grains] are not allowed for dimensions.
+                /tables/0/dimensions/2: property 'grains' is not defined in the schema and the schema does not allow additional properties
                 /tables/0/dimensions/2/type: does not match the elideTimeFieldType pattern must be [Time] for any time dimension.
                 /tables/0/dimensions/2/grains/0/type: does not match the elideGrainType pattern must be one of [Second, Minute, Hour, Day, IsoWeek, Week, Month, Quarter, Year].
                 /tables/0/arguments/0/type: does not match the elideFieldType pattern must be one of [Integer, Decimal, Money, Text, Coordinate, Boolean, Enum_Text, Enum_Ordinal].
