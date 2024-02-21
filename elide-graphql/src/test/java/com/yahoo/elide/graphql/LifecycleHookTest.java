@@ -46,19 +46,20 @@ public class LifecycleHookTest extends PersistentResourceFetcherTest {
         testCreate();
 
         String query = "mutation {\n"
-                + "  job(op: UPDATE, data: { id: \"1\", result: \"Done\" } ) {\n"
+                + "  job(op: UPDATE, data: { id: \"1\", result: \"Done\", jobType: MANUAL } ) {\n"
                 + "    edges {\n"
                 + "      node {\n"
                 + "        id\n"
                 + "        status\n"
                 + "        result\n"
+                + "        jobType\n"
                 + "      }\n"
                 + "    }\n"
                 + "  }\n"
                 + "}";
 
         assertQueryEquals(query,
-                "{\"job\":{\"edges\":[{\"node\":{\"id\":\"1\",\"status\":2, \"result\":\"Done\"}}]}}");
+                "{\"job\":{\"edges\":[{\"node\":{\"id\":\"1\",\"status\":2, \"result\":\"Done\", \"jobType\":\"MANUAL\"}}]}}");
     }
 
     @Test

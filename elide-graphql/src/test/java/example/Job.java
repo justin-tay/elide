@@ -10,6 +10,7 @@ import com.yahoo.elide.annotation.Include;
 import com.yahoo.elide.annotation.LifeCycleHookBinding;
 
 import hooks.JobLifeCycleHook;
+import hooks.JobTypeLifeCycleHook;
 import jakarta.persistence.Id;
 import lombok.Data;
 
@@ -45,4 +46,7 @@ public class Job {
     private int status = 0;
 
     private String result;
+
+    @LifeCycleHookBinding(operation = LifeCycleHookBinding.Operation.UPDATE, phase = LifeCycleHookBinding.TransactionPhase.PRECOMMIT, hook = JobTypeLifeCycleHook.class)
+    private JobType jobType = JobType.SCHEDULED;
 }
