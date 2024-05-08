@@ -41,8 +41,8 @@ public class DynamicConfigSchemaValidator {
         this.objectMapper = objectMapper;
         JsonMetaSchema jsonMetaSchema = ElideMetaSchema.getInstance();
         JsonSchemaFactory factory = JsonSchemaFactory.builder()
-                .defaultMetaSchemaURI(jsonMetaSchema.getUri())
-                .addMetaSchema(jsonMetaSchema)
+                .defaultMetaSchemaIri(jsonMetaSchema.getIri())
+                .metaSchema(jsonMetaSchema)
                 .build();
 
         tableSchema = loadSchema(factory, objectMapper, Config.TABLE.getConfigSchema());

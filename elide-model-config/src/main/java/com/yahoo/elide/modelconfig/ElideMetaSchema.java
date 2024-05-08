@@ -28,8 +28,8 @@ public class ElideMetaSchema {
     private static class Holder {
         static final JsonMetaSchema INSTANCE;
         static {
-            INSTANCE = JsonMetaSchema.builder(JsonMetaSchema.getV202012().getUri(), JsonMetaSchema.getV202012())
-                    .addFormats(FORMATS)
+            INSTANCE = JsonMetaSchema.builder(JsonMetaSchema.getV202012())
+                    .formats(FORMATS)
                     // add your custom keywords
                     .build();
 
