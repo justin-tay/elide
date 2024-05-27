@@ -89,7 +89,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.ArgumentCaptor;
 
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 import nocreate.NoCreateEntity;
 
 import java.math.BigDecimal;

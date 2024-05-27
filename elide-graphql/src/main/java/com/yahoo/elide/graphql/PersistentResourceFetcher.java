@@ -27,7 +27,7 @@ import com.google.common.collect.Sets;
 import graphql.language.OperationDefinition;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 

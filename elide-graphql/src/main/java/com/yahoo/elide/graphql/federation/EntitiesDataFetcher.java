@@ -18,7 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -65,7 +65,7 @@ public class EntitiesDataFetcher implements DataFetcher<List<NodeContainer>> {
 
 
         // Ignore errors as potentially an id on a subgraph no longer exists here
-        Set<PersistentResource> results = records.onExceptionResumeNext(Observable.empty())
+        Set<PersistentResource> results = records.onErrorResumeNext(error -> Observable.empty())
                 .toList(LinkedHashSet::new)
                 .blockingGet();
 

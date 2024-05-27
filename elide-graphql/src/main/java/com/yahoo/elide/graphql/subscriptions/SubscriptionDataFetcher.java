@@ -18,8 +18,8 @@ import com.yahoo.elide.graphql.subscriptions.containers.SubscriptionNodeContaine
 import graphql.language.OperationDefinition;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
+import io.reactivex.rxjava3.core.Flowable;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

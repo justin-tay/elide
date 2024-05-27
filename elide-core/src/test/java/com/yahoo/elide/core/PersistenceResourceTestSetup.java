@@ -57,7 +57,7 @@ import example.nontransferable.ShareableWithPackageShare;
 import example.nontransferable.StrictNoTransfer;
 import example.nontransferable.Untransferable;
 
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;

@@ -34,7 +34,7 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 import lombok.ToString;
 
 import java.util.ArrayList;

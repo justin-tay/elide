@@ -63,7 +63,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 import lombok.NonNull;
 
 import java.io.Serializable;

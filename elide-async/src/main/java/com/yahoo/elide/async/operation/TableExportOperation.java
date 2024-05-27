@@ -26,7 +26,7 @@ import com.yahoo.elide.core.request.EntityProjection;
 import com.yahoo.elide.graphql.GraphQLSettings;
 import com.yahoo.elide.jsonapi.JsonApiSettings;
 
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

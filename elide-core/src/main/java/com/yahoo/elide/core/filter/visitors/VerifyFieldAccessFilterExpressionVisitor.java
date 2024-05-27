@@ -23,7 +23,7 @@ import com.yahoo.elide.core.request.Relationship;
 import com.yahoo.elide.core.security.PermissionExecutor;
 import com.yahoo.elide.core.security.permissions.ExpressionResult;
 
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;

@@ -11,7 +11,7 @@ import com.yahoo.elide.jsonapi.serialization.DataSerializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 import lombok.ToString;
 
 import java.util.Collection;

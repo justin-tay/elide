@@ -17,7 +17,7 @@ import com.yahoo.elide.generated.parsers.CoreParser.SubCollectionRelationshipCon
 import com.yahoo.elide.generated.parsers.CoreParser.SubCollectionSubCollectionContext;
 import com.google.common.base.Preconditions;
 
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
 import java.util.Optional;
 
