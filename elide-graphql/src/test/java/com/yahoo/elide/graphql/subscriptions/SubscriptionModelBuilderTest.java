@@ -20,7 +20,6 @@ import com.yahoo.elide.core.type.Type;
 import com.yahoo.elide.core.utils.DefaultClassScanner;
 import com.yahoo.elide.core.utils.coerce.CoerceUtil;
 import com.yahoo.elide.graphql.GraphQLFieldDefinitionCustomizer;
-import com.yahoo.elide.graphql.GraphQLScalars;
 import com.yahoo.elide.graphql.GraphQLSettings;
 import com.yahoo.elide.graphql.NonEntityDictionary;
 import com.yahoo.elide.graphql.annotation.GraphQLDescription;
@@ -159,7 +158,7 @@ public class SubscriptionModelBuilderTest {
         //Verify Book Fields
         assertEquals(Scalars.GraphQLString, bookType.getFieldDefinition(FIELD_TITLE).getType());
         assertEquals(Scalars.GraphQLString, bookType.getFieldDefinition(FIELD_GENRE).getType());
-        assertEquals(GraphQLScalars.GRAPHQL_DEFERRED_ID, previewType.getFieldDefinition(FIELD_ID).getType());
+        assertEquals(Scalars.GraphQLID, previewType.getFieldDefinition(FIELD_ID).getType());
         assertEquals(previewType,
                 ((GraphQLList) bookType.getFieldDefinition("previews").getType()).getWrappedType());
         assertEquals(authorType,
@@ -172,7 +171,7 @@ public class SubscriptionModelBuilderTest {
         assertNull(bookType.getFieldDefinition("publisher"));
 
         //Verify Author Fields
-        assertEquals(GraphQLScalars.GRAPHQL_DEFERRED_ID, authorType.getFieldDefinition(FIELD_ID).getType());
+        assertEquals(Scalars.GraphQLID, authorType.getFieldDefinition(FIELD_ID).getType());
         GraphQLObjectType addressType = (GraphQLObjectType) authorType.getFieldDefinition("homeAddress").getType();
         assertEquals(Scalars.GraphQLString, addressType.getFieldDefinition("street1").getType());
         assertEquals(Scalars.GraphQLString, addressType.getFieldDefinition("street2").getType());
@@ -185,7 +184,7 @@ public class SubscriptionModelBuilderTest {
         assertNull(bookType.getFieldDefinition("books"));
 
         //Verify Preview Fields
-        assertEquals(GraphQLScalars.GRAPHQL_DEFERRED_ID, previewType.getFieldDefinition(FIELD_ID).getType());
+        assertEquals(Scalars.GraphQLID, previewType.getFieldDefinition(FIELD_ID).getType());
         assertEquals(2, previewType.getFieldDefinitions().size());
 
     }

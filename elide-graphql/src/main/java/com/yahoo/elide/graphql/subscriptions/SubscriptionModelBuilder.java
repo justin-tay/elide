@@ -17,7 +17,6 @@ import com.yahoo.elide.core.type.Type;
 import com.yahoo.elide.graphql.GraphQLConversionUtils;
 import com.yahoo.elide.graphql.GraphQLFieldDefinitionCustomizer;
 import com.yahoo.elide.graphql.GraphQLNameUtils;
-import com.yahoo.elide.graphql.GraphQLScalars;
 import com.yahoo.elide.graphql.GraphQLSettings;
 import com.yahoo.elide.graphql.NonEntityDictionary;
 import com.yahoo.elide.graphql.subscriptions.annotations.Subscription;
@@ -203,7 +202,7 @@ public class SubscriptionModelBuilder {
 
         builder.field(newFieldDefinition()
                 .name(id)
-                .type(GraphQLScalars.GRAPHQL_DEFERRED_ID));
+                .type(Scalars.GraphQLID));
 
         for (String attribute : entityDictionary.getAttributes(entityClass)) {
             Type<?> attributeClass = entityDictionary.getType(entityClass, attribute);

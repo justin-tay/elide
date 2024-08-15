@@ -17,7 +17,6 @@ import com.yahoo.elide.core.utils.coerce.converters.ElideTypeConverter;
 import com.yahoo.elide.extension.runtime.ElideConfig;
 import com.yahoo.elide.extension.runtime.ElideRecorder;
 import com.yahoo.elide.extension.runtime.ElideResourceBuilder;
-import com.yahoo.elide.graphql.DeferredId;
 import com.yahoo.elide.graphql.GraphQLEndpoint;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
 import com.yahoo.elide.jsonapi.resources.JsonApiEndpoint;
@@ -224,10 +223,6 @@ class ElideExtensionProcessor {
         //Prefabbed Checks:
         reflectionBuildItems.produce(new ReflectiveClassBuildItem(true, true, Collections.AppendOnly.class));
         reflectionBuildItems.produce(new ReflectiveClassBuildItem(true, true, Collections.RemoveOnly.class));
-
-        //GraphQL Schema:
-        reflectionBuildItems.produce(new ReflectiveClassBuildItem(true, true, DeferredId.class));
-//        reflectionBuildItems.produce(new ReflectiveClassBuildItem(true, true, DeferredId.SerializeId.class));
 
         //Needed by elide dependency coerce utils which pulls in commons logging.
 //        reflectionBuildItems.produce(new ReflectiveClassBuildItem(true, true, JBossLogFactory.class));

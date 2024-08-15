@@ -475,10 +475,9 @@ public class ModelBuilder {
 
         String id = entityDictionary.getIdFieldName(entityClass);
 
-        /* our id types are DeferredId objects (not Scalars.GraphQLID) */
         builder.field(newFieldDefinition()
                 .name(id)
-                .type(GraphQLScalars.GRAPHQL_DEFERRED_ID));
+                .type(Scalars.GraphQLID));
 
         if (this.enableFederation) {
             if (entityDictionary.isRoot(entityClass)) {

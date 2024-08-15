@@ -60,35 +60,6 @@ public class GraphQLScalars {
             })
             .build();
 
-    public static GraphQLScalarType GRAPHQL_DEFERRED_ID = GraphQLScalarType.newScalar()
-            .name("DeferredID")
-            .description("The DeferredID scalar type represents a unique identifier.")
-            .coercing(new Coercing() {
-                @Override
-                public Object serialize(Object o) {
-                    return o;
-                }
-
-                @Override
-                public String parseValue(Object o) {
-                    return o.toString();
-                }
-
-                @Override
-                public String parseLiteral(Object o) {
-                    if (o instanceof StringValue) {
-                        return ((StringValue) o).getValue();
-                    }
-                    if (o instanceof IntValue) {
-                        return ((IntValue) o).getValue().toString();
-                    }
-                    // Unexpected object, try to use the toString.
-                    log.debug("Found unexpected object type: {}", o.getClass());
-                    return o.toString();
-                }
-            })
-            .build();
-
     public static GraphQLScalarType GRAPHQL_STRING_OR_INT_TYPE = GraphQLScalarType.newScalar()
             .name("StringOrInt")
             .description("The `StringOrInt` scalar type represents a type that can accept either a `String` "

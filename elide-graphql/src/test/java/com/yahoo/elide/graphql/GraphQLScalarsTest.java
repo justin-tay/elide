@@ -17,10 +17,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import graphql.language.IntValue;
 import graphql.language.StringValue;
 
-import java.math.BigInteger;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -93,22 +91,5 @@ public class GraphQLScalarsTest {
                 new SerdeCoercing("", timeZoneSerde, TimeZone.class);
         Object actualTz = serdeCoercing.parseLiteral(new StringValue(input));
         assertEquals(expectedTz, actualTz);
-    }
-    @Test
-    public void testGraphQLDeferredIdSerialize() {
-        assertEquals(123L, GraphQLScalars.GRAPHQL_DEFERRED_ID.getCoercing().serialize(123L));
-        assertEquals("123", GraphQLScalars.GRAPHQL_DEFERRED_ID.getCoercing().serialize("123"));
-    }
-
-    @Test
-    public void testGraphQLDeferredIdParseLiteral() {
-        assertEquals("123", GraphQLScalars.GRAPHQL_DEFERRED_ID.getCoercing().parseLiteral(new IntValue(new BigInteger("123"))));
-        assertEquals("123", GraphQLScalars.GRAPHQL_DEFERRED_ID.getCoercing().parseLiteral(new StringValue("123")));
-    }
-
-    @Test
-    public void testGraphQLDeferredIdParseValue() {
-        assertEquals("123", GraphQLScalars.GRAPHQL_DEFERRED_ID.getCoercing().parseValue("123"));
-        assertEquals("123", GraphQLScalars.GRAPHQL_DEFERRED_ID.getCoercing().parseValue(123L));
     }
 }
