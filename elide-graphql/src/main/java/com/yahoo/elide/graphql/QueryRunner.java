@@ -12,6 +12,7 @@ import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.InvalidEntityBodyException;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.security.User;
+import com.yahoo.elide.graphql.execution.MutationExecutionStrategy;
 import com.yahoo.elide.graphql.parser.GraphQLEntityProjectionMaker;
 import com.yahoo.elide.graphql.parser.GraphQLProjectionInfo;
 import com.yahoo.elide.graphql.parser.GraphQLQuery;
@@ -95,6 +96,7 @@ public class QueryRunner {
 
         this.api = GraphQL.newGraphQL(builder.build())
                 .defaultDataFetcherExceptionHandler(exceptionHandler)
+                .mutationExecutionStrategy(new MutationExecutionStrategy(exceptionHandler))
                 .queryExecutionStrategy(new AsyncSerialExecutionStrategy(exceptionHandler))
                 .build();
 
@@ -326,7 +328,7 @@ public class QueryRunner {
             executionInput.variables(variables);
 
             ExecutionResult result = api.execute(executionInput);
-
+/*
             tx.preCommit(requestScope);
             requestScope.getPermissionExecutor().executeCommitChecks();
             if (isMutation) {
@@ -341,6 +343,7 @@ public class QueryRunner {
             }
 
             tx.flush(requestScope);
+            */
 
             requestScope.runQueuedPreCommitTriggers();
             elide.getAuditLogger().commit();
