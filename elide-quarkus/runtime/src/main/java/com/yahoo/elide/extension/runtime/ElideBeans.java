@@ -60,15 +60,15 @@ public class ElideBeans {
         LOG.debug("Creating Elide bean");
         ElideSettings.ElideSettingsBuilder builder = ElideSettings.builder()
                 .entityDictionary(dictionary)
-                .maxPageSize(config.defaultMaxPageSize)
-                .defaultPageSize(config.defaultPageSize)
+                .maxPageSize(config.defaultMaxPageSize())
+                .defaultPageSize(config.defaultPageSize())
                 .auditLogger(new Slf4jLogger())
                 .baseUrl(rootPath)
                 .settings(new JsonApiSettings.JsonApiSettingsBuilder())
                 .settings(new GraphQLSettings.GraphQLSettingsBuilder())
                 .dataStore(store);
 
-        if (config.verboseErrors) {
+        if (config.verboseErrors()) {
             builder = builder.verboseErrors(true);
         }
 
