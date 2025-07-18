@@ -270,7 +270,7 @@ public class ModelBuilder {
         if (existing != null) {
             return existing;
         }
-
+        RelationshipType type = entityDictionary.getRelationshipType(entityClass, field);
         String entityName = entityDictionary.getJsonAliasFor(entityClass);
         String postfix = entityName.substring(0, 1).toUpperCase(Locale.ENGLISH) + entityName.substring(1)
                 + field.substring(0, 1).toUpperCase(Locale.ENGLISH) + field.substring(1);
@@ -281,7 +281,8 @@ public class ModelBuilder {
                     case FETCH:
                         return canRead(entityClass, field);
                     case DELETE:
-                        return canDelete(relationshipClass);
+                        // buildQueryObject for isToOne() does not add id argument
+                        return type.isToOne() ? false : canDelete(relationshipClass);
                     case UPSERT:
                         return canUpdate(entityClass, field);
                     case REPLACE:

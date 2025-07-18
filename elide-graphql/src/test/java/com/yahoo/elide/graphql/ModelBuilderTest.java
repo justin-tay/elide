@@ -53,6 +53,7 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.Getter;
 
@@ -562,6 +563,9 @@ public class ModelBuilderTest {
         private Long id;
 
         private String name;
+
+        @ManyToOne
+        private RelationshipEntity parent;
     }
 
     @Include
@@ -612,6 +616,10 @@ public class ModelBuilderTest {
                 List.of(RelationshipOp.REMOVE, RelationshipOp.REPLACE, RelationshipOp.UPDATE,
                         RelationshipOp.UPSERT)),
         NO_DELETE("RelationshipEntityNoDelete",
+                List.of(RelationshipOp.FETCH, RelationshipOp.REMOVE, RelationshipOp.REPLACE, RelationshipOp.UPDATE,
+                        RelationshipOp.UPSERT),
+                List.of(RelationshipOp.DELETE)),
+        TO_ONE("RelatedEntityParent",
                 List.of(RelationshipOp.FETCH, RelationshipOp.REMOVE, RelationshipOp.REPLACE, RelationshipOp.UPDATE,
                         RelationshipOp.UPSERT),
                 List.of(RelationshipOp.DELETE))
