@@ -33,17 +33,17 @@ public class ElideResourceBuilder extends ResourceBuilder {
         String basePath = null;
 
         if (clazz.equals(JsonApiEndpoint.class)) {
-            basePath = config.getConfigValue("elide.base-jsonapi").getValue();
+            basePath = config.getConfigValue("elide.json-api.path").getValue();
             if (basePath == null) {
                 basePath = JSONAPI_BASE;
             }
         } else if (clazz.equals(GraphQLEndpoint.class)) {
-            basePath = config.getConfigValue("elide.base-graphql").getValue();
+            basePath = config.getConfigValue("elide.graphql.path").getValue();
             if (basePath == null) {
                 basePath = GRAPHQL_BASE;
             }
         } else if (clazz.equals(ApiDocsEndpoint.class)) {
-            basePath = config.getConfigValue("elide.base-swagger").getValue();
+            basePath = config.getConfigValue("elide.api-docs.path").getValue();
             if (basePath == null) {
                 basePath = SWAGGER_BASE;
             }

@@ -81,19 +81,23 @@ class ElideExtensionProcessor {
 
     @BuildStep
     public AdditionalBeanBuildItem configureElideEndpoints(ElideConfig config) {
+        String jsonApiPath = config.jsonApi().path();
+        String graphqlPath = config.graphql().path();
+        String apiDocsPath = config.apiDocs().path();
+
         AdditionalBeanBuildItem.Builder builder = AdditionalBeanBuildItem.builder();
 
-        if (config.baseJsonapi != null) {
+        if (jsonApiPath != null) {
             LOG.info("Enabling JSON-API Endpoint");
             builder = builder.addBeanClass(JsonApiEndpoint.class);
         }
 
-        if (config.baseGraphql != null) {
+        if (graphqlPath != null) {
             LOG.info("Enabling GraphQL Endpoint");
             builder = builder.addBeanClass(GraphQLEndpoint.class);
         }
 
-        if (config.baseSwagger != null && config.baseJsonapi != null) {
+        if (apiDocsPath != null && jsonApiPath != null) {
             LOG.info("Enabling Swagger Endpoint");
             builder = builder.addBeanClass(ApiDocsEndpoint.class);
         }
