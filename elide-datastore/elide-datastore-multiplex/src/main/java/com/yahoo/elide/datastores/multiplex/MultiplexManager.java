@@ -104,7 +104,7 @@ public final class MultiplexManager implements DataStore {
                     dictionary.getSerdeLookup(),
                     dictionary.getEntitiesToExclude(),
                     dictionary.getScanner(),
-                    dictionary.getIdObfuscator());
+                    dictionary.getIdObfuscator(), null);
 
             dataStore.populateEntityDictionary(subordinateDictionary);
             for (EntityBinding binding : subordinateDictionary.getBindings(false)) {

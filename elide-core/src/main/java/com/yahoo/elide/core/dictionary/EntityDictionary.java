@@ -151,6 +151,8 @@ public class EntityDictionary {
     @Getter
     private final IdObfuscator idObfuscator;
 
+    private final Function<Object, Object> entityUnproxy;
+
     @Builder
     public EntityDictionary(Map<String, Class<? extends Check>> checks,
                             Map<String, UserCheck> roleChecks,
@@ -158,7 +160,8 @@ public class EntityDictionary {
                             Function<Class, Serde> serdeLookup,
                             Set<Type<?>> entitiesToExclude,
                             ClassScanner scanner,
-                            IdObfuscator idObfuscator) {
+                            IdObfuscator idObfuscator,
+                            Function<Object, Object> entityUnproxy) {
         this.scanner = scanner;
         this.serdeLookup = serdeLookup;
         this.checkNames = Maps.synchronizedBiMap(HashBiMap.create(checks));
@@ -174,6 +177,7 @@ public class EntityDictionary {
             getCheckInstance(checkName);
         });
         this.idObfuscator = idObfuscator;
+        this.entityUnproxy = entityUnproxy;
     }
 
     private void initializeChecks() {
@@ -1272,6 +1276,9 @@ public class EntityDictionary {
         if (value == null) {
             return null;
         }
+        if (entityUnproxy != null) {
+            value = entityUnproxy.apply(value);
+        }
         try {
             AccessibleObject idField = null;
 
@@ -2360,7 +2367,8 @@ public class EntityDictionary {
                     serdeLookup,
                     entitiesToExclude,
                     scanner,
-                    idObfuscator
+                    idObfuscator,
+                    entityUnproxy
             );
         }
     }

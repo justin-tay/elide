@@ -106,7 +106,7 @@ public class ElideStandaloneConfigStoreTest {
                         CoerceUtil::lookup, //Serde Lookup
                         entitiesToExclude,
                         scanner,
-                        idObfuscator);
+                        idObfuscator, null);
 
                 dynamicConfiguration.map(DynamicConfiguration::getRoles).orElseGet(Collections::emptySet).forEach(role ->
                         dictionary.addRoleCheck(role, new Role.RoleMemberCheck(role))

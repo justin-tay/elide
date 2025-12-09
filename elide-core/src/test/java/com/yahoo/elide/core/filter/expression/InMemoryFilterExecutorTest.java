@@ -83,7 +83,7 @@ public class InMemoryFilterExecutorTest {
                     CoerceUtil::lookup,
                     Collections.emptySet(), //excluded entities
                     new DefaultClassScanner(),
-                    null
+                    null, null
             );
         }
 

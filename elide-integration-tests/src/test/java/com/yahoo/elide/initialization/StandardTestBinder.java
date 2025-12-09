@@ -21,9 +21,12 @@ import com.yahoo.elide.jsonapi.JsonApiSettings.JsonApiSettingsBuilder;
 
 import example.TestCheckMappings;
 import example.models.triggers.services.BillingService;
+
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -47,6 +50,12 @@ public class StandardTestBinder extends AbstractBinder {
         EntityDictionary dictionary = EntityDictionary.builder()
                 .injector(injector::inject)
                 .checks(TestCheckMappings.MAPPINGS)
+                .entityUnproxy(object -> {
+                    if (object instanceof HibernateProxy) {
+                        return Hibernate.unproxy(object);
+                    }
+                    return object;
+                })
                 .build();
 
         bind(dictionary).to(EntityDictionary.class);

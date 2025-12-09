@@ -113,7 +113,7 @@ public class EntityDictionaryTest extends EntityDictionary {
                 CoerceUtil::lookup,
                 Collections.emptySet(),
                 new DefaultClassScanner(),
-                null
+                null, null
         );
         init();
     }
@@ -309,7 +309,7 @@ public class EntityDictionaryTest extends EntityDictionary {
                 unused -> new ISO8601DateSerde(),
                 Collections.emptySet(),
                 new DefaultClassScanner(),
-                null);
+                null, null);
 
         testDictionary.bindEntity(EntityWithDateId.class);
 

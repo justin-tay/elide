@@ -34,7 +34,7 @@ public class NonEntityDictionary extends EntityDictionary {
                 serdeLookup,
                 Collections.emptySet(), //Entity excludes
                 scanner,
-                null);
+                null, null);
     }
 
     /**
