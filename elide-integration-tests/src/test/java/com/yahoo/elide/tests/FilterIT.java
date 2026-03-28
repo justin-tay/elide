@@ -21,13 +21,14 @@ import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.utils.JsonParser;
 import com.yahoo.elide.initialization.IntegrationTest;
 import com.yahoo.elide.jsonapi.JsonApi;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.collections4.CollectionUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -62,7 +63,7 @@ public class FilterIT extends IntegrationTest {
 
 
     @BeforeEach
-    void setup() throws JsonProcessingException {
+    void setup() throws JacksonException {
 
         given()
                 .contentType(JsonApi.JsonPatch.MEDIA_TYPE)
@@ -254,7 +255,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testRootFilterImplicitSingle() throws JsonProcessingException {
+    void testRootFilterImplicitSingle() throws JacksonException {
         int scienceFictionBookCount = 0;
         for (JsonNode node : books.get("data")) {
             if (node.get("attributes").get("genre").asText().equalsIgnoreCase("Science Fiction")) {
@@ -281,7 +282,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testRootFilterInSingle() throws JsonProcessingException {
+    void testRootFilterInSingle() throws JacksonException {
         int literaryFictionBookCount = 0;
         for (JsonNode node : books.get("data")) {
             if (node.get("attributes").get("genre").asText().equalsIgnoreCase("Literary Fiction")) {
@@ -313,7 +314,7 @@ public class FilterIT extends IntegrationTest {
 
     @Test
     @Tag("skipInMemory")
-    void testRootFilterNotInSingle() throws JsonProcessingException {
+    void testRootFilterNotInSingle() throws JacksonException {
         int nonLiteraryFictionBookCount = 0;
         for (JsonNode node : books.get("data")) {
             if (!node.get("attributes").get("genre").isNull()
@@ -342,7 +343,7 @@ public class FilterIT extends IntegrationTest {
 
     @Test
     @Tag("skipInMemory")
-    void testRootFilterNotInMultiple() throws JsonProcessingException {
+    void testRootFilterNotInMultiple() throws JacksonException {
         int nonFictionBookCount = 0;
         for (JsonNode node : books.get("data")) {
             if (!node.get("attributes").get("genre").isNull()
@@ -371,7 +372,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testRootFilterInMultipleSingle() throws JsonProcessingException {
+    void testRootFilterInMultipleSingle() throws JacksonException {
         int literaryAndScienceFictionBookCount = 0;
         for (JsonNode node : books.get("data")) {
             if (node.get("attributes").get("genre").asText().equalsIgnoreCase("Literary Fiction")
@@ -421,7 +422,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testRootFilterPostfix() throws JsonProcessingException {
+    void testRootFilterPostfix() throws JacksonException {
         int genreEndsWithFictionBookCount = 0;
         for (JsonNode node : books.get("data")) {
             if (node.get("attributes").get("genre").asText().toLowerCase(Locale.ENGLISH).endsWith("fiction")) {
@@ -448,7 +449,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testRootFilterPrefix() throws JsonProcessingException {
+    void testRootFilterPrefix() throws JacksonException {
         int titleStartsWithTheBookCount = 0;
         for (JsonNode node : books.get("data")) {
             if (node.get("attributes").get("title").asText().toLowerCase(Locale.ENGLISH).startsWith("the")) {
@@ -476,7 +477,7 @@ public class FilterIT extends IntegrationTest {
 
     @Test
     @Tag("skipInMemory")
-    void testRootFilterPrefixWithSpecialChars() throws JsonProcessingException {
+    void testRootFilterPrefixWithSpecialChars() throws JacksonException {
         int titleStartsWithTheBookCount = 0;
         for (JsonNode node : books.get("data")) {
             if (node.get("attributes").get("title").asText().toLowerCase(Locale.ENGLISH).startsWith("i'm")) {
@@ -504,7 +505,7 @@ public class FilterIT extends IntegrationTest {
 
     @Test
     @Tag("skipInMemory")
-    void testRootFilterInfix() throws JsonProcessingException {
+    void testRootFilterInfix() throws JacksonException {
         int titleContainsTheBookCount = 0;
         for (JsonNode node : books.get("data")) {
             if (node.get("attributes").get("title").asText().toLowerCase(Locale.ENGLISH).contains("the")) {
@@ -535,7 +536,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testRootFilterWithInclude() throws JsonProcessingException {
+    void testRootFilterWithInclude() throws JacksonException {
         Set<String> authorIdsOfLiteraryFiction = new HashSet<>();
 
         for (JsonNode book : books.get("data")) {
@@ -571,7 +572,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testRootFilterIsNull() throws JsonProcessingException {
+    void testRootFilterIsNull() throws JacksonException {
         Set<JsonNode> bookIdsWithNullGenre = new HashSet<>();
 
         for (JsonNode book : books.get("data")) {
@@ -636,7 +637,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testRootFilterIsNotNull() throws JsonProcessingException {
+    void testRootFilterIsNotNull() throws JacksonException {
         Set<JsonNode> bookIdsWithNonNullGenre = new HashSet<>();
 
         for (JsonNode book : books.get("data")) {
@@ -701,7 +702,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterImplicitSingle() throws JsonProcessingException {
+    void testNonRootFilterImplicitSingle() throws JacksonException {
         int asimovScienceFictionBookCount = 0;
         for (JsonNode node : asimovBooks.get("data")) {
             if (node.get("attributes").get("genre").asText().equals("Science Fiction")) {
@@ -723,7 +724,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterInSingle() throws JsonProcessingException {
+    void testNonRootFilterInSingle() throws JacksonException {
         int asimovHistoryBookCount = 0;
         for (JsonNode node : asimovBooks.get("data")) {
             if (node.get("attributes").get("genre").asText().equals("History")) {
@@ -745,7 +746,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterNotInSingle() throws JsonProcessingException {
+    void testNonRootFilterNotInSingle() throws JacksonException {
         int nonHistoryBookCount = 0;
         for (JsonNode node : asimovBooks.get("data")) {
             if (!node.get("attributes").get("genre").isNull()
@@ -768,7 +769,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterPostfix() throws JsonProcessingException {
+    void testNonRootFilterPostfix() throws JacksonException {
         int genreEndsWithFictionBookCount = 0;
         for (JsonNode node : asimovBooks.get("data")) {
             if (node.get("attributes").get("genre").asText().endsWith("Fiction")) {
@@ -790,7 +791,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterPostfixInsensitive() throws JsonProcessingException {
+    void testNonRootFilterPostfixInsensitive() throws JacksonException {
         int editorEdBooks = 0;
         for (JsonNode node : nullNedBooks.get("data")) {
             if (node.get("attributes").get("editorName").asText().endsWith("d")) {
@@ -820,7 +821,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterPrefixInsensitive() throws JsonProcessingException {
+    void testNonRootFilterPrefixInsensitive() throws JacksonException {
         int editorEdBooks = 0;
         for (JsonNode node : nullNedBooks.get("data")) {
             if (node.get("attributes").get("editorName").asText().startsWith("E")) {
@@ -851,7 +852,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterInfixInsensitive() throws JsonProcessingException {
+    void testNonRootFilterInfixInsensitive() throws JacksonException {
         int editorEditBooks = 0;
         for (JsonNode node : nullNedBooks.get("data")) {
             if (node.get("attributes").get("editorName").asText().contains("Ed")) {
@@ -881,7 +882,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterPrefix() throws JsonProcessingException {
+    void testNonRootFilterPrefix() throws JacksonException {
         int titleStartsWithTheBookCount = 0;
         for (JsonNode node : asimovBooks.get("data")) {
             if (node.get("attributes").get("title").asText().startsWith("The")) {
@@ -903,7 +904,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterPrefixWithSpecialChars() throws JsonProcessingException {
+    void testNonRootFilterPrefixWithSpecialChars() throws JacksonException {
         int titleStartsWithTheBookCount = 0;
         for (JsonNode node : thomasHarrisBooks.get("data")) {
             if (node.get("attributes").get("title").asText().startsWith("I'm")) {
@@ -926,7 +927,7 @@ public class FilterIT extends IntegrationTest {
 
     @Test
     @Tag("skipInMemory")
-    void testNonRootFilterInfix() throws JsonProcessingException {
+    void testNonRootFilterInfix() throws JacksonException {
         int titleContainsTheBookCount = 0;
         for (JsonNode node : asimovBooks.get("data")) {
             if (node.get("attributes").get("title").asText().toLowerCase(Locale.ENGLISH).contains("the")) {
@@ -948,7 +949,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterWithInclude() throws JsonProcessingException {
+    void testNonRootFilterWithInclude() throws JacksonException {
         Set<String> authorIdsOfScienceFiction = new HashSet<>();
 
         for (JsonNode book : asimovBooks.get("data")) {
@@ -977,7 +978,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterIsNull() throws JsonProcessingException {
+    void testNonRootFilterIsNull() throws JacksonException {
         Set<JsonNode> bookIdsWithNullGenre = new HashSet<>();
 
         for (JsonNode book : nullNedBooks.get("data")) {
@@ -1021,7 +1022,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNonRootFilterIsNotNull() throws JsonProcessingException {
+    void testNonRootFilterIsNotNull() throws JacksonException {
         Set<JsonNode> bookIdsWithNonNullGenre = new HashSet<>();
 
         for (JsonNode book : nullNedBooks.get("data")) {
@@ -1065,7 +1066,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testPublishDateGreaterThanFilter() throws JsonProcessingException {
+    void testPublishDateGreaterThanFilter() throws JacksonException {
         Set<JsonNode> bookIdsWithNonNullGenre = new HashSet<>();
         long publishDate;
 
@@ -1099,7 +1100,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testPublishDateEqualsFilter() throws JsonProcessingException {
+    void testPublishDateEqualsFilter() throws JacksonException {
         /* Test Default */
         JsonNode result = getAsNode("/book?filter[book.publishDate][in]=0,1454638927412");
 
@@ -1112,7 +1113,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testPublishDatePrefixFilter() throws JsonProcessingException {
+    void testPublishDatePrefixFilter() throws JacksonException {
         /* Test Default */
         /* publish date = 1454638927412 */
         JsonNode result = getAsNode("/book?filter[book.publishDate][prefix]=1");
@@ -1127,7 +1128,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testPublishDateInfixFilter() throws JsonProcessingException {
+    void testPublishDateInfixFilter() throws JacksonException {
         /* Test Default */
         /* publish date = 1454638927412 */
         JsonNode result = getAsNode("/book?filter[book.publishDate][infix]=389");
@@ -1142,7 +1143,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testPublishDatePostfixFilter() throws JsonProcessingException {
+    void testPublishDatePostfixFilter() throws JacksonException {
         /* Test Default */
         /* publish date = 1454638927412 */
         JsonNode result = getAsNode("/book?filter[book.publishDate][postfix]=412");
@@ -1157,7 +1158,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testPublishDateGreaterThanFilterSubRecord() throws JsonProcessingException {
+    void testPublishDateGreaterThanFilterSubRecord() throws JacksonException {
         long publishDate;
 
         /* Test Default */
@@ -1182,7 +1183,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testPublishDateLessThanOrEqualsFilterSubRecord() throws JsonProcessingException {
+    void testPublishDateLessThanOrEqualsFilterSubRecord() throws JacksonException {
         long publishDate;
 
         /* Test Default */
@@ -1207,7 +1208,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testPublishDateLessThanOrEqual() throws JsonProcessingException {
+    void testPublishDateLessThanOrEqual() throws JacksonException {
         long publishDate;
 
         /* Test Default */
@@ -1242,7 +1243,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testPublishDateLessThanFilter() throws JsonProcessingException {
+    void testPublishDateLessThanFilter() throws JacksonException {
         long publishDate;
 
         /* Test Default */
@@ -1280,7 +1281,7 @@ public class FilterIT extends IntegrationTest {
      * Verifies that issue 508 is closed.
      */
     @Test
-    void testIssue508() throws JsonProcessingException {
+    void testIssue508() throws JacksonException {
         JsonNode result = getAsNode("book?filter=(authors.name=='Thomas Harris',publisher.name=='Default publisher')&page[totals]");
 
         assertEquals(2, result.get("data").size());
@@ -1305,7 +1306,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testGetBadRelationshipNameWithNestedFieldFilter() throws JsonProcessingException {
+    void testGetBadRelationshipNameWithNestedFieldFilter() throws JacksonException {
         /* Test Default */
         JsonNode result = getAsNode(
                 "book?filter[book.author12.name]=Null Ned", HttpStatus.SC_BAD_REQUEST);
@@ -1325,7 +1326,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testGetBooksFilteredByAuthors() throws JsonProcessingException {
+    void testGetBooksFilteredByAuthors() throws JacksonException {
         /* Test Default */
         JsonNode result = getAsNode("book?filter[book.authors.name]=Null Ned");
 
@@ -1348,7 +1349,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testGetBooksFilteredByAuthorsId() throws JsonProcessingException {
+    void testGetBooksFilteredByAuthorsId() throws JacksonException {
         String nullNedIdStr = String.valueOf(nullNedId);
         /* Test Default */
         JsonNode result = getAsNode("book?filter[book.authors.id]=" + nullNedIdStr);
@@ -1372,7 +1373,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testGetBooksFilteredByAuthorAndTitle() throws JsonProcessingException {
+    void testGetBooksFilteredByAuthorAndTitle() throws JacksonException {
         /* Test Default */
         JsonNode result = getAsNode("book?filter[book.authors.name]=Null Ned&filter[book.title]=Life with Null Ned");
 
@@ -1393,7 +1394,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testFilterAuthorsByBookChapterTitle() throws JsonProcessingException {
+    void testFilterAuthorsByBookChapterTitle() throws JacksonException {
         /* Test Default */
         JsonNode result = getAsNode("/author?sort=-name&filter[author.books.chapters.title][in]=Viva la Roma!,Mamma mia I wantz some pizza!");
 
@@ -1416,7 +1417,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testFilterAuthorBookByPublisher() throws JsonProcessingException {
+    void testFilterAuthorBookByPublisher() throws JacksonException {
         /* Test default */
         JsonNode result = getAsNode(String.format("/author/%s/books?filter[book.publisher.name]=Default publisher", hemingwayId));
         JsonNode data = result.get("data");
@@ -1512,7 +1513,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testFilterBookByAuthorAddress() throws JsonProcessingException {
+    void testFilterBookByAuthorAddress() throws JacksonException {
         /* Test default */
         JsonNode result = getAsNode("book?filter[book.authors.homeAddress]=main&include=authors");
         JsonNode data = result.get("data");
@@ -1526,7 +1527,7 @@ public class FilterIT extends IntegrationTest {
 
 
     @Test
-    void testGetBadRelationshipRoot() throws JsonProcessingException {
+    void testGetBadRelationshipRoot() throws JacksonException {
         /* Test Default */
         JsonNode result = getAsNode(
                 "/author?filter[idontexist.books.title][in]=Viva la Roma!,Mamma mia I wantz some pizza!",
@@ -1547,7 +1548,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testGetBadRelationshipIntermediate() throws JsonProcessingException {
+    void testGetBadRelationshipIntermediate() throws JacksonException {
         /* Test Default */
         JsonNode result = getAsNode(
                 "/author?filter[author.idontexist.title][in]=Viva la Roma!,Mamma mia I wantz some pizza!",
@@ -1568,7 +1569,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testGetBadRelationshipLeaf() throws JsonProcessingException {
+    void testGetBadRelationshipLeaf() throws JacksonException {
         /* Test Default */
         JsonNode result = getAsNode(
                 "/author?filter[author.books.idontexist][in]=Viva la Roma!,Mamma mia I wantz some pizza!",
@@ -1592,14 +1593,14 @@ public class FilterIT extends IntegrationTest {
      * Verify that a combination of filters and order by generate working SQL.
      */
     @Test
-    void testFilterWithSort() throws JsonProcessingException {
+    void testFilterWithSort() throws JacksonException {
         JsonNode result = getAsNode(String.format("/author/%s/books?filter[book.title][notnull]=true&sort=title", asimovId));
         JsonNode data = result.get("data");
         assertEquals(data.size(), 2);
     }
 
     @Test
-    void testBetweenOperatorOnRoot() throws JsonProcessingException {
+    void testBetweenOperatorOnRoot() throws JacksonException {
         JsonNode result = getAsNode("/book?filter[book.id][between]=2,4");
         JsonNode data = result.get("data");
         assertEquals(3, data.size());
@@ -1616,7 +1617,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testBetweenOperatorOnNonRoot() throws JsonProcessingException {
+    void testBetweenOperatorOnNonRoot() throws JacksonException {
         JsonNode result = getAsNode(String.format("/author/%s/books?filter[book.id][notbetween]=6,7", nullNedId));
         JsonNode data = result.get("data");
         assertEquals(1, data.size());
@@ -1634,7 +1635,7 @@ public class FilterIT extends IntegrationTest {
 
 
     @Test
-    void testIsEmptyRelationshipOnRoot() throws JsonProcessingException {
+    void testIsEmptyRelationshipOnRoot() throws JacksonException {
         //Book has ToMany relationship with chapter
         Set<JsonNode> bookIdsWithEmptyChapters = new HashSet<>();
         JsonNode result;
@@ -1683,7 +1684,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testNotEmptyRelationshipOnNonRoot() throws JsonProcessingException {
+    void testNotEmptyRelationshipOnNonRoot() throws JacksonException {
         //Book has ToMany relationship with chapter
         Set<JsonNode> bookIdsWithNonEmptyChapters = new HashSet<>();
         JsonNode result;
@@ -1733,7 +1734,7 @@ public class FilterIT extends IntegrationTest {
     @Tag("excludeOnHibernate3")
     @Tag("excludeOnHibernate5")
     @Tag("excludeOnJPA")
-    void testNotEmptyAttributeOnRoot() throws JsonProcessingException {
+    void testNotEmptyAttributeOnRoot() throws JacksonException {
         Set<JsonNode> bookIdsWithNonEmptyAwards = new HashSet<>();
         JsonNode result;
 
@@ -1785,7 +1786,7 @@ public class FilterIT extends IntegrationTest {
     @Tag("excludeOnHibernate3")
     @Tag("excludeOnHibernate5")
     @Tag("excludeOnJPA")
-    void testIsEmptyAttributesOnNonRoot() throws JsonProcessingException {
+    void testIsEmptyAttributesOnNonRoot() throws JacksonException {
         Set<JsonNode> bookIdsWithEmptyAwards = new HashSet<>();
         JsonNode result;
         for (JsonNode book : nullNedBooks.get("data")) {
@@ -1831,7 +1832,7 @@ public class FilterIT extends IntegrationTest {
     }
 
     @Test
-    void testExceptionOnEmptyOperator() throws JsonProcessingException {
+    void testExceptionOnEmptyOperator() throws JacksonException {
         JsonNode result;
         // Typed Expression
         result = getAsNode(String.format("/author/%s/books?filter[book.authors.name][notempty]", nullNedId), HttpStatus.SC_BAD_REQUEST);
@@ -1864,7 +1865,7 @@ public class FilterIT extends IntegrationTest {
 
         // * Filter On Root Entity *
         for (JsonNode book : books.get("data")) {
-            Iterator<JsonNode> awards = book.get("attributes").get("awards").elements();
+            Iterator<JsonNode> awards = book.get("attributes").get("awards").iterator();
             while (awards.hasNext()) {
                 if (awards.next().asText().equals(filterString)) {
                     awardBook.add(book.get("id").asText());
@@ -1892,7 +1893,7 @@ public class FilterIT extends IntegrationTest {
 
         // * Filter On Non Root Entity *
         for (JsonNode book : nullNedBooks.get("data")) {
-            Iterator<JsonNode> awards = book.get("attributes").get("awards").elements();
+            Iterator<JsonNode> awards = book.get("attributes").get("awards").iterator();
             while (awards.hasNext()) {
                 if (awards.next().asText().equals(filterString)) {
                     nullNedAwardBook.add(book.get("id").asText());
@@ -2074,7 +2075,7 @@ public class FilterIT extends IntegrationTest {
 
     @Test
     @Tag("excludeOnHibernate3")
-    void testExceptionOnMemberOfOperator() throws JsonProcessingException {
+    void testExceptionOnMemberOfOperator() throws JacksonException {
         JsonNode result;
         // Typed Expression
         result = getAsNode(String.format("/author/%s/books?filter[book.authors][hasmember]", nullNedId), HttpStatus.SC_BAD_REQUEST);
@@ -2133,7 +2134,7 @@ public class FilterIT extends IntegrationTest {
 
         // * Filter On Root Entity *
         for (JsonNode book : books.get("data")) {
-            Iterator<JsonNode> awards = book.get("attributes").get("awards").elements();
+            Iterator<JsonNode> awards = book.get("attributes").get("awards").iterator();
             while (awards.hasNext()) {
                 allAwards.add(awards.next().asText());
             }
@@ -2165,7 +2166,7 @@ public class FilterIT extends IntegrationTest {
 
         // * Filter On Non Root Entity *
         for (JsonNode book : nullNedBooks.get("data")) {
-            Iterator<JsonNode> awards = book.get("attributes").get("awards").elements();
+            Iterator<JsonNode> awards = book.get("attributes").get("awards").iterator();
             while (awards.hasNext()) {
                 allAwards.add(awards.next().asText());
             }
@@ -2331,7 +2332,7 @@ public class FilterIT extends IntegrationTest {
 
     @Test
     @Tag("excludeOnHibernate3")
-    void testExceptionOnSubsetOfOperator() throws JsonProcessingException {
+    void testExceptionOnSubsetOfOperator() throws JacksonException {
         JsonNode result;
         // Typed Expression
         result = getAsNode(String.format("/author/%s/books?filter[book.authors][subsetof]", nullNedId), HttpStatus.SC_BAD_REQUEST);
@@ -2389,7 +2390,7 @@ public class FilterIT extends IntegrationTest {
 
         // * Filter On Root Entity *
         for (JsonNode book : books.get("data")) {
-            Iterator<JsonNode> awards = book.get("attributes").get("awards").elements();
+            Iterator<JsonNode> awards = book.get("attributes").get("awards").iterator();
             while (awards.hasNext()) {
                 if (awards.next().asText().equals(filterString)) {
                     awardBook.add(book.get("id").asText());
@@ -2417,10 +2418,10 @@ public class FilterIT extends IntegrationTest {
 
         // * Filter On Non Root Entity *
         for (JsonNode book : nullNedBooks.get("data")) {
-            Iterator<JsonNode> awards = book.get("attributes").get("awards").elements();
+            Iterator<JsonNode> awards = book.get("attributes").get("awards").iterator();
             while (awards.hasNext()) {
-                if (awards.next().asText().equals(filterString)) {
-                    nullNedAwardBook.add(book.get("id").asText());
+                if (awards.next().asString().equals(filterString)) {
+                    nullNedAwardBook.add(book.get("id").asString());
                     break;
                 }
             }
@@ -2584,7 +2585,7 @@ public class FilterIT extends IntegrationTest {
 
     @Test
     @Tag("excludeOnHibernate3")
-    void testExceptionOnSupersetOfOperator() throws JsonProcessingException {
+    void testExceptionOnSupersetOfOperator() throws JacksonException {
         JsonNode result;
         // Typed Expression
         result = getAsNode(String.format("/author/%s/books?filter[book.authors][supersetof]", nullNedId), HttpStatus.SC_BAD_REQUEST);
