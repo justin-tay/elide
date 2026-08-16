@@ -42,7 +42,7 @@
     <module>runtime</module>
   </modules>
   <properties>
-    <quarkus.version>3.35.0</quarkus.version>
+    <quarkus.version>3.38.2</quarkus.version>
     <parent.pom.dir>${project.basedir}/../..</parent.pom.dir>
   </properties>
   <dependencyManagement>

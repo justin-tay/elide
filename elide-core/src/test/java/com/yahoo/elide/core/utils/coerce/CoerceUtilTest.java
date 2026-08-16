@@ -5,6 +5,7 @@
  */
 package com.yahoo.elide.core.utils.coerce;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -145,7 +146,9 @@ public class CoerceUtilTest {
         testMap.put("foo", "bar");
         testMap.put("baz", "qaz");
 
-        assertThrows(InvalidValueException.class, () -> CoerceUtil.coerce(testMap, TestClass.class));
+        // Change in behavior in Jackson 3.2 that unless FAIL_ON_MISSING_CREATOR_PROPERTIES is enabled
+        // will not throw
+        assertDoesNotThrow(() -> CoerceUtil.coerce(testMap, TestClass.class));
     }
 
     @Test
