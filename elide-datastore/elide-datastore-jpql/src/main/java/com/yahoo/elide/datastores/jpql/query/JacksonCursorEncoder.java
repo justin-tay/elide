@@ -7,6 +7,7 @@ package com.yahoo.elide.datastores.jpql.query;
 
 import com.yahoo.elide.core.exceptions.InvalidValueException;
 
+import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
@@ -49,7 +50,7 @@ public class JacksonCursorEncoder implements CursorEncoder {
             TypeReference<LinkedHashMap<String, String>> typeRef = new TypeReference<LinkedHashMap<String, String>>() {
             };
             return this.objectMapper.readValue(result, typeRef);
-        } catch (IllegalArgumentException e) {
+        } catch (JacksonException | IllegalArgumentException e) {
             throw new InvalidValueException("cursor " + cursor);
         }
     }

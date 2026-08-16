@@ -13,6 +13,7 @@ import jakarta.persistence.spi.PersistenceUnitTransactionType;
 import lombok.Data;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -78,6 +79,6 @@ public class PersistenceUnitInfoImpl implements PersistenceUnitInfo {
     @Override
     public List<String> getQualifierAnnotationNames() {
         //Not implemented
-        return null;
+        return Collections.emptyList();
     }
 }

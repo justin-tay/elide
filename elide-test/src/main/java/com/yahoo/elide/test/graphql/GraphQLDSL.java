@@ -205,7 +205,6 @@ public final class GraphQLDSL {
             .disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
             .changeDefaultPropertyInclusion(c -> JsonInclude.Value.construct(Include.NON_EMPTY, Include.NON_EMPTY)
                     .withValueInclusion(Include.NON_DEFAULT))
-            .disable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
             .build();
 
     private static final ObjectMapper ARGUMENT_MAPPER = JsonMapper.builder()
@@ -221,8 +220,6 @@ public final class GraphQLDSL {
      * @param object  Object to be serialized
      *
      * @return a string
-     *
-     * @throws IllegalStateException
      */
     public static String toJson(Object object) {
         return BASE_MAPPER.writer().writeValueAsString(object);

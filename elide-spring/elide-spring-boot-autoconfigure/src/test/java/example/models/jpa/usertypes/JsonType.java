@@ -83,7 +83,7 @@ public class JsonType implements UserType<Object>, ParameterizedType {
 
             try {
                 return MAPPER.readValue(rawJson, this.objectClass);
-            } catch (RuntimeException e) {
+            } catch (JacksonException e) {
                 throw new HibernateException("Could not retrieve an instance of the mapped class from a JDBC resultset.");
             }
         }
