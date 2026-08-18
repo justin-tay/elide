@@ -8,12 +8,14 @@ package com.yahoo.elide.spring.controllers;
 import com.yahoo.elide.async.service.storageengine.ResultStorageEngine;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 /**
@@ -56,7 +59,26 @@ public class ExportController {
             try {
                 observableResults.accept(outputStream);
             } catch (RuntimeException e) {
+                for (int x = 0; x < 999999; x++) {
+                    outputStream.write("helloworld".getBytes(StandardCharsets.UTF_8));
+                }
+                outputStream.flush();
+                // If there is a flush then there's no way to indicate there's an error...
+                throw new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND,
+                        asyncQueryId + "not found", e);
+                /*
                 String message = e.getMessage();
+                log.debug(message, e);
+                if (message != null && message.equals(ResultStorageEngine.RETRIEVE_ERROR)) {
+                    throw new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND,
+                            asyncQueryId + "not found", e);
+                } else {
+                    throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, null,
+                            e);
+                }
+                */
+
+                /*
                 try {
                     log.debug(message);
                     if (message != null && message.equals(ResultStorageEngine.RETRIEVE_ERROR)) {
@@ -73,6 +95,8 @@ public class ExportController {
                     outputStream.write("Error Occured....".concat(System.lineSeparator()).getBytes());
                     log.error(ie.getMessage(), ie);
                 }
+                */
+                //throw e;
             }
         };
         return ResponseEntity

@@ -54,6 +54,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Basic functional tests to test Async service setup, JSONAPI and GRAPHQL endpoints.
@@ -122,13 +123,15 @@ public class AsyncTest extends IntegrationTest {
     @Test
     public void testExportJsonApiCustom() throws InterruptedException {
         //Create Table Export
+        for (int x = 0; x < 99999999; x++) {
+        String id = UUID.randomUUID().toString();
         given()
                 .contentType(JsonApi.MEDIA_TYPE)
                 .body(
                         data(
                                 resource(
                                         type("tableExport"),
-                                        id("011f99aa-cc41-4c5b-bbb0-d3478aa9d8ac"),
+                                        id(id),
                                         attributes(
                                                 attr("query", "/group?fields%5Bgroup%5D=deprecated,commonName,description"),
                                                 attr("queryType", "JSONAPI_V1_0"),
@@ -148,7 +151,7 @@ public class AsyncTest extends IntegrationTest {
             Thread.sleep(10);
             Response response = given()
                     .accept("application/vnd.api+json")
-                    .get("/json/tableExport/011f99aa-cc41-4c5b-bbb0-d3478aa9d8ac");
+                    .get("/json/tableExport/"+id);
 
             String outputResponse = response.jsonPath().getString("data.attributes.status");
 
@@ -159,28 +162,28 @@ public class AsyncTest extends IntegrationTest {
                 response
                         .then()
                         .statusCode(HttpStatus.SC_OK)
-                        .body("data.id", equalTo("011f99aa-cc41-4c5b-bbb0-d3478aa9d8ac"))
+                        .body("data.id", equalTo(id))
                         .body("data.type", equalTo("tableExport"))
                         .body("data.attributes.queryType", equalTo("JSONAPI_V1_0"))
                         .body("data.attributes.status", equalTo("COMPLETE"))
                         .body("data.attributes.result.message", equalTo(null))
                         .body("data.attributes.result.url",
-                                equalTo("https://elide.io" + "/export/011f99aa-cc41-4c5b-bbb0-d3478aa9d8ac.custom"));
+                                equalTo("https://elide.io" + "/export/"+id+".custom"));
 
                 // Validate GraphQL Response
                 String responseGraphQL = given()
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON_VALUE)
-                        .body("{\"query\":\"{ tableExport(ids: [\\\"011f99aa-cc41-4c5b-bbb0-d3478aa9d8ac\\\"]) "
+                        .body("{\"query\":\"{ tableExport(ids: [\\\""+id+"\\\"]) "
                                 + "{ edges { node { id queryType status resultType result "
                                 + "{ url httpStatus recordCount } } } } }\","
                                 + "\"variables\":null }")
                         .post("/graphql")
                         .asString();
 
-                String expectedResponse = "{\"data\":{\"tableExport\":{\"edges\":[{\"node\":{\"id\":\"011f99aa-cc41-4c5b-bbb0-d3478aa9d8ac\","
+                String expectedResponse = "{\"data\":{\"tableExport\":{\"edges\":[{\"node\":{\"id\":\""+id+"\","
                         + "\"queryType\":\"JSONAPI_V1_0\",\"status\":\"COMPLETE\",\"resultType\":\"CUSTOM\","
-                        + "\"result\":{\"url\":\"https://elide.io/export/011f99aa-cc41-4c5b-bbb0-d3478aa9d8ac.custom\",\"httpStatus\":200,\"recordCount\":1}}}]}}}";
+                        + "\"result\":{\"url\":\"https://elide.io/export/"+id+".custom\",\"httpStatus\":200,\"recordCount\":1}}}]}}}";
 
                 assertEquals(expectedResponse, responseGraphQL);
                 break;
@@ -189,10 +192,11 @@ public class AsyncTest extends IntegrationTest {
         }
         String expected = "com.example.repository";
         String response = when()
-                .get("/export/011f99aa-cc41-4c5b-bbb0-d3478aa9d8ac.custom")
+                .get("/export/"+id+".custom")
                 .asString();
         assertEquals(expected.replaceAll("\r", "").replaceAll("\n", ""),
                 response.replaceAll("\r", "").replaceAll("\n", ""));
+        }
     }
 
 
