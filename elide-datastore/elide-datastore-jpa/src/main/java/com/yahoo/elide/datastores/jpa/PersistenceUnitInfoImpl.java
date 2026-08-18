@@ -13,6 +13,7 @@ import jakarta.persistence.spi.PersistenceUnitTransactionType;
 import lombok.Data;
 
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -67,5 +68,17 @@ public class PersistenceUnitInfoImpl implements PersistenceUnitInfo {
     @Override
     public void addTransformer(ClassTransformer classTransformer) {
         //Not implemented
+    }
+
+    @Override
+    public String getScopeAnnotationName() {
+        //Not implemented
+        return null;
+    }
+
+    @Override
+    public List<String> getQualifierAnnotationNames() {
+        //Not implemented
+        return Collections.emptyList();
     }
 }
