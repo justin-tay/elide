@@ -21,7 +21,6 @@ import com.yahoo.elide.ElideResponse;
 import com.yahoo.elide.ElideSettings;
 import com.yahoo.elide.core.PersistentResource;
 import com.yahoo.elide.core.RequestScope;
-import com.yahoo.elide.core.TestRequestScope;
 import com.yahoo.elide.core.TransactionRegistry;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
@@ -172,7 +171,8 @@ public class JsonApiTest {
 
     @Test
     public void writeSingleWithMeta() {
-        Child child = new Child();
+        dictionary.bindEntity(ChildWithMetadata.class);
+        ChildWithMetadata child = new ChildWithMetadata();
         child.setId(2);
         child.setMetadataField("foo", "bar");
 
@@ -182,8 +182,8 @@ public class JsonApiTest {
         jsonApiDocument.setData(new Data<>(JsonApiPersistentResource.toResource(
                 new PersistentResource<>(child, userScope.getUUIDFor(child), userScope))));
 
-        String expected = "{\"data\":{\"type\":\"child\",\"id\":\"2\",\""
-                + "links\":{\"self\":\"http://localhost:8080/json/child/2\"},\"meta\":{\"foo\":\"bar\"}}}";
+        String expected = "{\"data\":{\"type\":\"childWithMetadata\",\"id\":\"2\",\""
+                + "links\":{\"self\":\"http://localhost:8080/json/childWithMetadata/2\"},\"meta\":{\"foo\":\"bar\"}}}";
 
         Data<Resource> data = jsonApiDocument.getData();
         String doc = mapper.writeJsonApiDocument(jsonApiDocument);
