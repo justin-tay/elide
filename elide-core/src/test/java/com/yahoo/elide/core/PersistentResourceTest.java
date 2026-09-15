@@ -34,9 +34,6 @@ import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.InvalidAttributeException;
 import com.yahoo.elide.core.exceptions.InvalidObjectIdentifierException;
 import com.yahoo.elide.core.exceptions.InvalidValueException;
-import com.yahoo.elide.core.filter.Operator;
-import com.yahoo.elide.core.filter.expression.FilterExpression;
-import com.yahoo.elide.core.filter.predicates.FilterPredicate;
 import com.yahoo.elide.core.lifecycle.CRUDEvent;
 import com.yahoo.elide.core.request.Attribute;
 import com.yahoo.elide.core.request.EntityProjection;
@@ -45,17 +42,15 @@ import com.yahoo.elide.core.security.ChangeSpec;
 import com.yahoo.elide.core.security.TestUser;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.core.type.ClassType;
+import com.yahoo.elide.jsonapi.JsonApiPersistentResource;
 import com.yahoo.elide.jsonapi.extensions.JsonApiJsonPatchRequestScope;
 import com.yahoo.elide.jsonapi.models.Data;
 import com.yahoo.elide.jsonapi.models.Relationship;
 import com.yahoo.elide.jsonapi.models.Resource;
 import com.yahoo.elide.jsonapi.models.ResourceIdentifier;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import example.Address;
-import example.Author;
 import example.Book;
 import example.Child;
 import example.Color;
@@ -320,7 +315,7 @@ public class PersistentResourceTest extends PersistenceResourceTestSetup {
 
         PersistentResource<FunWithPermissions> funResource = new PersistentResource<>(fun, "3", scope);
 
-        Map<String, Relationship> relationships = funResource.getRelationships();
+        Map<String, Relationship> relationships = JsonApiPersistentResource.getRelationships(funResource);
 
         assertEquals(5, relationships.size(), "All relationships should be returned.");
         assertTrue(relationships.containsKey("relation1"), "relation1 should be present");
@@ -332,7 +327,7 @@ public class PersistentResourceTest extends PersistenceResourceTestSetup {
         scope = new TestRequestScope(tx, badUser, dictionary);
 
         PersistentResource<FunWithPermissions> funResourceWithBadScope = new PersistentResource<>(fun, "3", scope);
-        relationships = funResourceWithBadScope.getRelationships();
+        relationships = JsonApiPersistentResource.getRelationships(funResourceWithBadScope);
 
         assertEquals(0, relationships.size(), "All relationships should be filtered out");
     }
@@ -364,7 +359,7 @@ public class PersistentResourceTest extends PersistenceResourceTestSetup {
         RequestScope scope = new TestRequestScope(tx, goodUser, dictionary);
         PersistentResource<FunWithPermissions> funResource = new PersistentResource<>(fun, "3", scope);
 
-        Map<String, Object> attributes = funResource.getAttributes();
+        Map<String, Object> attributes = JsonApiPersistentResource.getAttributes(funResource);
 
         assertEquals(6, attributes.size(),
                 "A valid user should have access to all attributes that are readable."
@@ -383,7 +378,7 @@ public class PersistentResourceTest extends PersistenceResourceTestSetup {
         RequestScope badUserScope = new TestRequestScope(tx, badUser, dictionary);
         PersistentResource<FunWithPermissions> funResourceBad = new PersistentResource<>(fun, "3", badUserScope);
 
-        attributes = funResourceBad.getAttributes();
+        attributes = JsonApiPersistentResource.getAttributes(funResourceBad);
 
         assertEquals(3, attributes.size(), "An invalid user should have access to a subset of attributes.");
         assertTrue(attributes.containsKey("field2"), "Readable attributes should include field2");
@@ -2868,61 +2863,6 @@ public class PersistentResourceTest extends PersistenceResourceTestSetup {
         verify(tx, times(1)).setAttribute(eq(parent), attributeArgument.capture(), eq(scope));
         assertEquals(attributeArgument.getValue().getName(), "firstName");
         assertEquals(attributeArgument.getValue().getArguments().iterator().next().getValue(), "foobar");
-    }
-
-    @Test
-    public void testFilterExpressionByType() {
-        Map<String, List<String>> queryParams = new LinkedHashMap<>();
-
-        add(queryParams,
-                "filter[author.name][infix]",
-                "Hemingway"
-        );
-
-        RequestScope scope = buildRequestScope("/", mock(DataStoreTransaction.class),
-                new TestUser("1"), queryParams);
-
-        Optional<FilterExpression> filter = scope.getLoadFilterExpression(ClassType.of(Author.class));
-        FilterPredicate predicate = (FilterPredicate) filter.get();
-        assertEquals("name", predicate.getField());
-        assertEquals("name", predicate.getFieldPath());
-        assertEquals(Operator.INFIX, predicate.getOperator());
-        assertEquals(Arrays.asList("Hemingway"), predicate.getValues());
-        assertEquals("[Author].name", predicate.getPath().toString());
-    }
-
-    @Test
-    public void testFilterExpressionCollection() {
-        Map<String, List<String>> queryParams = new LinkedHashMap<>();
-
-        add(queryParams,
-                "filter[book.authors.name][infix]",
-                "Hemingway"
-        );
-
-        RequestScope scope = buildRequestScope("/", mock(DataStoreTransaction.class), new TestUser("1"),
-                queryParams);
-
-        Optional<FilterExpression> filter = scope.getLoadFilterExpression(ClassType.of(Book.class));
-        FilterPredicate predicate = (FilterPredicate) filter.get();
-        assertEquals("name", predicate.getField());
-        assertEquals("authors.name", predicate.getFieldPath());
-        assertEquals(Operator.INFIX, predicate.getOperator());
-        assertEquals(Arrays.asList("Hemingway"), predicate.getValues());
-        assertEquals("[Book].authors/[Author].name", predicate.getPath().toString());
-    }
-
-
-    @Test
-    public void testSparseFields() {
-        Map<String, List<String>> queryParams = new LinkedHashMap<>();
-
-        add(queryParams, "fields[author]", "name");
-
-        RequestScope scope = buildRequestScope("/", mock(DataStoreTransaction.class),
-                new TestUser("1"), queryParams);
-        Map<String, Set<String>> expected = ImmutableMap.of("author", ImmutableSet.of("name"));
-        assertEquals(expected, scope.getSparseFields());
     }
 
     @Test

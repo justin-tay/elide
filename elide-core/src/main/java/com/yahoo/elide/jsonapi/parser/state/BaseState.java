@@ -17,6 +17,7 @@ import com.yahoo.elide.generated.parsers.CoreParser.SubCollectionReadCollectionC
 import com.yahoo.elide.generated.parsers.CoreParser.SubCollectionReadEntityContext;
 import com.yahoo.elide.generated.parsers.CoreParser.SubCollectionRelationshipContext;
 import com.yahoo.elide.generated.parsers.CoreParser.SubCollectionSubCollectionContext;
+import com.yahoo.elide.jsonapi.JsonApiPersistentResource;
 import com.yahoo.elide.jsonapi.JsonApiRequestScope;
 import com.yahoo.elide.jsonapi.document.processors.DocumentProcessor;
 import com.yahoo.elide.jsonapi.document.processors.IncludedProcessor;
@@ -184,7 +185,7 @@ public abstract class BaseState {
         JsonApiDocument jsonApiDocument = new JsonApiDocument();
 
         //TODO Make this a document processor
-        Data<Resource> data = resource == null ? null : new Data<>(resource.toResource());
+        Data<Resource> data = resource == null ? null : new Data<>(JsonApiPersistentResource.toResource(resource));
         jsonApiDocument.setData(data);
 
         //TODO Iterate over set of document processors

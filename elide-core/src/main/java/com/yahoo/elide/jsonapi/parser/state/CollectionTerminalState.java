@@ -20,6 +20,7 @@ import com.yahoo.elide.core.request.EntityProjection;
 import com.yahoo.elide.core.request.Pagination;
 import com.yahoo.elide.core.type.Type;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
+import com.yahoo.elide.jsonapi.JsonApiPersistentResource;
 import com.yahoo.elide.jsonapi.JsonApiRequestScope;
 import com.yahoo.elide.jsonapi.document.processors.DocumentProcessor;
 import com.yahoo.elide.jsonapi.document.processors.IncludedProcessor;
@@ -142,7 +143,7 @@ public class CollectionTerminalState extends BaseState {
         parent.ifPresent(persistentResource -> persistentResource.addRelation(relationName.get(), newObject));
         return () -> {
             JsonApiDocument returnDoc = new JsonApiDocument();
-            returnDoc.setData(new Data<>(newObject.toResource()));
+            returnDoc.setData(new Data<>(JsonApiPersistentResource.toResource(newObject)));
 
             PopulateMetaProcessor metaProcessor = new PopulateMetaProcessor();
             metaProcessor.execute(returnDoc, requestScope, newObject, requestScope.getRoute().getParameters());
@@ -172,7 +173,8 @@ public class CollectionTerminalState extends BaseState {
 
     private Data getData(Set<PersistentResource> collection, EntityDictionary dictionary) {
         Preconditions.checkNotNull(collection);
-        List<Resource> resources = collection.stream().map(PersistentResource::toResource).collect(Collectors.toList());
+        List<Resource> resources = collection.stream()
+                .map(JsonApiPersistentResource::toResource).collect(Collectors.toList());
 
         if (parent.isPresent()) {
             Type<?> parentClass = parent.get().getResourceType();

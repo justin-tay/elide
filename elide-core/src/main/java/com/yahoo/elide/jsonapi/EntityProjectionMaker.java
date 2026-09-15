@@ -7,7 +7,6 @@
 package com.yahoo.elide.jsonapi;
 
 import com.yahoo.elide.core.Path;
-import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.InvalidCollectionException;
 import com.yahoo.elide.core.exceptions.InvalidValueException;
@@ -61,12 +60,12 @@ public class EntityProjectionMaker
     private EntityDictionary dictionary;
     private Map<String, List<String>> queryParams;
     private Map<String, Set<String>> sparseFields;
-    private RequestScope scope;
+    private JsonApiRequestScope scope;
 
-    public EntityProjectionMaker(EntityDictionary dictionary, RequestScope scope) {
+    public EntityProjectionMaker(EntityDictionary dictionary, JsonApiRequestScope scope) {
         this.dictionary = dictionary;
         this.queryParams = scope.getRoute().getParameters();
-        sparseFields = RequestScope.parseSparseFields(queryParams);
+        sparseFields = JsonApiRequestScope.parseSparseFields(queryParams);
         this.scope = scope;
     }
 

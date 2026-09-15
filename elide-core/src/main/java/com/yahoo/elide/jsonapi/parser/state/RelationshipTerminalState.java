@@ -13,6 +13,7 @@ import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.InvalidEntityBodyException;
 import com.yahoo.elide.core.request.EntityProjection;
+import com.yahoo.elide.jsonapi.JsonApiPersistentResource;
 import com.yahoo.elide.jsonapi.document.processors.DocumentProcessor;
 import com.yahoo.elide.jsonapi.document.processors.IncludedProcessor;
 import com.yahoo.elide.jsonapi.document.processors.PopulateMetaProcessor;
@@ -56,7 +57,8 @@ public class RelationshipTerminalState extends BaseState {
         RequestScope requestScope = state.getRequestScope();
         Map<String, List<String>> queryParams = requestScope.getRoute().getParameters();
 
-        Map<String, Relationship> relationships = record.toResource(parentProjection).getRelationships();
+        Map<String, Relationship> relationships =
+                JsonApiPersistentResource.toResource(record, parentProjection).getRelationships();
         if (relationships != null && relationships.containsKey(relationshipName)) {
             Relationship relationship = relationships.get(relationshipName);
 

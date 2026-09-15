@@ -16,6 +16,7 @@ import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.dictionary.TestDictionary;
 import com.yahoo.elide.core.security.TestUser;
+import com.yahoo.elide.jsonapi.JsonApiPersistentResource;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
 import com.yahoo.elide.jsonapi.models.Resource;
 import com.google.common.collect.Sets;
@@ -113,7 +114,7 @@ public class IncludedProcessorTest {
         testScope.setQueryParams(queryParams);
         includedProcessor.execute(jsonApiDocument, testScope, parentRecord1, queryParams);
 
-        List<Resource> expectedIncluded = Collections.singletonList(childRecord1.toResource());
+        List<Resource> expectedIncluded = Collections.singletonList(JsonApiPersistentResource.toResource(childRecord1));
         List<Resource> actualIncluded = jsonApiDocument.getIncluded();
 
         assertEquals(expectedIncluded, actualIncluded,
@@ -133,7 +134,7 @@ public class IncludedProcessorTest {
         testScope.setQueryParams(queryParams);
         includedProcessor.execute(jsonApiDocument, testScope, parents, queryParams);
 
-        List<Resource> expectedIncluded = Arrays.asList(childRecord1.toResource(), childRecord2.toResource());
+        List<Resource> expectedIncluded = Arrays.asList(JsonApiPersistentResource.toResource(childRecord1), JsonApiPersistentResource.toResource(childRecord2));
         List<Resource> actualIncluded = jsonApiDocument.getIncluded();
 
         assertEquals(expectedIncluded, actualIncluded,
@@ -151,7 +152,7 @@ public class IncludedProcessorTest {
         includedProcessor.execute(jsonApiDocument, testScope, parentRecord1, queryParams);
 
         List<Resource> expectedIncluded =
-                Arrays.asList(childRecord1.toResource(), childRecord2.toResource());
+                Arrays.asList(JsonApiPersistentResource.toResource(childRecord1), JsonApiPersistentResource.toResource(childRecord2));
         List<Resource> actualIncluded = jsonApiDocument.getIncluded();
 
         assertEquals(expectedIncluded, actualIncluded,
@@ -168,7 +169,7 @@ public class IncludedProcessorTest {
         includedProcessor.execute(jsonApiDocument, testScope, parentRecord1, queryParams);
 
         List<Resource> expectedIncluded =
-                Arrays.asList(childRecord1.toResource(), parentRecord2.toResource());
+                Arrays.asList(JsonApiPersistentResource.toResource(childRecord1), JsonApiPersistentResource.toResource(parentRecord2));
         List<Resource> actualIncluded = jsonApiDocument.getIncluded();
 
         assertEquals(expectedIncluded, actualIncluded,
@@ -186,10 +187,10 @@ public class IncludedProcessorTest {
 
         Set<Resource> expectedIncluded =
                 Sets.newHashSet(
-                        childRecord1.toResource(),
-                        childRecord2.toResource(),
-                        childRecord3.toResource(),
-                        childRecord4.toResource()
+                        JsonApiPersistentResource.toResource(childRecord1),
+                        JsonApiPersistentResource.toResource(childRecord2),
+                        JsonApiPersistentResource.toResource(childRecord3),
+                        JsonApiPersistentResource.toResource(childRecord4)
                 );
         Set<Resource> actualIncluded = new HashSet<>(jsonApiDocument.getIncluded());
 

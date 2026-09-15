@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.yahoo.elide.core.Path;
-import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.TestRequestScope;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.InvalidValueException;
@@ -65,7 +64,7 @@ public class EntityProjectionMakerTest {
         Map<String, List<String>> queryParams = new LinkedHashMap<>();
         String path = "/book";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -101,7 +100,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "fields[book]", "title,publishDate,authors");
         String path = "/book";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -125,7 +124,7 @@ public class EntityProjectionMakerTest {
         Map<String, List<String>> queryParams = new LinkedHashMap<>();
         String path = "/book/1";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -159,7 +158,7 @@ public class EntityProjectionMakerTest {
         Map<String, List<String>> queryParams = new LinkedHashMap<>();
         String path = "/author/1/books/3/publisher";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -192,7 +191,7 @@ public class EntityProjectionMakerTest {
         Map<String, List<String>> queryParams = new LinkedHashMap<>();
         String path = "/author/1/books/3/publisher/1";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -224,7 +223,7 @@ public class EntityProjectionMakerTest {
         Map<String, List<String>> queryParams = new LinkedHashMap<>();
         String path = "/author/1/relationships/books";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -250,7 +249,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "include", "authors");
         String path = "/book/1/relationships/publisher";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -291,7 +290,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "include", "authors");
         String path = "/book";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -339,7 +338,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "include", "authors");
         String path = "/book/1";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -387,7 +386,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "include", "books.publisher,books.editor");
         String path = "/author";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -450,7 +449,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "include", "books.publisher,books.editor");
         String path = "/author/1";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -511,7 +510,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "include", "books");
         String path = "/author/1/books/3/publisher/1";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -560,7 +559,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "include", "books");
         String path = "/author/1/books/3/publisher";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -614,7 +613,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "fields[book]", "publisher,editor,title");
         String path = "/author/1";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -654,7 +653,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "filter", "genre=='Science Fiction'");
         String path = "/book";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         FilterExpression expression =
                 new InPredicate(new Path(Book.class, dictionary, "genre"), "Science Fiction");
@@ -697,7 +696,7 @@ public class EntityProjectionMakerTest {
         FilterExpression expression =
                 new InPredicate(new Path(Publisher.class, dictionary, "name"), "Foo");
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -736,7 +735,7 @@ public class EntityProjectionMakerTest {
         String path = "/book/1/relationships/publisher";
         Sorting sorting = SortingImpl.parseSortRule("name", ClassType.of(Publisher.class), dictionary);
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
@@ -780,7 +779,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "filter[book]", "genre=='Science Fiction'");
         String path = "/book";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
 
         FilterExpression expression =
                 new InPredicate(new Path(Book.class, dictionary, "genre"), "Science Fiction");
@@ -820,7 +819,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "fields[book]", "publisher,bookTitle,bookName"); // Invalid Fields: bookTitle & bookName
         String path = "/book";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
         Exception e = assertThrows(InvalidValueException.class, () -> maker.parsePath(path));
@@ -835,7 +834,7 @@ public class EntityProjectionMakerTest {
         add(queryParams, "include", "publisher");
         String path = "/book";
 
-        RequestScope scope = new TestRequestScope(dictionary, path, queryParams);
+        JsonApiRequestScope scope = new TestRequestScope(dictionary, path, queryParams);
         EntityProjectionMaker maker = new EntityProjectionMaker(dictionary, scope);
 
         Exception e = assertThrows(InvalidValueException.class, () -> maker.parsePath(path));

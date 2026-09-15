@@ -5,6 +5,7 @@
  */
 package com.yahoo.elide.jsonapi.parser;
 
+import com.yahoo.elide.core.utils.PathUtils;
 import com.yahoo.elide.generated.parsers.CoreLexer;
 import com.yahoo.elide.generated.parsers.CoreParser;
 import org.antlr.v4.runtime.BailErrorStrategy;
@@ -16,16 +17,11 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.regex.Pattern;
 
 /**
  * Parses the REST request.
  */
 public class JsonApiParser {
-
-    private static final Pattern DUPLICATE_SEPARATOR_PATTERN = Pattern.compile("//+");
 
     /**
      * Normalize request path.
@@ -34,11 +30,7 @@ public class JsonApiParser {
      * @return normalized path string
      */
     public static String normalizePath(String path) {
-        String normalizedPath = DUPLICATE_SEPARATOR_PATTERN.matcher(path).replaceAll("/");
-
-        normalizedPath = StringUtils.removeEnd(normalizedPath, "/");
-
-        return StringUtils.removeStart(normalizedPath, "/");
+        return PathUtils.normalizePath(path);
     }
 
     /**

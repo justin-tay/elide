@@ -108,7 +108,8 @@ public class JsonApiTest {
         RequestScope userScope = new TestRequestScope(BASE_URL, tx, user, dictionary);
 
         JsonApiDocument jsonApiDocument = new JsonApiDocument();
-        jsonApiDocument.setData(new Data<>(new PersistentResource<>(parent, userScope.getUUIDFor(parent), userScope).toResource()));
+        jsonApiDocument.setData(new Data<>(JsonApiPersistentResource.toResource(
+                new PersistentResource<>(parent, userScope.getUUIDFor(parent), userScope))));
 
         String expected = "{\"data\":{"
                 + "\"type\":\"parent\","
@@ -145,7 +146,8 @@ public class JsonApiTest {
         RequestScope userScope = new TestRequestScope(BASE_URL, tx, user, dictionary);
 
         JsonApiDocument jsonApiDocument = new JsonApiDocument();
-        jsonApiDocument.setData(new Data<>(new PersistentResource<>(parent, userScope.getUUIDFor(parent), userScope).toResource()));
+        jsonApiDocument.setData(new Data<>(JsonApiPersistentResource.toResource(
+                new PersistentResource<>(parent, userScope.getUUIDFor(parent), userScope))));
 
         String expected = "{\"data\":{"
                 + "\"type\":\"parent\","
@@ -177,7 +179,8 @@ public class JsonApiTest {
         RequestScope userScope = new TestRequestScope(BASE_URL, tx, user, dictionary);
 
         JsonApiDocument jsonApiDocument = new JsonApiDocument();
-        jsonApiDocument.setData(new Data<>(new PersistentResource<>(child, userScope.getUUIDFor(child), userScope).toResource()));
+        jsonApiDocument.setData(new Data<>(JsonApiPersistentResource.toResource(
+                new PersistentResource<>(child, userScope.getUUIDFor(child), userScope))));
 
         String expected = "{\"data\":{\"type\":\"child\",\"id\":\"2\",\""
                 + "links\":{\"self\":\"http://localhost:8080/json/child/2\"},\"meta\":{\"foo\":\"bar\"}}}";
@@ -205,9 +208,9 @@ public class JsonApiTest {
         PersistentResource<Parent> pRec = new PersistentResource<>(parent, userScope.getUUIDFor(parent), userScope);
 
         JsonApiDocument jsonApiDocument = new JsonApiDocument();
-        jsonApiDocument.setData(new Data<>(pRec.toResource()));
-        jsonApiDocument.addIncluded(
-                new PersistentResource<>(child, pRec, "children", userScope.getUUIDFor(child), userScope).toResource());
+        jsonApiDocument.setData(new Data<>(JsonApiPersistentResource.toResource(pRec)));
+        jsonApiDocument.addIncluded(JsonApiPersistentResource.toResource(
+                new PersistentResource<>(child, pRec, "children", userScope.getUUIDFor(child), userScope)));
 
         String expected = "{\"data\":{"
                 + "\"type\":\"parent\","
@@ -262,7 +265,8 @@ public class JsonApiTest {
 
         JsonApiDocument jsonApiDocument = new JsonApiDocument();
         jsonApiDocument.setData(
-            new Data<>(Collections.singletonList(new PersistentResource<>(parent, userScope.getUUIDFor(parent), userScope).toResource())));
+            new Data<>(Collections.singletonList(JsonApiPersistentResource.toResource(
+                    new PersistentResource<>(parent, userScope.getUUIDFor(parent), userScope)))));
 
         String expected = "{\"data\":[{"
                 + "\"type\":\"parent\","
@@ -301,12 +305,12 @@ public class JsonApiTest {
         PersistentResource<Parent> pRec = new PersistentResource<>(parent, userScope.getUUIDFor(parent), userScope);
 
         JsonApiDocument jsonApiDocument = new JsonApiDocument();
-        jsonApiDocument.setData(new Data<>(Collections.singletonList(pRec.toResource())));
-        jsonApiDocument.addIncluded(new PersistentResource<>(child,
-                pRec, "children", userScope.getUUIDFor(child), userScope).toResource());
+        jsonApiDocument.setData(new Data<>(Collections.singletonList(JsonApiPersistentResource.toResource(pRec))));
+        jsonApiDocument.addIncluded(JsonApiPersistentResource.toResource(new PersistentResource<>(child,
+                pRec, "children", userScope.getUUIDFor(child), userScope)));
         // duplicate will be ignored
-        jsonApiDocument.addIncluded(
-                new PersistentResource<>(child, pRec, "children", userScope.getUUIDFor(child), userScope).toResource());
+        jsonApiDocument.addIncluded(JsonApiPersistentResource.toResource(
+                new PersistentResource<>(child, pRec, "children", userScope.getUUIDFor(child), userScope)));
 
         String expected = "{\"data\":[{"
                 + "\"type\":\"parent\","
@@ -562,10 +566,10 @@ public class JsonApiTest {
         PersistentResource<Parent> pRec2 = new PersistentResource<>(parent2, userScope.getUUIDFor(parent2), userScope);
 
         JsonApiDocument jsonApiDocument1 = new JsonApiDocument();
-        jsonApiDocument1.setData(new Data<>(Lists.newArrayList(pRec1.toResource(), pRec2.toResource())));
+        jsonApiDocument1.setData(new Data<>(Lists.newArrayList(JsonApiPersistentResource.toResource(pRec1), JsonApiPersistentResource.toResource(pRec2))));
 
         JsonApiDocument jsonApiDocument2 = new JsonApiDocument();
-        jsonApiDocument2.setData(new Data<>(Lists.newArrayList(pRec2.toResource(), pRec1.toResource())));
+        jsonApiDocument2.setData(new Data<>(Lists.newArrayList(JsonApiPersistentResource.toResource(pRec2), JsonApiPersistentResource.toResource(pRec1))));
 
         assertEquals(jsonApiDocument1, jsonApiDocument2);
         assertEquals(jsonApiDocument1.hashCode(), jsonApiDocument2.hashCode());

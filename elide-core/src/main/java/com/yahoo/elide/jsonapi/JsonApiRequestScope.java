@@ -10,23 +10,30 @@ import com.yahoo.elide.core.RequestScope;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.BadRequestException;
+import com.yahoo.elide.core.exceptions.InvalidAttributeException;
 import com.yahoo.elide.core.filter.dialect.ParseException;
 import com.yahoo.elide.core.filter.dialect.RSQLFilterDialect;
 import com.yahoo.elide.core.filter.dialect.jsonapi.DefaultFilterDialect;
 import com.yahoo.elide.core.filter.dialect.jsonapi.JoinFilterDialect;
 import com.yahoo.elide.core.filter.dialect.jsonapi.MultipleFilterDialect;
 import com.yahoo.elide.core.filter.dialect.jsonapi.SubqueryFilterDialect;
+import com.yahoo.elide.core.filter.expression.FilterExpression;
 import com.yahoo.elide.core.request.EntityProjection;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.security.User;
+import com.yahoo.elide.core.type.Type;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
 
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -38,6 +45,12 @@ public class JsonApiRequestScope extends RequestScope {
     @Getter private final JsonApiMapper mapper;
     @Getter private final int updateStatusCode;
     @Getter private final MultipleFilterDialect filterDialect;
+    @Getter private final Map<String, Set<String>> sparseFields;
+
+    protected Map<String, FilterExpression> expressionsByType;
+
+    /* Used to filter across heterogeneous types during the first load */
+    protected FilterExpression globalFilterExpression;
 
     /**
      * Create a new RequestScope.
@@ -58,6 +71,10 @@ public class JsonApiRequestScope extends RequestScope {
                         ) {
         super(route, transaction, user, requestId, elideSettings, entityProjection);
         this.jsonApiDocument = jsonApiDocument;
+
+        this.globalFilterExpression = null;
+        this.expressionsByType = new LinkedHashMap<>();
+        this.sparseFields = parseSparseFields(getRoute().getParameters());
 
         JsonApiSettings jsonApiSettings = elideSettings.getSettings(JsonApiSettings.class);
         this.mapper = jsonApiSettings.getJsonApiMapper();
@@ -135,11 +152,91 @@ public class JsonApiRequestScope extends RequestScope {
         super(outerRequestScope);
         this.route = route;
         this.jsonApiDocument = jsonApiDocument;
+        this.sparseFields = outerRequestScope.sparseFields;
+        this.expressionsByType = outerRequestScope.expressionsByType;
+        this.globalFilterExpression = outerRequestScope.globalFilterExpression;
         setEntityProjection(new EntityProjectionMaker(outerRequestScope.getElideSettings().getEntityDictionary(), this)
                 .parsePath(this.route.getPath()));
         this.updateStatusCode = outerRequestScope.getUpdateStatusCode();
         this.mapper = outerRequestScope.getMapper();
         this.filterDialect = outerRequestScope.getFilterDialect();
+    }
+
+    /**
+     * Parses queryParams and produces sparseFields map.
+     * @param queryParams The request query parameters
+     * @return Parsed sparseFields map
+     */
+    public static Map<String, Set<String>> parseSparseFields(Map<String, List<String>> queryParams) {
+        Map<String, Set<String>> result = new LinkedHashMap<>();
+
+        for (Map.Entry<String, List<String>> kv : queryParams.entrySet()) {
+            String key = kv.getKey();
+            if (key.startsWith("fields[") && key.endsWith("]")) {
+                String type = key.substring(7, key.length() - 1);
+
+                LinkedHashSet<String> filters = new LinkedHashSet<>();
+                for (String filterParams : kv.getValue()) {
+                    Collections.addAll(filters, filterParams.split(","));
+                }
+
+                if (!filters.isEmpty()) {
+                    result.put(type, filters);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Get filter expression for a specific collection type.
+     * @param type The name of the type
+     * @return The filter expression for the given type
+     */
+    public Optional<FilterExpression> getFilterExpressionByType(String type) {
+        return Optional.ofNullable(expressionsByType.get(type));
+    }
+
+    /**
+     * Get filter expression for a specific collection type.
+     * @param entityClass The class to lookup
+     * @return The filter expression for the given type
+     */
+    public Optional<FilterExpression> getFilterExpressionByType(Type<?> entityClass) {
+        return Optional.ofNullable(expressionsByType.get(dictionary.getJsonAliasFor(entityClass)));
+    }
+
+    /**
+     * Get the global/cross-type filter expression.
+     * @param loadClass Entity class
+     * @return The global filter expression evaluated at the first load
+     */
+    public Optional<FilterExpression> getLoadFilterExpression(Type<?> loadClass) {
+        Optional<FilterExpression> filterExpression;
+        if (globalFilterExpression == null) {
+            String typeName = dictionary.getJsonAliasFor(loadClass);
+            filterExpression =  getFilterExpressionByType(typeName);
+        } else {
+            filterExpression = Optional.of(globalFilterExpression);
+        }
+        return filterExpression;
+    }
+
+    /**
+     * Get the filter expression for a particular relationship.
+     * @param parentType The parent type which has the relationship
+     * @param relationName The relationship name
+     * @return A type specific filter expression for the given relationship
+     */
+    public Optional<FilterExpression> getExpressionForRelation(Type<?> parentType, String relationName) {
+        final Type<?> entityClass = dictionary.getParameterizedType(parentType, relationName);
+        if (entityClass == null) {
+            throw new InvalidAttributeException(relationName, dictionary.getJsonAliasFor(parentType));
+        }
+
+        final String valType = dictionary.getJsonAliasFor(entityClass);
+        return getFilterExpressionByType(valType);
     }
 
     /**

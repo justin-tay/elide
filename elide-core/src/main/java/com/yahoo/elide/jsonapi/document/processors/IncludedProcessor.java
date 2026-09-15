@@ -11,6 +11,8 @@ import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.request.EntityProjection;
 import com.yahoo.elide.core.request.Relationship;
 import com.yahoo.elide.jsonapi.EntityProjectionMaker;
+import com.yahoo.elide.jsonapi.JsonApiPersistentResource;
+import com.yahoo.elide.jsonapi.JsonApiRequestScope;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
 import com.google.common.collect.Lists;
 
@@ -67,7 +69,8 @@ public class IncludedProcessor implements DocumentProcessor {
     private void addIncludedResources(JsonApiDocument jsonApiDocument, PersistentResource rec,
             List<String> requestedRelationPaths) {
 
-        EntityProjectionMaker maker = new EntityProjectionMaker(rec.getDictionary(), rec.getRequestScope());
+        EntityProjectionMaker maker = new EntityProjectionMaker(rec.getDictionary(),
+                (JsonApiRequestScope) rec.getRequestScope());
         EntityProjection projection = maker.parseInclude(rec.getResourceType());
         // Process each include relation path
         requestedRelationPaths.forEach(pathParam -> {
@@ -101,7 +104,7 @@ public class IncludedProcessor implements DocumentProcessor {
         }
 
         collection.forEach(resource -> {
-            jsonApiDocument.addIncluded(resource.toResource());
+            jsonApiDocument.addIncluded(JsonApiPersistentResource.toResource(resource));
 
             //If more relations left in the path, process a level deeper
             if (!relationPath.isEmpty()) {
