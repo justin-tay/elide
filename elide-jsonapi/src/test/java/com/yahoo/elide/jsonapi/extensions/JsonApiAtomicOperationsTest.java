@@ -18,7 +18,6 @@ import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.datastore.inmemory.HashMapDataStore;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
 import com.yahoo.elide.core.exceptions.InvalidEntityBodyException;
-import com.yahoo.elide.core.exceptions.JsonApiAtomicOperationsException;
 import com.yahoo.elide.core.request.EntityProjection;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.jsonapi.JsonApiMapper;

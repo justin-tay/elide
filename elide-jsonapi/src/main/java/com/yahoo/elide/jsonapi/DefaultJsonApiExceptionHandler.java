@@ -17,9 +17,9 @@ import com.yahoo.elide.core.exceptions.ForbiddenAccessException;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.exceptions.HttpStatusException;
 import com.yahoo.elide.core.exceptions.InvalidURLException;
-import com.yahoo.elide.core.exceptions.JsonApiAtomicOperationsException;
-import com.yahoo.elide.core.exceptions.JsonPatchExtensionException;
 import com.yahoo.elide.core.exceptions.TransactionException;
+import com.yahoo.elide.jsonapi.extensions.JsonApiAtomicOperationsException;
+import com.yahoo.elide.jsonapi.extensions.JsonPatchExtensionException;
 import com.yahoo.elide.jsonapi.models.JsonApiErrors;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
