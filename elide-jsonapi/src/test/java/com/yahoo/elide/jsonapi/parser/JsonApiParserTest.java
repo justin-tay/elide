@@ -3,11 +3,10 @@
  * Licensed under the Apache License, Version 2.0
  * See LICENSE file in project root for terms.
  */
-package com.yahoo.elide.parsers;
+package com.yahoo.elide.jsonapi.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.yahoo.elide.jsonapi.parser.JsonApiParser;
 import org.junit.jupiter.api.Test;
 
 public class JsonApiParserTest {

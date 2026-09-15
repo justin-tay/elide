@@ -13,6 +13,7 @@ import com.yahoo.elide.core.request.route.FlexibleRouteResolver;
 import com.yahoo.elide.core.request.route.NullRouteResolver;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.request.route.RouteResolver;
+import com.yahoo.elide.core.security.SecurityContextUser;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.jsonapi.JsonApi;
 import com.yahoo.elide.utils.HeaderProcessor;

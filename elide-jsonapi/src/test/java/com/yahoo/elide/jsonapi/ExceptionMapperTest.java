@@ -3,7 +3,7 @@
  * Licensed under the Apache License, Version 2.0
  * See LICENSE file in project root for terms.
  */
-package com.yahoo.elide.core.exceptions;
+package com.yahoo.elide.jsonapi;
 
 import static com.yahoo.elide.core.dictionary.EntityDictionary.NO_VERSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,17 +27,12 @@ import com.yahoo.elide.core.TransactionRegistry;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.dictionary.TestDictionary;
-import com.yahoo.elide.core.lifecycle.FieldTestModel;
-import com.yahoo.elide.core.lifecycle.LegacyTestModel;
-import com.yahoo.elide.core.lifecycle.PropertyTestModel;
+import com.yahoo.elide.core.exceptions.ErrorResponseException;
+import com.yahoo.elide.core.exceptions.ExceptionMappers;
+import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.type.ClassType;
-import com.yahoo.elide.jsonapi.DefaultJsonApiErrorMapper;
-import com.yahoo.elide.jsonapi.DefaultJsonApiExceptionHandler;
-import com.yahoo.elide.jsonapi.JsonApi;
-import com.yahoo.elide.jsonapi.JsonApiMapper;
-import com.yahoo.elide.jsonapi.JsonApiSettings;
+import com.yahoo.elide.jsonapi.example.TestModel;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -62,10 +57,8 @@ public class ExceptionMapperTest {
     private EntityDictionary dictionary;
 
     ExceptionMapperTest() throws Exception {
-        dictionary = TestDictionary.getTestDictionary();
-        dictionary.bindEntity(FieldTestModel.class);
-        dictionary.bindEntity(PropertyTestModel.class);
-        dictionary.bindEntity(LegacyTestModel.class);
+        dictionary = EntityDictionary.builder().build();
+        dictionary.bindEntity(TestModel.class);
     }
 
     @AfterEach
@@ -77,7 +70,7 @@ public class ExceptionMapperTest {
     public void testElideRuntimeExceptionNoErrorResponseMapper() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
-        FieldTestModel mockModel = mock(FieldTestModel.class);
+        TestModel mockModel = mock(TestModel.class);
 
         Elide elide = getElide(store, dictionary, null);
         JsonApi jsonApi = new JsonApi(elide);
@@ -85,7 +78,7 @@ public class ExceptionMapperTest {
         String body = "{\"data\": {\"type\":\"testModel\",\"id\":\"1\",\"attributes\": {\"field\":\"Foo\"}}}";
 
         when(store.beginTransaction()).thenReturn(tx);
-        when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
+        when(tx.createNewObject(eq(ClassType.of(TestModel.class)), any())).thenReturn(mockModel);
         doThrow(EXPECTED_EXCEPTION).when(tx).preCommit(any());
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
@@ -99,7 +92,7 @@ public class ExceptionMapperTest {
     public void testElideIOExceptionNoErrorResponseMapper() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
-        FieldTestModel mockModel = mock(FieldTestModel.class);
+        TestModel mockModel = mock(TestModel.class);
 
         Elide elide = getElide(store, dictionary, null);
         JsonApi jsonApi = new JsonApi(elide);
@@ -108,7 +101,7 @@ public class ExceptionMapperTest {
         String body = "{\"data\": {\"type\":\"testModel\"\"id\":\"1\",\"attributes\": {\"field\":\"Foo\"}}}";
 
         when(store.beginTransaction()).thenReturn(tx);
-        when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
+        when(tx.createNewObject(eq(ClassType.of(TestModel.class)), any())).thenReturn(mockModel);
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
         ElideResponse<String> response = jsonApi.post(route, body, null, null);
@@ -124,7 +117,7 @@ public class ExceptionMapperTest {
     public void testElideRuntimeExceptionWithErrorResponseMapperUnmapped() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
-        FieldTestModel mockModel = mock(FieldTestModel.class);
+        TestModel mockModel = mock(TestModel.class);
 
         Elide elide = getElide(store, dictionary, MOCK_EXCEPTION_MAPPER);
         JsonApi jsonApi = new JsonApi(elide);
@@ -132,7 +125,7 @@ public class ExceptionMapperTest {
         String body = "{\"data\": {\"type\":\"testModel\",\"id\":\"1\",\"attributes\": {\"field\":\"Foo\"}}}";
 
         when(store.beginTransaction()).thenReturn(tx);
-        when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
+        when(tx.createNewObject(eq(ClassType.of(TestModel.class)), any())).thenReturn(mockModel);
         doThrow(EXPECTED_EXCEPTION).when(tx).preCommit(any());
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
@@ -146,7 +139,7 @@ public class ExceptionMapperTest {
     public void testElideJacksonExceptionWithErrorResponseMapperUnmapped() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
-        FieldTestModel mockModel = mock(FieldTestModel.class);
+        TestModel mockModel = mock(TestModel.class);
 
         Elide elide = getElide(store, dictionary, MOCK_EXCEPTION_MAPPER);
         JsonApi jsonApi = new JsonApi(elide);
@@ -155,7 +148,7 @@ public class ExceptionMapperTest {
         String body = "{\"data\": {\"type\":\"testModel\"\"id\":\"1\",\"attributes\": {\"field\":\"Foo\"}}}";
 
         when(store.beginTransaction()).thenReturn(tx);
-        when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
+        when(tx.createNewObject(eq(ClassType.of(TestModel.class)), any())).thenReturn(mockModel);
 
         Route route = Route.builder().baseUrl(baseUrl).path("/testModel").apiVersion(NO_VERSION).build();
         ElideResponse<String> response = jsonApi.post(route, body, null, null);
@@ -171,7 +164,7 @@ public class ExceptionMapperTest {
     void testElideRuntimeExceptionWithErrorResponseMapperMapped() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
-        FieldTestModel mockModel = mock(FieldTestModel.class);
+        TestModel mockModel = mock(TestModel.class);
 
         Elide elide = getElide(store, dictionary, MOCK_EXCEPTION_MAPPER);
         JsonApi jsonApi = new JsonApi(elide);
@@ -179,7 +172,7 @@ public class ExceptionMapperTest {
         String body = "{\"data\": {\"type\":\"testModel\",\"id\":\"1\",\"attributes\": {\"field\":\"Foo\"}}}";
 
         when(store.beginTransaction()).thenReturn(tx);
-        when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
+        when(tx.createNewObject(eq(ClassType.of(TestModel.class)), any())).thenReturn(mockModel);
         doThrow(EXPECTED_EXCEPTION).when(tx).preCommit(any());
         when(MOCK_EXCEPTION_MAPPER.toErrorResponse(eq(EXPECTED_EXCEPTION), any())).thenReturn((ElideErrorResponse<Object>) MAPPED_EXCEPTION.getErrorResponse());
 
@@ -197,7 +190,7 @@ public class ExceptionMapperTest {
     void testElideJacksonExceptionWithErrorResponseMapperMapped() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
-        FieldTestModel mockModel = mock(FieldTestModel.class);
+        TestModel mockModel = mock(TestModel.class);
 
         Elide elide = getElide(store, dictionary, MOCK_EXCEPTION_MAPPER);
         JsonApi jsonApi = new JsonApi(elide);
@@ -206,7 +199,7 @@ public class ExceptionMapperTest {
         String body = "{\"data\": {\"type\":\"testModel\"\"id\":\"1\",\"attributes\": {\"field\":\"Foo\"}}}";
 
         when(store.beginTransaction()).thenReturn(tx);
-        when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
+        when(tx.createNewObject(eq(ClassType.of(TestModel.class)), any())).thenReturn(mockModel);
 
         when(MOCK_EXCEPTION_MAPPER.toErrorResponse(isA(JacksonException.class), any())).thenReturn((ElideErrorResponse<Object>) MAPPED_EXCEPTION.getErrorResponse());
 

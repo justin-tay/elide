@@ -3,7 +3,7 @@
  * Licensed under the Apache License, Version 2.0
  * See LICENSE file in project root for terms.
  */
-package com.yahoo.elide.core.lifecycle;
+package com.yahoo.elide.jsonapi.lifecycle;
 
 import static com.yahoo.elide.annotation.LifeCycleHookBinding.Operation.CREATE;
 import static com.yahoo.elide.annotation.LifeCycleHookBinding.Operation.DELETE;
@@ -42,14 +42,12 @@ import com.yahoo.elide.core.datastore.DataStoreIterable;
 import com.yahoo.elide.core.datastore.DataStoreIterableBuilder;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.dictionary.TestDictionary;
 import com.yahoo.elide.core.exceptions.HttpStatus;
 import com.yahoo.elide.core.request.Attribute;
 import com.yahoo.elide.core.request.EntityProjection;
 import com.yahoo.elide.core.request.Relationship;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.core.security.ChangeSpec;
-import com.yahoo.elide.core.security.TestUser;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.core.type.ClassType;
 import com.yahoo.elide.jsonapi.JsonApi;
@@ -82,7 +80,7 @@ public class LifeCycleTest {
     private EntityDictionary dictionary;
 
     LifeCycleTest() throws Exception {
-        dictionary = TestDictionary.getTestDictionary();
+        dictionary = EntityDictionary.builder().build();
         dictionary.bindEntity(FieldTestModel.class);
         dictionary.bindEntity(PropertyTestModel.class);
         dictionary.bindEntity(LegacyTestModel.class);
@@ -1865,7 +1863,7 @@ public class LifeCycleTest {
     }
 
     private RequestScope buildRequestScope(EntityDictionary dict, DataStoreTransaction tx) {
-        User user = new TestUser("1");
+        User user = new User(() -> "1");
         Route route = Route.builder().apiVersion(NO_VERSION).build();
         ElideSettings elideSettings = getElideSettings(null, dict, MOCK_AUDIT_LOGGER);
         return JsonApiRequestScope.builder().route(route).dataStoreTransaction(tx).user(user)
