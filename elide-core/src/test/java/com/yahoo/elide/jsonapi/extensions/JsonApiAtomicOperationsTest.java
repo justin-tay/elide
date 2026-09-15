@@ -23,12 +23,11 @@ import com.yahoo.elide.core.request.EntityProjection;
 import com.yahoo.elide.core.request.route.Route;
 import com.yahoo.elide.jsonapi.JsonApiMapper;
 import com.yahoo.elide.jsonapi.JsonApiSettings;
+import com.yahoo.elide.jsonapi.example.Book;
+import com.yahoo.elide.jsonapi.example.Company;
+import com.yahoo.elide.jsonapi.example.Person;
 import com.yahoo.elide.jsonapi.models.Resource;
 import com.yahoo.elide.jsonapi.models.Results;
-
-import example.Book;
-import example.Company;
-import example.Person;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;

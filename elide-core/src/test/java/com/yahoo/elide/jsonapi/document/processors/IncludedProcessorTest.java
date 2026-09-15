@@ -13,16 +13,15 @@ import static org.mockito.Mockito.reset;
 import com.yahoo.elide.core.PersistentResource;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.dictionary.TestDictionary;
-import com.yahoo.elide.core.security.TestUser;
+import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.jsonapi.JsonApiPersistentResource;
 import com.yahoo.elide.jsonapi.TestRequestScope;
+import com.yahoo.elide.jsonapi.example.Child;
+import com.yahoo.elide.jsonapi.example.FunWithPermissions;
+import com.yahoo.elide.jsonapi.example.Parent;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
 import com.yahoo.elide.jsonapi.models.Resource;
 import com.google.common.collect.Sets;
-import example.Child;
-import example.FunWithPermissions;
-import example.Parent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
@@ -60,14 +59,16 @@ public class IncludedProcessorTest {
     public void setUp() throws Exception {
         includedProcessor = new IncludedProcessor();
 
-        dictionary = TestDictionary.getTestDictionary();
+        dictionary = EntityDictionary.builder()
+                .checks(Map.of("goodUser", FunWithPermissions.GoodUserCheck.class))
+                .build();
         dictionary.bindEntity(Child.class);
         dictionary.bindEntity(Parent.class);
         dictionary.bindEntity(FunWithPermissions.class);
 
         reset(mockTransaction);
 
-        testScope = new TestRequestScope(mockTransaction, new TestUser("1"), dictionary);
+        testScope = new TestRequestScope(mockTransaction, new User(() -> "1"), dictionary);
 
         //Create objects
         Parent parent1 = newParent(1);
@@ -203,7 +204,7 @@ public class IncludedProcessorTest {
         JsonApiDocument jsonApiDocument = new JsonApiDocument();
 
         Map<String, List<String>> queryParams = new LinkedHashMap<>();
-        queryParams.put(INCLUDE, Collections.singletonList("relation1"));
+        queryParams.put(INCLUDE, Collections.singletonList("forbiddenRelation"));
         testScope.setQueryParams(queryParams);
         includedProcessor.execute(jsonApiDocument, testScope, funWithPermissionsRecord, queryParams);
 
@@ -252,7 +253,7 @@ public class IncludedProcessorTest {
     private FunWithPermissions newFunWithPermissions(int id) {
         FunWithPermissions funWithPermissions = new FunWithPermissions();
         funWithPermissions.setId(id);
-        funWithPermissions.setRelation1(new HashSet<>());
+        funWithPermissions.setForbiddenRelation(new HashSet<>());
         return funWithPermissions;
     }
 }

@@ -58,13 +58,17 @@ import example.LineItem;
 import example.MapColorShape;
 import example.NoDeleteEntity;
 import example.NoReadEntity;
+import example.NoShareEntity;
 import example.NoUpdateEntity;
 import example.Parent;
 import example.Price;
 import example.Right;
 import example.Shape;
+import example.nontransferable.ContainerWithPackageShare;
 import example.nontransferable.NoTransferBiDirectional;
+import example.nontransferable.ShareableWithPackageShare;
 import example.nontransferable.StrictNoTransfer;
+import example.nontransferable.Untransferable;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IterableUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -334,6 +338,494 @@ public class PersistentResourceTest extends PersistenceResourceTestSetup {
 
             assertEquals(0, results.size(), "No children are readable by an invalid user");
         }
+    }
+
+    /**
+     * Loads persistent resources by id, the way a JSON-API relationship payload would be deserialized,
+     * without depending on the JSON-API model classes.
+     */
+    private static Set<PersistentResource> loadResources(RequestScope scope, Class<?> type, String typeName,
+            String... ids) {
+        Set<PersistentResource> result = new LinkedHashSet<>();
+        for (String id : ids) {
+            if (id == null) {
+                throw new InvalidObjectIdentifierException(null, typeName);
+            }
+            result.add(PersistentResource.loadRecord(
+                    EntityProjection.builder().type(ClassType.of(type)).build(), id, scope));
+        }
+        return result;
+    }
+
+    @Test
+    /**
+     * Verifies that loading a resource throws a ForbiddenAccessException when the user cannot read it.
+     */
+    public void testToPersistentResourceForbidden() {
+        when(tx.loadObject(any(), eq(1L), any())).thenReturn(new NoReadEntity());
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+        assertThrows(ForbiddenAccessException.class,
+                () -> loadResources(goodScope, NoReadEntity.class, "noread", "1"));
+    }
+
+    @Test
+    public void testSuccessfulOneToOneRelationshipAdd() throws Exception {
+        Left left = new Left();
+        Right right = new Right();
+        left.setId(2);
+        right.setId(3);
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+
+        PersistentResource<Left> leftResource = new PersistentResource<>(left, "2", goodScope);
+
+        when(tx.loadObject(any(), eq(3L), any())).thenReturn(right);
+        boolean updated = leftResource.updateRelation("one2one",
+                loadResources(goodScope, Right.class, "right", "3"));
+        goodScope.saveOrCreateObjects();
+        verify(tx, times(1)).save(left, goodScope);
+        verify(tx, times(1)).save(right, goodScope);
+        verify(tx, times(1)).getToOneRelation(tx, left, getRelationship(ClassType.of(Right.class), "one2one"), goodScope);
+
+        assertTrue(updated, "The one-2-one relationship should be added.");
+        assertEquals(3, left.getOne2one().getId(), "The correct object was set in the one-2-one relationship");
+    }
+
+    /**
+     * Avoid NPE when PATCH or POST defines relationship with null id.
+     * <pre>
+     * <code>
+     * "relationships": {
+     *   "left": {
+     *     "data": {
+     *       "type": "right",
+     *       "id": null
+     *     }
+     *   }
+     * }
+     * </code>
+     * </pre>
+     */
+    @Test
+    public void testSuccessfulOneToOneRelationshipAddNull() throws Exception {
+        Left left = new Left();
+        left.setId(2);
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+
+        PersistentResource<Left> leftResource = new PersistentResource<>(left, "2", goodScope);
+
+        InvalidObjectIdentifierException thrown = assertThrows(
+                InvalidObjectIdentifierException.class,
+                () -> leftResource.updateRelation("one2one",
+                        loadResources(goodScope, Right.class, "right", (String) null)));
+
+        assertEquals("Unknown identifier null for right", thrown.getMessage());
+    }
+
+    @Test
+    /*
+     * The following are ids for a hypothetical relationship.
+     * GIVEN:
+     * all (all the ids in the DB) = 1,2,3,4,5
+     * mine (everything the current user has access to) = 1,2,3
+     * requested (what the user wants to change to) = 3,6
+     * THEN:
+     * deleted (what gets removed from the DB) = 1,2
+     * final (what get stored in the relationship) = 3,4,5,6
+     * BECAUSE:
+     * notMine = all - mine
+     * updated = (requested UNION mine) - (requested INTERSECT mine)
+     * deleted = (mine - requested)
+     * final = (notMine) UNION requested
+     */
+    public void testSuccessfulManyToManyRelationshipUpdate() throws Exception {
+        Parent parent = new Parent();
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+
+        Child child1 = newChild(1);
+        Child child2 = newChild(2);
+        Child child3 = newChild(3);
+        Child child4 = newChild(-4); //Not accessible to goodUser
+        Child child5 = newChild(-5); //Not accessible to goodUser
+        Child child6 = newChild(6);
+
+        //All = (1,2,3,4,5)
+        //Mine = (1,2,3)
+        Set<Child> allChildren = new HashSet<>();
+        allChildren.add(child1);
+        allChildren.add(child2);
+        allChildren.add(child3);
+        allChildren.add(child4);
+        allChildren.add(child5);
+        parent.setChildren(allChildren);
+        parent.setSpouses(Sets.newHashSet());
+
+        when(tx.getToManyRelation(any(), eq(parent), any(), any())).thenReturn(new DataStoreIterableBuilder(allChildren).build());
+
+        PersistentResource<Parent> parentResource = new PersistentResource<>(parent, "1", goodScope);
+
+        when(tx.loadObject(any(), eq(2L), any())).thenReturn(child2);
+        when(tx.loadObject(any(), eq(3L), any())).thenReturn(child3);
+        when(tx.loadObject(any(), eq(-4L), any())).thenReturn(child4);
+        when(tx.loadObject(any(), eq(-5L), any())).thenReturn(child5);
+        when(tx.loadObject(any(), eq(6L), any())).thenReturn(child6);
+
+        //Final set after operation = (3,4,5,6)
+        Set<Child> expected = new HashSet<>();
+        expected.add(child3);
+        expected.add(child4);
+        expected.add(child5);
+        expected.add(child6);
+
+        //Requested = (3,6)
+        boolean updated = parentResource.updateRelation("children",
+                loadResources(goodScope, Child.class, "child", "3", "6"));
+
+        goodScope.saveOrCreateObjects();
+        verify(tx, times(1)).save(parent, goodScope);
+        verify(tx, times(1)).save(child1, goodScope);
+        verify(tx, times(1)).save(child2, goodScope);
+        verify(tx, times(1)).save(child6, goodScope);
+        verify(tx, never()).save(child4, goodScope);
+        verify(tx, never()).save(child5, goodScope);
+        verify(tx, never()).save(child3, goodScope);
+
+        assertTrue(updated, "Many-2-many relationship should be updated.");
+        assertTrue(parent.getChildren().containsAll(expected), "All expected members were updated");
+        assertTrue(expected.containsAll(parent.getChildren()), "All expected members were updated");
+
+        /*
+         * No tests for reference integrity since the parent is the owner and
+         * this is a many to many relationship.
+         */
+    }
+
+    @Test
+    /*
+     * The following are ids for a hypothetical relationship.
+     * GIVEN:
+     * all (all the ids in the DB) = 1,2,3,4,5
+     * mine (everything the current user has access to) = 1,2,3
+     * requested (what the user wants to change to) = 1,2,3
+     * THEN:
+     * deleted (what gets removed from the DB) = nothing
+     * final (what get stored in the relationship) = 1,2,3,4,5
+     * BECAUSE:
+     * notMine = all - mine
+     * updated = (requested UNION mine) - (requested INTERSECT mine)
+     * deleted = (mine - requested)
+     * final = (notMine) UNION requested
+     */
+    public void testSuccessfulManyToManyRelationshipNoopUpdate() throws Exception {
+        Parent parent = new Parent();
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+
+        Child child1 = newChild(1);
+        Child child2 = newChild(2);
+        Child child3 = newChild(3);
+        Child child4 = newChild(-4); //Not accessible to goodUser
+        Child child5 = newChild(-5); //Not accessible to goodUser
+
+        //All = (1,2,3,4,5)
+        //Mine = (1,2,3)
+        Set<Child> allChildren = new HashSet<>();
+        allChildren.add(child1);
+        allChildren.add(child2);
+        allChildren.add(child3);
+        allChildren.add(child4);
+        allChildren.add(child5);
+        parent.setChildren(allChildren);
+        parent.setSpouses(Sets.newHashSet());
+
+        when(tx.getToManyRelation(any(), eq(parent), any(), any())).thenReturn(new DataStoreIterableBuilder(allChildren).build());
+
+        PersistentResource<Parent> parentResource = new PersistentResource<>(parent, "1", goodScope);
+
+        when(tx.loadObject(any(), eq(1L), any())).thenReturn(child1);
+        when(tx.loadObject(any(), eq(2L), any())).thenReturn(child2);
+        when(tx.loadObject(any(), eq(3L), any())).thenReturn(child3);
+        when(tx.loadObject(any(), eq(-4L), any())).thenReturn(child4);
+        when(tx.loadObject(any(), eq(-5L), any())).thenReturn(child5);
+
+        //Final set after operation = (1,2,3,4,5)
+        Set<Child> expected = new HashSet<>();
+        expected.add(child1);
+        expected.add(child2);
+        expected.add(child3);
+        expected.add(child4);
+        expected.add(child5);
+
+        //Requested = (1,2,3)
+        boolean updated = parentResource.updateRelation("children",
+                loadResources(goodScope, Child.class, "child", "3", "2", "1"));
+
+        goodScope.saveOrCreateObjects();
+        verify(tx, never()).save(parent, goodScope);
+        verify(tx, never()).save(child1, goodScope);
+        verify(tx, never()).save(child2, goodScope);
+        verify(tx, never()).save(child4, goodScope);
+        verify(tx, never()).save(child5, goodScope);
+        verify(tx, never()).save(child3, goodScope);
+
+        assertFalse(updated, "Many-2-many relationship should not be updated.");
+        assertTrue(parent.getChildren().containsAll(expected), "All expected members were updated");
+        assertTrue(expected.containsAll(parent.getChildren()), "All expected members were updated");
+
+        /*
+         * No tests for reference integrity since the parent is the owner and
+         * this is a many to many relationship.
+         */
+    }
+
+    @Test
+    /*
+     * The following are ids for a hypothetical relationship.
+     * GIVEN:
+     * all (all the ids in the DB) = null
+     * mine (everything the current user has access to) = null
+     * requested (what the user wants to change to) = 1,2,3
+     * THEN:
+     * deleted (what gets removed from the DB) = nothing
+     * final (what get stored in the relationship) = 1,2,3
+     * BECAUSE:
+     * notMine = all - mine
+     * updated = (requested UNION mine) - (requested INTERSECT mine)
+     * deleted = (mine - requested)
+     * final = (notMine) UNION requested
+     */
+    public void testSuccessfulManyToManyRelationshipNullUpdate() throws Exception {
+        Parent parent = new Parent();
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+
+        Child child1 = newChild(1);
+        Child child2 = newChild(2);
+        Child child3 = newChild(3);
+
+        //All = null
+        //Mine = null
+        parent.setChildren(null);
+        parent.setSpouses(Sets.newHashSet());
+
+        when(tx.getToManyRelation(any(), eq(parent), any(), any())).thenReturn(null);
+
+        PersistentResource<Parent> parentResource = new PersistentResource<>(parent, "1", goodScope);
+
+        when(tx.loadObject(any(), eq(1L), any())).thenReturn(child1);
+        when(tx.loadObject(any(), eq(2L), any())).thenReturn(child2);
+        when(tx.loadObject(any(), eq(3L), any())).thenReturn(child3);
+
+        //Final set after operation = (1,2,3)
+        Set<Child> expected = new HashSet<>();
+        expected.add(child1);
+        expected.add(child2);
+        expected.add(child3);
+
+        //Requested = (1,2,3)
+        boolean updated = parentResource.updateRelation("children",
+                loadResources(goodScope, Child.class, "child", "3", "2", "1"));
+
+        goodScope.saveOrCreateObjects();
+        verify(tx, times(1)).save(parent, goodScope);
+        verify(tx, times(1)).save(child1, goodScope);
+        verify(tx, times(1)).save(child2, goodScope);
+        verify(tx, times(1)).save(child3, goodScope);
+
+        assertTrue(updated, "Many-2-many relationship should be updated.");
+        assertTrue(parent.getChildren().containsAll(expected), "All expected members were updated");
+        assertTrue(expected.containsAll(parent.getChildren()), "All expected members were updated");
+
+        /*
+         * No tests for reference integrity since the parent is the owner and
+         * this is a many to many relationship.
+         */
+    }
+
+    @Test
+    public void testUpdatePermissionCheckedOnInverseRelationship() {
+        Left left = new Left();
+        left.setId(1);
+        Right right = new Right();
+
+        Set<Right> rights = Sets.newHashSet(right);
+        left.setNoInverseUpdate(rights);
+        right.setNoUpdate(Sets.newHashSet(left));
+
+        when(tx.getToManyRelation(any(), eq(left), any(), any()))
+                .thenReturn(new DataStoreIterableBuilder(rights).build());
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+        PersistentResource<Left> leftResource = new PersistentResource<>(left, goodScope.getUUIDFor(left), goodScope);
+
+        assertThrows(
+                ForbiddenAccessException.class,
+                () -> leftResource.updateRelation("noInverseUpdate", new LinkedHashSet<>()));
+        // Modifications have a deferred check component:
+        leftResource.getRequestScope().getPermissionExecutor().executeCommitChecks();
+    }
+
+    @Test
+    public void testTransferPermissionErrorOnUpdateSingularRelationship() {
+        example.User userModel = new example.User();
+        userModel.setId(1);
+
+        NoShareEntity noShare = new NoShareEntity();
+        noShare.setId(1);
+
+        EntityProjection collection = EntityProjection.builder()
+                .type(NoShareEntity.class)
+
+                .build();
+
+        when(tx.loadObject(eq(collection), eq(1L), any())).thenReturn(noShare);
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+        PersistentResource<example.User> userResource =
+                new PersistentResource<>(userModel, goodScope.getUUIDFor(userModel), goodScope);
+
+        assertThrows(
+                ForbiddenAccessException.class,
+                () -> userResource.updateRelation("noShare",
+                        loadResources(goodScope, NoShareEntity.class, "noshare", "1")));
+    }
+
+    @Test
+    public void testTransferPermissionErrorOnUpdateRelationshipPackageLevel() {
+        ContainerWithPackageShare containerWithPackageShare = new ContainerWithPackageShare();
+
+        Untransferable untransferable = new Untransferable();
+        untransferable.setContainerWithPackageShare(containerWithPackageShare);
+
+        when(tx.loadObject(any(), eq(1L), any())).thenReturn(untransferable);
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+        PersistentResource<ContainerWithPackageShare> containerResource = new PersistentResource<>(
+                containerWithPackageShare, goodScope.getUUIDFor(containerWithPackageShare), goodScope);
+
+        assertThrows(
+                ForbiddenAccessException.class,
+                () -> containerResource.updateRelation(
+                        "untransferables", loadResources(goodScope, Untransferable.class, "untransferable", "1")));
+    }
+
+    @Test
+    public void testTransferPermissionSuccessOnUpdateManyRelationshipPackageLevel() {
+        ContainerWithPackageShare containerWithPackageShare = new ContainerWithPackageShare();
+
+        ShareableWithPackageShare shareableWithPackageShare = new ShareableWithPackageShare();
+        shareableWithPackageShare.setContainerWithPackageShare(containerWithPackageShare);
+
+        when(tx.loadObject(any(), eq(1L), any())).thenReturn(shareableWithPackageShare);
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+        PersistentResource<ContainerWithPackageShare> containerResource = new PersistentResource<>(
+                containerWithPackageShare, goodScope.getUUIDFor(containerWithPackageShare), goodScope);
+
+        containerResource.updateRelation(
+                "shareableWithPackageShares",
+                loadResources(goodScope, ShareableWithPackageShare.class, "shareableWithPackageShare", "1"));
+
+        assertEquals(1, containerWithPackageShare.getShareableWithPackageShares().size());
+        assertTrue(containerWithPackageShare.getShareableWithPackageShares().contains(shareableWithPackageShare));
+    }
+
+    @Test
+    public void testTransferPermissionErrorOnUpdateManyRelationship() {
+        example.User userModel = new example.User();
+        userModel.setId(1);
+
+        NoShareEntity noShare1 = new NoShareEntity();
+        noShare1.setId(1);
+        NoShareEntity noShare2 = new NoShareEntity();
+        noShare2.setId(2);
+
+        when(tx.loadObject(any(), eq(1L), any())).thenReturn(noShare1);
+        when(tx.loadObject(any(), eq(2L), any())).thenReturn(noShare2);
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+        PersistentResource<example.User> userResource =
+                new PersistentResource<>(userModel, goodScope.getUUIDFor(userModel), goodScope);
+
+        assertThrows(
+                ForbiddenAccessException.class,
+                () -> userResource.updateRelation("noShares",
+                        loadResources(goodScope, NoShareEntity.class, "noshare", "1", "2")));
+    }
+
+    @Test
+    public void testTransferPermissionSuccessOnUpdateManyRelationship() {
+        example.User userModel = new example.User();
+        userModel.setId(1);
+
+        NoShareEntity noShare1 = new NoShareEntity();
+        noShare1.setId(1);
+        NoShareEntity noShare2 = new NoShareEntity();
+        noShare2.setId(2);
+        HashSet<NoShareEntity> noshares = Sets.newHashSet(noShare1, noShare2);
+
+        /* The no shares already exist so no exception should be thrown */
+        userModel.setNoShares(noshares);
+
+        when(tx.loadObject(any(), eq(1L), any())).thenReturn(noShare1);
+        when(tx.getToManyRelation(any(), eq(userModel), any(), any()))
+                .thenReturn(new DataStoreIterableBuilder(noshares).build());
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+        PersistentResource<example.User> userResource =
+                new PersistentResource<>(userModel, goodScope.getUUIDFor(userModel), goodScope);
+
+        boolean returnVal = userResource.updateRelation("noShares",
+                loadResources(goodScope, NoShareEntity.class, "noshare", "1"));
+
+        assertTrue(returnVal);
+        assertEquals(1, userModel.getNoShares().size());
+        assertTrue(userModel.getNoShares().contains(noShare1));
+    }
+
+    @Test
+    public void testTransferPermissionSuccessOnUpdateSingularRelationship() {
+        example.User userModel = new example.User();
+        userModel.setId(1);
+
+        NoShareEntity noShare = new NoShareEntity();
+
+        /* The noshare already exists so no exception should be thrown */
+        userModel.setNoShare(noShare);
+
+        when(tx.getToOneRelation(any(), eq(userModel), any(), any())).thenReturn(noShare);
+        when(tx.loadObject(any(), eq(1L), any())).thenReturn(noShare);
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+        PersistentResource<example.User> userResource =
+                new PersistentResource<>(userModel, goodScope.getUUIDFor(userModel), goodScope);
+
+        boolean returnVal = userResource.updateRelation("noShare",
+                loadResources(goodScope, NoShareEntity.class, "noshare", "1"));
+
+        assertFalse(returnVal);
+        assertEquals(noShare, userModel.getNoShare());
+    }
+
+    @Test
+    public void testTransferPermissionSuccessOnClearSingularRelationship() {
+        example.User userModel = new example.User();
+        userModel.setId(1);
+
+        NoShareEntity noShare = new NoShareEntity();
+
+        /* The noshare already exists so no exception should be thrown */
+        userModel.setNoShare(noShare);
+
+        when(tx.getToOneRelation(any(), eq(userModel), any(), any())).thenReturn(noShare);
+
+        RequestScope goodScope = buildRequestScope(tx, goodUser);
+        PersistentResource<example.User> userResource =
+                new PersistentResource<>(userModel, goodScope.getUUIDFor(userModel), goodScope);
+
+        boolean returnVal = userResource.updateRelation("noShare", new LinkedHashSet<>());
+
+        assertTrue(returnVal);
+        assertNull(userModel.getNoShare());
     }
 
     @Test

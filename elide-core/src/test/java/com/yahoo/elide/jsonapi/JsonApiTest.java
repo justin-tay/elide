@@ -25,16 +25,14 @@ import com.yahoo.elide.core.TransactionRegistry;
 import com.yahoo.elide.core.datastore.DataStore;
 import com.yahoo.elide.core.datastore.DataStoreTransaction;
 import com.yahoo.elide.core.dictionary.EntityDictionary;
-import com.yahoo.elide.core.dictionary.TestDictionary;
 import com.yahoo.elide.core.exceptions.ExceptionMappers;
 import com.yahoo.elide.core.exceptions.Slf4jExceptionLogger;
-import com.yahoo.elide.core.lifecycle.FieldTestModel;
-import com.yahoo.elide.core.lifecycle.LegacyTestModel;
-import com.yahoo.elide.core.lifecycle.PropertyTestModel;
 import com.yahoo.elide.core.request.route.Route;
-import com.yahoo.elide.core.security.TestUser;
 import com.yahoo.elide.core.security.User;
 import com.yahoo.elide.core.type.ClassType;
+import com.yahoo.elide.jsonapi.example.Child;
+import com.yahoo.elide.jsonapi.example.Parent;
+import com.yahoo.elide.jsonapi.example.TestModel;
 import com.yahoo.elide.jsonapi.models.Data;
 import com.yahoo.elide.jsonapi.models.JsonApiDocument;
 import com.yahoo.elide.jsonapi.models.JsonApiError;
@@ -45,9 +43,6 @@ import com.yahoo.elide.jsonapi.models.Resource;
 import com.yahoo.elide.jsonapi.models.ResourceIdentifier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
-import example.Child;
-import example.Parent;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.json.JSONException;
@@ -82,7 +77,7 @@ import java.util.UUID;
  */
 public class JsonApiTest {
     private JsonApiMapper mapper;
-    private User user = new TestUser("0");
+    private User user = new User(() -> "0");
     private static String BASE_URL = "http://localhost:8080/json";
 
     private EntityDictionary dictionary;
@@ -90,12 +85,10 @@ public class JsonApiTest {
 
     @BeforeEach
     void init() {
-        dictionary = TestDictionary.getTestDictionary();
+        dictionary = EntityDictionary.builder().build();
         dictionary.bindEntity(Parent.class);
         dictionary.bindEntity(Child.class);
-        dictionary.bindEntity(FieldTestModel.class);
-        dictionary.bindEntity(PropertyTestModel.class);
-        dictionary.bindEntity(LegacyTestModel.class);
+        dictionary.bindEntity(TestModel.class);
         mapper = new JsonApiMapper();
     }
 
@@ -593,7 +586,7 @@ public class JsonApiTest {
     void constraintViolationException() throws Exception {
         DataStore store = mock(DataStore.class);
         DataStoreTransaction tx = mock(DataStoreTransaction.class);
-        FieldTestModel mockModel = mock(FieldTestModel.class);
+        TestModel mockModel = mock(TestModel.class);
 
         Elide elide = getElide(store, dictionary, null);
 
@@ -607,7 +600,7 @@ public class JsonApiTest {
         ConstraintViolationException e = new ConstraintViolationException("message", violations);
 
         when(store.beginTransaction()).thenReturn(tx);
-        when(tx.createNewObject(eq(ClassType.of(FieldTestModel.class)), any())).thenReturn(mockModel);
+        when(tx.createNewObject(eq(ClassType.of(TestModel.class)), any())).thenReturn(mockModel);
         doThrow(e).when(tx).preCommit(any());
 
         Route route = Route.builder().baseUrl(BASE_URL).path("/testModel").build();
