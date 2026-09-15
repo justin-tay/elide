@@ -387,7 +387,7 @@ public class RSQLFilterDialect implements FilterDialect, SubqueryFilterDialect, 
                     addDefaultArguments(arguments, dictionary.getAttributeArguments(entityType, associationName));
                 }
 
-                String typeName = dictionary.getJsonAliasFor(entityType);
+                String typeName = dictionary.getTypeName(entityType);
                 Type fieldType = dictionary.getParameterizedType(entityType, associationName);
 
                 if (fieldType == null) {

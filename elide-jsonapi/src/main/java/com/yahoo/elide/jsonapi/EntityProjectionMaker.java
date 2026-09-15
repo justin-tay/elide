@@ -356,7 +356,7 @@ public class EntityProjectionMaker
     private Set<Attribute> getSparseAttributes(Type<?> entityClass) {
         Set<String> allAttributes = new LinkedHashSet<>(dictionary.getAttributes(entityClass));
 
-        Set<String> sparseFieldsForEntity = sparseFields.get(dictionary.getJsonAliasFor(entityClass));
+        Set<String> sparseFieldsForEntity = sparseFields.get(dictionary.getTypeName(entityClass));
         if (CollectionUtils.isEmpty(sparseFieldsForEntity)) {
             sparseFieldsForEntity = allAttributes;
         } else {
@@ -377,7 +377,7 @@ public class EntityProjectionMaker
 
     private Map<String, EntityProjection> getSparseRelationships(Type<?> entityClass) {
         Set<String> allRelationships = new LinkedHashSet<>(dictionary.getRelationships(entityClass));
-        Set<String> sparseFieldsForEntity = sparseFields.get(dictionary.getJsonAliasFor(entityClass));
+        Set<String> sparseFieldsForEntity = sparseFields.get(dictionary.getTypeName(entityClass));
 
         if (CollectionUtils.isEmpty(sparseFieldsForEntity)) {
             sparseFieldsForEntity = allRelationships;
@@ -412,7 +412,7 @@ public class EntityProjectionMaker
 
         if (!unknownSparseFields.isEmpty()) {
             throw new InvalidValueException(String.format("%s does not contain the fields: [%s]",
-                            dictionary.getJsonAliasFor(entityClass), unknownSparseFields));
+                            dictionary.getTypeName(entityClass), unknownSparseFields));
         }
     }
 

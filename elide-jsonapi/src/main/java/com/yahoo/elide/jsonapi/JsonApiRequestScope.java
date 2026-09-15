@@ -204,7 +204,7 @@ public class JsonApiRequestScope extends RequestScope {
      * @return The filter expression for the given type
      */
     public Optional<FilterExpression> getFilterExpressionByType(Type<?> entityClass) {
-        return Optional.ofNullable(expressionsByType.get(dictionary.getJsonAliasFor(entityClass)));
+        return Optional.ofNullable(expressionsByType.get(dictionary.getTypeName(entityClass)));
     }
 
     /**
@@ -215,7 +215,7 @@ public class JsonApiRequestScope extends RequestScope {
     public Optional<FilterExpression> getLoadFilterExpression(Type<?> loadClass) {
         Optional<FilterExpression> filterExpression;
         if (globalFilterExpression == null) {
-            String typeName = dictionary.getJsonAliasFor(loadClass);
+            String typeName = dictionary.getTypeName(loadClass);
             filterExpression =  getFilterExpressionByType(typeName);
         } else {
             filterExpression = Optional.of(globalFilterExpression);
@@ -232,10 +232,10 @@ public class JsonApiRequestScope extends RequestScope {
     public Optional<FilterExpression> getExpressionForRelation(Type<?> parentType, String relationName) {
         final Type<?> entityClass = dictionary.getParameterizedType(parentType, relationName);
         if (entityClass == null) {
-            throw new InvalidAttributeException(relationName, dictionary.getJsonAliasFor(parentType));
+            throw new InvalidAttributeException(relationName, dictionary.getTypeName(parentType));
         }
 
-        final String valType = dictionary.getJsonAliasFor(entityClass);
+        final String valType = dictionary.getTypeName(entityClass);
         return getFilterExpressionByType(valType);
     }
 

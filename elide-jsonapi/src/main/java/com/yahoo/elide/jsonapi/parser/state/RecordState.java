@@ -48,7 +48,7 @@ public class RecordState extends BaseState {
 
         Type<?> paramType = dictionary.getParameterizedType(resource.getObject(), subCollection);
 
-        entityName = dictionary.getJsonAliasFor(paramType);
+        entityName = dictionary.getTypeName(paramType);
         entityClass = dictionary.getEntityClass(entityName, state.getRequestScope().getRoute().getApiVersion());
 
         if (entityClass == null) {

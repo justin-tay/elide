@@ -118,7 +118,7 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
                 ? new ResourceLineage(parent.lineage, parent, parentRelationship)
                 : new ResourceLineage();
         this.dictionary = scope.getDictionary();
-        this.typeName = dictionary.getJsonAliasFor(type);
+        this.typeName = dictionary.getTypeName(type);
         this.transaction = scope.getTransaction();
         this.requestScope = scope;
         dictionary.initializeEntity(obj);
@@ -253,7 +253,7 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
                         idOrEntityId = (Serializable) idObfuscator.deobfuscate(id, idType);
                     } catch (RuntimeException e) {
                         throw new InvalidValueException(
-                                "Invalid identifier " + id + " for " + dictionary.getJsonAliasFor(loadClass), e);
+                                "Invalid identifier " + id + " for " + dictionary.getTypeName(loadClass), e);
                     }
                 } else {
                     idOrEntityId = (Serializable) CoerceUtil.coerce(id, idType);
@@ -262,7 +262,7 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
 
             obj = tx.loadObject(projection, idOrEntityId, requestScope);
             if (obj == null) {
-                throw new InvalidObjectIdentifierException(id, dictionary.getJsonAliasFor(loadClass));
+                throw new InvalidObjectIdentifierException(id, dictionary.getTypeName(loadClass));
             }
         }
 
@@ -325,7 +325,7 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
             if (ids.isEmpty()) {
                 return Flux.empty();
             }
-            throw new InvalidObjectIdentifierException(ids.toString(), dictionary.getJsonAliasFor(loadClass));
+            throw new InvalidObjectIdentifierException(ids.toString(), dictionary.getTypeName(loadClass));
         }
 
         Set<String> requestedFields = projection.getRequestedFields();
@@ -333,13 +333,13 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
         if (pagination != null && !pagination.isDefaultInstance()
                 && !CanPaginateVisitor.canPaginate(loadClass, dictionary, requestScope, requestedFields)) {
             throw new BadRequestException(String.format("Cannot paginate %s",
-                    dictionary.getJsonAliasFor(loadClass)));
+                    dictionary.getTypeName(loadClass)));
         }
 
         Set<PersistentResource> newResources = new LinkedHashSet<>();
 
         if (!ids.isEmpty()) {
-            String typeAlias = dictionary.getJsonAliasFor(loadClass);
+            String typeAlias = dictionary.getTypeName(loadClass);
             newResources = requestScope.getNewPersistentResources().stream()
                     .filter(resource -> typeAlias.equals(resource.getTypeName())
                             && ids.contains(resource.getUUID().orElse("")))
@@ -393,7 +393,7 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
         allResources = allResources.doOnComplete(() -> {
             Set<String> missedIds = Sets.difference(new LinkedHashSet<>(ids), foundIds);
             if (!missedIds.isEmpty()) {
-                throw new InvalidObjectIdentifierException(missedIds.toString(), dictionary.getJsonAliasFor(loadClass));
+                throw new InvalidObjectIdentifierException(missedIds.toString(), dictionary.getTypeName(loadClass));
             }
         });
 
@@ -1264,7 +1264,7 @@ public class PersistentResource<T> implements com.yahoo.elide.core.security.Pers
                 relationship.getProjection().getRequestedFields())) {
 
             throw new BadRequestException(String.format("Cannot paginate %s",
-                    dictionary.getJsonAliasFor(relationClass)));
+                    dictionary.getTypeName(relationClass)));
         }
 
         return getRelationUnchecked(relationship);
